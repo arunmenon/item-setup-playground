@@ -1,6 +1,17 @@
 # llm_request_models.py
 from pydantic import BaseModel
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
+
+class BaseLLMRequest(BaseModel):
+    """
+    Base request model for interacting with LLMs.
+
+    Attributes:
+        prompt (str): The input prompt to be sent to the LLM.
+        parameters (Optional[Dict[str, Union[str, int, float]]]): Additional parameters for LLM configuration.
+    """
+    prompt: str
+    parameters: Optional[Dict[str, Union[str, int, float]]] = None
 
 class LLMRequest(BaseModel):
     """
@@ -13,11 +24,10 @@ class LLMRequest(BaseModel):
     metadata: Dict[str, Union[str, int, float, List[str]]]
     tasks: List[str]
 
-class GPT4Request(BaseModel):
+class GPT4Request(BaseLLMRequest):
     """
     Request model for interacting with GPT-4.
-
-    Attributes:
-        prompt (str): The input prompt to be sent to the GPT-4 model.
+    
+    Inherits from BaseLLMRequest and includes attributes specific to GPT-4 requests.
     """
-    prompt: str
+    model: str = "gpt-4"

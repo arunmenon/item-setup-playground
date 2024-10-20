@@ -1,77 +1,85 @@
-# llm_handler.py
-from typing import Dict, List, Any
-import asyncio
-from asyncio import Semaphore
+import openai
 import logging
-from handlers.openai_handler import OpenAIHandler
-from handlers.ow_model_handler import OpenWeightsModelHandler
+from typing import Dict, Any
+import asyncio
+import time
+from models.llm_request_models import BaseLLMRequest
+from openai import RateLimitError, AuthenticationError, OpenAIError, APIConnectionError, Timeout
+import os
+from openai import OpenAI
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-class LLMHandler:
-    def __init__(self, config: Dict[str, Any], api_key: str, max_concurrent_tasks: int = 5, batch_size: int = 10):
-        logging.debug("Initializing LLMHandler with config: %s, max_concurrent_tasks: %d, batch_size: %d", config, max_concurrent_tasks, batch_size)
-        self.llms = config.get("llms", {})
-        if not self.llms:
-            logging.error("No LLMs configured. Please provide at least one LLM in the configuration.")
-            raise ValueError("No LLMs configured. Please provide at least one LLM in the configuration.")
-        self.semaphore = Semaphore(max_concurrent_tasks)  # Limit the number of concurrent tasks to avoid overwhelming the system
-        self.batch_size = batch_size  # Limit the number of tasks processed concurrently in each batch
-        self.openai_handler = OpenAIHandler(api_key)
-        self.open_weights_handlers = {
-            llm_name: OpenWeightsModelHandler(llm_config.get("endpoint"))
-            for llm_name, llm_config in self.llms.items() if llm_config.get("type") == "open_weights"
-        }
-        logging.info("LLMHandler initialized with configuration: %s", self.llms)
+class BaseModelHandler:
+    def __init__(self, provider: str = None, api_key: str = None, api_base: str = None, model: str = "gpt-4", max_tokens: int = None, temperature: float = 0.7):
+        self.logger = logging.getLogger(self.__class__.__name__)
 
-    async def fan_out_calls(self, metadata: Dict[str, Any], tasks: List[str]) -> Dict[str, Dict[str, Any]]:
-        logging.debug("Starting fan_out_calls with metadata: %s and tasks: %s", metadata, tasks)
-        responses = {}
-        tasks_list = [self.invoke_llm(metadata, task, llm_name) for llm_name in self.llms.keys() for task in tasks]
-        
-        # Process tasks in batches to avoid overwhelming system resources
-        for i in range(0, len(tasks_list), self.batch_size):
-            logging.debug("Processing batch %d to %d", i, i + self.batch_size)
-            batch = tasks_list[i:i + self.batch_size]
-            done, pending = await asyncio.wait(batch, return_when=asyncio.FIRST_EXCEPTION)
-            for future in done:
-                try:
-                    result = await future
-                    llm_name = result["llm_name"]
-                    task = result["task"]
-                    response = result["response"]
+        self.provider = provider
+        self.client = self._initialize_client(api_key, api_base)
 
-                    logging.debug("Received response for LLM: %s, Task: %s, Response: %s", llm_name, task, response)
+        self.model = model
+        self.max_tokens = max_tokens
+        self.temperature = temperature
 
-                    if llm_name not in responses:
-                        responses[llm_name] = {}
-                    responses[llm_name][task] = response
-                except Exception as e:
-                    logging.error("Error occurred while processing a task: %s. Metadata: %s, Task: %s", e, metadata, task)
+    def _initialize_client(self, api_key: str, api_base: str):
+        if self.provider == "runpod":
+            return self._initialize_runpod_client()
+        elif self.provider == "openai":
+            return self._initialize_openai_client(api_key, api_base)
+        else:
+            raise ValueError("Unsupported provider specified.")
 
-            # Cancel any pending tasks if an exception was raised
-            for future in pending:
-                future.cancel()
+    def _initialize_runpod_client(self):
+        runpod_access_key = os.getenv("RUNPOD_ACCESS_KEY")
+        runpod_endpoint_id = os.getenv("RUNPOD_ENDPOINT_ID")
+        if runpod_access_key and runpod_endpoint_id:
+            return OpenAI(
+                api_key=runpod_access_key,
+                base_url=f"https://api.runpod.ai/v2/{runpod_endpoint_id}/openai/v1"
+            )
+        else:
+            raise ValueError("RunPod access key or endpoint ID not found in environment variables.")
 
-        logging.info("Completed fan_out_calls with responses: %s", responses)
-        return responses
+    def _initialize_openai_client(self, api_key: str, api_base: str):
+        if api_key:
+            openai.api_key = api_key
+        if api_base:
+            openai.api_base = api_base
+        return openai
 
-    async def invoke_llm(self, metadata: Dict[str, Any], task: str, llm_name: str) -> Dict[str, Any]:
-        logging.debug("Invoking LLM: %s for task: %s with metadata: %s", llm_name, task, metadata)
-        async with self.semaphore:
-            logging.debug("Acquired semaphore for LLM: %s, Task: %s", llm_name, task)
-            prompt = metadata.get("product_title", "")
-            logging.debug("Using prompt: %s", prompt)
-            llm_config = self.llms.get(llm_name, {})
-            llm_type = llm_config.get("type")
+    async def invoke(self, request: BaseLLMRequest, llm_name: str, task: str, retries: int = 3) -> Dict[str, Any]:
+        model = request.parameters.get("model") if request.parameters else self.model
+        max_tokens = request.parameters.get("max_tokens") if request.parameters else self.max_tokens
+        temperature = request.parameters.get("temperature") if request.parameters else self.temperature
+        prompt = request.prompt
 
-            if llm_type == "openai":
-                logging.debug("Invoking OpenAI handler for LLM: %s, Task: %s", llm_name, task)
-                return await self.openai_handler.invoke(prompt, llm_name, task, model=llm_config.get("model", "gpt-4"))
-            elif llm_type == "open_weights":
-                logging.debug("Invoking OpenWeightsModelHandler for LLM: %s, Task: %s", llm_name, task)
-                open_weights_handler = self.open_weights_handlers.get(llm_name)
-                return await open_weights_handler.invoke(prompt, llm_name, task)
-            else:
-                logging.error("LLM %s not supported", llm_name)
-                raise ValueError(f"LLM {llm_name} not supported")
+        self.logger.debug("Invoking model: %s with prompt: %s", model, prompt)
+
+        for attempt in range(retries):
+            try:
+                response = await asyncio.to_thread(
+                    self.client.ChatCompletion.acreate,
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+                self.logger.debug("Received response: %s", response)
+                return {"llm_name": llm_name, "task": task, "response": response['choices'][0]['message']['content']}
+            except (APIConnectionError, Timeout) as e:
+                self.logger.warning("Network-related error during model invocation, attempt %d/%d: %s", attempt + 1, retries, str(e))
+                if attempt < retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                    continue
+                else:
+                    self.logger.error("Failed after %d attempts: %s", retries, str(e))
+                    raise
+            except RateLimitError as e:
+                self.logger.error("Rate limit exceeded for model: %s", e)
+                raise
+            except AuthenticationError as e:
+                self.logger.error("Authentication error for model: %s", e)
+                raise
+            except OpenAIError as e:
+                self.logger.error("General OpenAI API error for model: %s", e)
+                raise
