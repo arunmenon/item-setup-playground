@@ -5,6 +5,7 @@ import csv
 import time
 import json
 from datetime import datetime
+import sys
 
 async def process_prompt_task_pair(prompt, task, handlers):
     request = BaseLLMRequest(prompt=prompt)
@@ -35,7 +36,7 @@ async def invoke_handler(handler_name, handler, request, task):
             "response": response['response'],
             "elapsed_time": elapsed_time
         }
-        print(f"{handler_name} response for prompt '{request.prompt}': {response['response']}\nElapsed time: {elapsed_time:.2f} seconds\n")
+        print(f"{handler_name} response for prompt '{request.prompt}':\n{response['response']}\nElapsed time: {elapsed_time:.2f} seconds\n")
     except Exception as e:
         elapsed_time = time.time() - start_time
         print(f"Error during {handler_name} invocation for prompt '{request.prompt}': {str(e)}\nElapsed time: {elapsed_time:.2f} seconds\n")
@@ -49,8 +50,8 @@ async def invoke_handler(handler_name, handler, request, task):
     return result
 
 async def test_providers_with_csv():
-    # Read prompts and tasks from CSV file
-    csv_file = 'prompts_tasks.csv'
+    # Get CSV file name from command-line argument or use default
+    csv_file = sys.argv[1] if len(sys.argv) > 1 else 'attribute_extraction_prompts.csv'
     prompts_tasks = []
     with open(csv_file, 'r', newline='') as f:
         reader = csv.DictReader(f)
@@ -61,15 +62,15 @@ async def test_providers_with_csv():
     handlers = {
         "openai": BaseModelHandler(
             provider="openai",
-            model="gpt-4",  # Replace with your desired OpenAI model
-            max_tokens=500,
-            temperature=0.2
+            model="gpt-4o-mini",  # Replace with your desired OpenAI model
+            max_tokens=1000,
+            temperature=0.7
         ),
         "runpod": BaseModelHandler(
             provider="runpod",
             model="neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",  # Replace with your RunPod model
-            max_tokens=500,
-            temperature=0.2
+            max_tokens=1000,
+            temperature=0.7
         )
     }
 
