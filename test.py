@@ -30,18 +30,22 @@ async def invoke_handler(handler_name, handler, request, task):
         response = await handler.invoke(request=request, task=task)
         elapsed_time = time.time() - start_time
         result = {
-            "provider": handler_name,
+            "handler_name": handler_name,
+            "provider": handler.provider_name,
+            "model": handler.model,
             "prompt": request.prompt,
             "task": task,
             "response": response['response'],
             "elapsed_time": elapsed_time
         }
-        print(f"{handler_name} response for prompt '{request.prompt}':\n{response['response']}\nElapsed time: {elapsed_time:.2f} seconds\n")
+        print(f"{handler_name} ({handler.provider_name}, model: {handler.model}) response for prompt '{request.prompt}':\n{response['response']}\nElapsed time: {elapsed_time:.2f} seconds\n")
     except Exception as e:
         elapsed_time = time.time() - start_time
         print(f"Error during {handler_name} invocation for prompt '{request.prompt}': {str(e)}\nElapsed time: {elapsed_time:.2f} seconds\n")
         result = {
-            "provider": handler_name,
+            "handler_name": handler_name,
+            "provider": handler.provider_name,
+            "model": handler.model,
             "prompt": request.prompt,
             "task": task,
             "error": str(e),
@@ -58,21 +62,14 @@ async def test_providers_with_csv():
         for row in reader:
             prompts_tasks.append((row['prompt'], row['task']))
 
-    # Instantiate handlers for both OpenAI and RunPod providers
-    handlers = {
-        "openai": BaseModelHandler(
-            provider="openai",
-            model="gpt-4o-mini",  # Replace with your desired OpenAI model
-            max_tokens=1000,
-            temperature=0.7
-        ),
-        "runpod": BaseModelHandler(
-            provider="runpod",
-            model="neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",  # Replace with your RunPod model
-            max_tokens=1000,
-            temperature=0.7
-        )
-    }
+    # Load provider configurations
+    with open('config.json', 'r') as f:
+        provider_configs = json.load(f)
+    handlers = {}
+    for provider_config in provider_configs['providers']:
+        provider_config_copy = provider_config.copy()
+        name = provider_config_copy.pop('name')
+        handlers[name] = BaseModelHandler(**provider_config_copy)    
 
     all_results = []
 

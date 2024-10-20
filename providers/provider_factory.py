@@ -13,13 +13,13 @@ class ProviderFactory:
 
 
     @staticmethod
-    def create_provider(provider: str):
-        if provider == "openai":
+    def create_provider(provider_name, **kwargs):
+        if provider_name == "openai":
             ProviderFactory.logger.debug(f"Creating OpenAI provider ")
             return OpenAIProvider()
-        elif provider == "runpod":
+        elif provider_name == "runpod":
             ProviderFactory.logger.info(f"Creating RunPod provider ")
-            return RunPodProvider()
+            return RunPodProvider(**kwargs)
         else:
-            ProviderFactory.logger.error(f"Unsupported provider: {provider}")
-            raise ValueError(f"Unsupported provider: {provider}")
+            ProviderFactory.logger.error(f"Unsupported provider: {provider_name}")
+            raise ValueError(f"Unsupported provider: {provider_name}")

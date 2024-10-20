@@ -1,0 +1,542 @@
+[
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Extract the color and size from the following product description: 'Men's T-Shirt, Blue, Size Medium'.",
+        "task": "attribute_extraction",
+        "response": "Color: Blue  \nSize: Medium",
+        "elapsed_time": 0.7314817905426025
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Extract the color and size from the following product description: 'Men's T-Shirt, Blue, Size Medium'.",
+        "task": "attribute_extraction",
+        "response": "From the product description, the color is:\n\n- Blue\n\nThe size is:\n\n- Medium",
+        "elapsed_time": 5.592556953430176
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Extract the color and size from the following product description: 'Men's T-Shirt, Blue, Size Medium'.",
+        "task": "attribute_extraction",
+        "response": "The color is Blue and the size is Medium.",
+        "elapsed_time": 11.684075832366943
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Identify the brand and model number from this SKU: 'Sony WH-1000XM4 Wireless Noise-Canceling Over-Ear Headphones'.",
+        "task": "attribute_extraction",
+        "response": "The brand is Sony, and the model number is WH-1000XM4.",
+        "elapsed_time": 0.7112572193145752
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Identify the brand and model number from this SKU: 'Sony WH-1000XM4 Wireless Noise-Canceling Over-Ear Headphones'.",
+        "task": "attribute_extraction",
+        "response": "The brand and model number for the Sony WH-1000XM4 Wireless Noise-Canceling Over-Ear Headphones are:\n\n- Brand: Sony\n- Model Number: WH-1000XM4",
+        "elapsed_time": 1.921994924545288
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Identify the brand and model number from this SKU: 'Sony WH-1000XM4 Wireless Noise-Canceling Over-Ear Headphones'.",
+        "task": "attribute_extraction",
+        "response": "The brand and model number for the given SKU 'Sony WH-1000XM4 Wireless Noise-Canceling Over-Ear Headphones' are:\n\n- Brand: Sony\n- Model Number: WH-1000XM4",
+        "elapsed_time": 2.353217124938965
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "From the product title 'Apple iPhone 13 Pro Max (128GB, Graphite)', extract the storage capacity and color.",
+        "task": "attribute_extraction",
+        "response": "The storage capacity is 128GB, and the color is Graphite.",
+        "elapsed_time": 0.8251779079437256
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "From the product title 'Apple iPhone 13 Pro Max (128GB, Graphite)', extract the storage capacity and color.",
+        "task": "attribute_extraction",
+        "response": "From the product title 'Apple iPhone 13 Pro Max (128GB, Graphite)', the storage capacity is 128GB and the color is Graphite.",
+        "elapsed_time": 1.9799060821533203
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "From the product title 'Apple iPhone 13 Pro Max (128GB, Graphite)', extract the storage capacity and color.",
+        "task": "attribute_extraction",
+        "response": "From the product title, the storage capacity is 128GB and the color is Graphite.",
+        "elapsed_time": 2.0646309852600098
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Extract the material and dimensions from: 'Ikea LACK Coffee Table, Black, 55x55 cm'.",
+        "task": "attribute_extraction",
+        "response": "The material of the Ikea LACK Coffee Table is not explicitly stated in the provided text, but it is typically made of particleboard with a laminate finish. The dimensions are 55 cm x 55 cm.",
+        "elapsed_time": 0.9955630302429199
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Extract the material and dimensions from: 'Ikea LACK Coffee Table, Black, 55x55 cm'.",
+        "task": "attribute_extraction",
+        "response": "Here's the extracted information:\n\n- Material: Black\n- Dimensions: 55x55 cm",
+        "elapsed_time": 1.7297227382659912
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Extract the material and dimensions from: 'Ikea LACK Coffee Table, Black, 55x55 cm'.",
+        "task": "attribute_extraction",
+        "response": "The material and dimensions of the Ikea LACK Coffee Table are:\n\n- Material: Not specified\n- Dimensions: 55x55 cm",
+        "elapsed_time": 2.1321401596069336
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Identify the product type and flavor from 'Nestl\u00e9 KitKat Chunky Milk Chocolate Bar 40g'.",
+        "task": "attribute_extraction",
+        "response": "The product type is a chocolate bar, and the flavor is milk chocolate.",
+        "elapsed_time": 0.6533420085906982
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Identify the product type and flavor from 'Nestl\u00e9 KitKat Chunky Milk Chocolate Bar 40g'.",
+        "task": "attribute_extraction",
+        "response": "The product type of 'Nestl\u00e9 KitKat Chunky Milk Chocolate Bar 40g' is a Chocolate Bar.",
+        "elapsed_time": 1.6941111087799072
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Identify the product type and flavor from 'Nestl\u00e9 KitKat Chunky Milk Chocolate Bar 40g'.",
+        "task": "attribute_extraction",
+        "response": "The product type is a chocolate bar, and the flavor is milk chocolate with a chunky texture.",
+        "elapsed_time": 2.111288070678711
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "From the following description, extract the voltage and wattage: 'Philips Hair Dryer HP8100/46, 1000 Watts, 220V'.",
+        "task": "attribute_extraction",
+        "response": "The voltage is 220V and the wattage is 1000 Watts.",
+        "elapsed_time": 0.8582861423492432
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "From the following description, extract the voltage and wattage: 'Philips Hair Dryer HP8100/46, 1000 Watts, 220V'.",
+        "task": "attribute_extraction",
+        "response": "From the description, the voltage is 220V, and the wattage is 1000 Watts.",
+        "elapsed_time": 1.811845064163208
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "From the following description, extract the voltage and wattage: 'Philips Hair Dryer HP8100/46, 1000 Watts, 220V'.",
+        "task": "attribute_extraction",
+        "response": "From the description, the voltage and wattage are:\n\n- Voltage: 220V\n- Wattage: 1000 Watts",
+        "elapsed_time": 10.27990198135376
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Extract the pack size and scent from 'Dove Soap Bar, Pack of 4, Cucumber and Green Tea Scent'.",
+        "task": "attribute_extraction",
+        "response": "The pack size is \"Pack of 4\" and the scent is \"Cucumber and Green Tea Scent\".",
+        "elapsed_time": 0.7527358531951904
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Extract the pack size and scent from 'Dove Soap Bar, Pack of 4, Cucumber and Green Tea Scent'.",
+        "task": "attribute_extraction",
+        "response": "The pack size for 'Dove Soap Bar, Pack of 4, Cucumber and Green Tea Scent' is 4 bars. \n\nThe scent is Cucumber and Green Tea.",
+        "elapsed_time": 2.8975942134857178
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Extract the pack size and scent from 'Dove Soap Bar, Pack of 4, Cucumber and Green Tea Scent'.",
+        "task": "attribute_extraction",
+        "response": "The pack size is 4 and the scent is Cucumber and Green Tea.",
+        "elapsed_time": 2.035628080368042
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Identify the screen size and resolution from 'Samsung 32-inch 4K UHD Monitor (LU32J590UQNXZA)'.",
+        "task": "attribute_extraction",
+        "response": "The screen size of the Samsung 32-inch 4K UHD Monitor (LU32J590UQNXZA) is 32 inches. The resolution is 3840 x 2160 pixels, which is commonly referred to as 4K UHD.",
+        "elapsed_time": 0.9993877410888672
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Identify the screen size and resolution from 'Samsung 32-inch 4K UHD Monitor (LU32J590UQNXZA)'.",
+        "task": "attribute_extraction",
+        "response": "The screen size of the Samsung 32-inch 4K UHD Monitor (LU32J590UQNXZA) is 32 inches. \n\nThe resolution of the monitor is 3840 x 2160 pixels, which is equivalent to 4K UHD (Ultra High Definition).",
+        "elapsed_time": 1.7994608879089355
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Identify the screen size and resolution from 'Samsung 32-inch 4K UHD Monitor (LU32J590UQNXZA)'.",
+        "task": "attribute_extraction",
+        "response": "The Samsung 32-inch 4K UHD Monitor (LU32J590UQNXZA) has the following specifications:\n\n- Screen size: 32 inches\n- Resolution: 4K UHD (3840 x 2160 pixels)",
+        "elapsed_time": 2.218801975250244
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "From the product name 'Dell XPS 13 Laptop, Intel Core i7, 16GB RAM, 512GB SSD', extract the processor type and storage capacity.",
+        "task": "attribute_extraction",
+        "response": "The processor type is \"Intel Core i7\" and the storage capacity is \"512GB SSD\".",
+        "elapsed_time": 0.6169798374176025
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "From the product name 'Dell XPS 13 Laptop, Intel Core i7, 16GB RAM, 512GB SSD', extract the processor type and storage capacity.",
+        "task": "attribute_extraction",
+        "response": "From the product name, we can extract the following information:\n\n- Processor type: Intel Core i7\n- Storage capacity: 512GB",
+        "elapsed_time": 1.6989822387695312
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "From the product name 'Dell XPS 13 Laptop, Intel Core i7, 16GB RAM, 512GB SSD', extract the processor type and storage capacity.",
+        "task": "attribute_extraction",
+        "response": "The processor type is Intel Core i7.\n\nThe storage capacity is 512GB SSD.",
+        "elapsed_time": 2.2483129501342773
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Extract the compatible devices and connectivity type from 'Logitech MX Master 3 Wireless Mouse, Bluetooth and USB Receiver, PC and Mac Compatible'.",
+        "task": "attribute_extraction",
+        "response": "Compatible devices: PC and Mac  \nConnectivity type: Bluetooth and USB Receiver",
+        "elapsed_time": 0.6171920299530029
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Extract the compatible devices and connectivity type from 'Logitech MX Master 3 Wireless Mouse, Bluetooth and USB Receiver, PC and Mac Compatible'.",
+        "task": "attribute_extraction",
+        "response": "The compatible devices and connectivity types mentioned are:\n\n- Bluetooth\n- USB Receiver",
+        "elapsed_time": 1.9396531581878662
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Extract the compatible devices and connectivity type from 'Logitech MX Master 3 Wireless Mouse, Bluetooth and USB Receiver, PC and Mac Compatible'.",
+        "task": "attribute_extraction",
+        "response": "The compatible devices and connectivity type mentioned are:\n\n- PC\n- Mac\n- Bluetooth\n- USB",
+        "elapsed_time": 2.0795559883117676
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Identify the battery capacity and operating system from 'Samsung Galaxy S21 Ultra 5G, 128GB, Phantom Black, Android 11'.",
+        "task": "attribute_extraction",
+        "response": "The Samsung Galaxy S21 Ultra 5G has a battery capacity of 5000 mAh. The operating system mentioned is Android 11.",
+        "elapsed_time": 0.9486219882965088
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Identify the battery capacity and operating system from 'Samsung Galaxy S21 Ultra 5G, 128GB, Phantom Black, Android 11'.",
+        "task": "attribute_extraction",
+        "response": "Based on the information provided, here are the battery capacity and operating system details for the Samsung Galaxy S21 Ultra 5G:\n\n- Battery Capacity: 5000mAh\n- Operating System: Android 11",
+        "elapsed_time": 2.076308012008667
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Identify the battery capacity and operating system from 'Samsung Galaxy S21 Ultra 5G, 128GB, Phantom Black, Android 11'.",
+        "task": "attribute_extraction",
+        "response": "Based on the given information, here are the identified details:\n\n1. Battery capacity: Not specified.\n2. Operating System: Android 11",
+        "elapsed_time": 10.206611156463623
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Extract the type of cheese and weight from 'Kraft Cheddar Cheese Block, 200g'.",
+        "task": "attribute_extraction",
+        "response": "The type of cheese is \"Kraft Cheddar Cheese Block\" and the weight is \"200g\".",
+        "elapsed_time": 0.7153081893920898
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Extract the type of cheese and weight from 'Kraft Cheddar Cheese Block, 200g'.",
+        "task": "attribute_extraction",
+        "response": "The type of cheese is Cheddar, and the weight is 200g.",
+        "elapsed_time": 2.0764589309692383
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Extract the type of cheese and weight from 'Kraft Cheddar Cheese Block, 200g'.",
+        "task": "attribute_extraction",
+        "response": "The type of cheese is Cheddar and the weight is 200g.",
+        "elapsed_time": 2.084203004837036
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "From the product description 'Nike Air Max 270 Men's Shoes, Size 10, White/Black', extract the shoe size and color.",
+        "task": "attribute_extraction",
+        "response": "Shoe size: 10  \nColor: White/Black",
+        "elapsed_time": 0.5826611518859863
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "From the product description 'Nike Air Max 270 Men's Shoes, Size 10, White/Black', extract the shoe size and color.",
+        "task": "attribute_extraction",
+        "response": "From the product description, the shoe size is 10 and the color is White/Black.",
+        "elapsed_time": 1.939007043838501
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "From the product description 'Nike Air Max 270 Men's Shoes, Size 10, White/Black', extract the shoe size and color.",
+        "task": "attribute_extraction",
+        "response": "The shoe size is 10 and the colors are White and Black.",
+        "elapsed_time": 2.0802648067474365
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Identify the fabric type and thread count from 'Egyptian Cotton Bedsheet Set, 1000 Thread Count'.",
+        "task": "attribute_extraction",
+        "response": "The fabric type is Egyptian cotton, and the thread count is 1000.",
+        "elapsed_time": 0.578298807144165
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Identify the fabric type and thread count from 'Egyptian Cotton Bedsheet Set, 1000 Thread Count'.",
+        "task": "attribute_extraction",
+        "response": "Based on the given information, here's what I can tell you:\n\n- The fabric type is Egyptian Cotton.\n- The thread count is 1000.\n\nSo, to summarize:\n- Fabric type: Egyptian Cotton\n- Thread count: 1000",
+        "elapsed_time": 2.017129898071289
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Identify the fabric type and thread count from 'Egyptian Cotton Bedsheet Set, 1000 Thread Count'.",
+        "task": "attribute_extraction",
+        "response": "The fabric type is likely to be cotton, and the thread count is 1000. However, it's worth noting that the term \"1000 Thread Count\" is not a standard measurement in the textile industry. \n\nIn the US, the Federal Trade Commission (FTC) regulates thread count labeling, and it's generally accepted that:\n\n- A thread count of 200-400 is considered low to medium quality.\n- A thread count of 400-600 is considered medium quality.\n- A thread count of 600-800 is considered high quality.\n- A thread count of 800-1000 is considered very high quality.\n\nHowever, some manufacturers may use techniques like plying (twisting multiple threads together) to artificially inflate the thread count. This can result in a lower-quality fabric.\n\nIn this case, the Egyptian Cotton Bedsheet Set with a 1000 thread count may still be a high-quality product, but it's difficult to say for certain without more information.",
+        "elapsed_time": 3.2056119441986084
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Extract the number of pages and author from 'Harry Potter and the Sorcerer's Stone by J.K. Rowling, 320 pages'.",
+        "task": "attribute_extraction",
+        "response": "The book \"Harry Potter and the Sorcerer's Stone\" has 320 pages and is authored by J.K. Rowling.",
+        "elapsed_time": 0.8183019161224365
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Extract the number of pages and author from 'Harry Potter and the Sorcerer's Stone by J.K. Rowling, 320 pages'.",
+        "task": "attribute_extraction",
+        "response": "The number of pages in 'Harry Potter and the Sorcerer's Stone' by J.K. Rowling is 320 pages.\n\nThe author of 'Harry Potter and the Sorcerer's Stone' is J.K. Rowling.",
+        "elapsed_time": 1.8146870136260986
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Extract the number of pages and author from 'Harry Potter and the Sorcerer's Stone by J.K. Rowling, 320 pages'.",
+        "task": "attribute_extraction",
+        "response": "The information extracted is:\n\n- Number of pages: 320\n- Author: J.K. Rowling",
+        "elapsed_time": 2.2473201751708984
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "From 'Canon EOS Rebel T7 DSLR Camera with 18-55mm Lens', extract the camera model and included lens.",
+        "task": "attribute_extraction",
+        "response": "The camera model is \"Canon EOS Rebel T7\" and the included lens is \"18-55mm.\"",
+        "elapsed_time": 0.6473121643066406
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "From 'Canon EOS Rebel T7 DSLR Camera with 18-55mm Lens', extract the camera model and included lens.",
+        "task": "attribute_extraction",
+        "response": "The camera model is Canon EOS Rebel T7, and the included lens is the 18-55mm lens.",
+        "elapsed_time": 2.28049373626709
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "From 'Canon EOS Rebel T7 DSLR Camera with 18-55mm Lens', extract the camera model and included lens.",
+        "task": "attribute_extraction",
+        "response": "The camera model is: Canon EOS Rebel T7\n\nThe included lens is: 18-55mm",
+        "elapsed_time": 10.239213943481445
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Identify the protein content and flavor from 'Optimum Nutrition Gold Standard Whey Protein Powder, Double Rich Chocolate, 5 lbs'.",
+        "task": "attribute_extraction",
+        "response": "Optimum Nutrition Gold Standard Whey Protein Powder in the Double Rich Chocolate flavor typically contains about 24 grams of protein per serving (which is usually one scoop, approximately 30 grams). The flavor is described as rich and chocolatey, providing a sweet and indulgent taste that is popular among chocolate lovers. This protein powder is often used for muscle recovery and supplementation in fitness routines. Always check the specific product label for the most accurate nutritional information, as formulations can vary.",
+        "elapsed_time": 1.4875810146331787
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Identify the protein content and flavor from 'Optimum Nutrition Gold Standard Whey Protein Powder, Double Rich Chocolate, 5 lbs'.",
+        "task": "attribute_extraction",
+        "response": "To identify the protein content and flavor of Optimum Nutrition Gold Standard Whey Protein Powder, Double Rich Chocolate, 5 lbs, I've gathered the necessary information:\n\n1. **Protein Content:** \nOptimum Nutrition Gold Standard Whey Protein Powder, Double Rich Chocolate, 5 lbs contains 24 grams of protein per serving. This is a relatively high protein content, suitable for individuals looking to support muscle growth and recovery.\n\n2. **Flavor:** \nThe flavor of Optimum Nutrition Gold Standard Whey Protein Powder, Double Rich Chocolate, 5 lbs is Double Rich Chocolate. This flavor is a rich, chocolatey taste that many users enjoy.\n\nPlease note that the exact protein content may vary depending on the batch and any potential variations in the product.",
+        "elapsed_time": 2.8426339626312256
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Identify the protein content and flavor from 'Optimum Nutrition Gold Standard Whey Protein Powder, Double Rich Chocolate, 5 lbs'.",
+        "task": "attribute_extraction",
+        "response": "I can provide you with the information about the protein content and flavor of 'Optimum Nutrition Gold Standard Whey Protein Powder, Double Rich Chocolate, 5 lbs'. \n\n1. Protein Content: \n   - Serving size: 1 scoop (30g)\n   - Protein content per serving: 24 grams\n\n2. Flavor: \n   - The flavor of this product is Double Rich Chocolate.",
+        "elapsed_time": 2.283808946609497
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Extract the language and region compatibility from 'The Legend of Zelda: Breath of the Wild (Nintendo Switch, US Version)'.",
+        "task": "attribute_extraction",
+        "response": "The language and region compatibility for 'The Legend of Zelda: Breath of the Wild (Nintendo Switch, US Version)' is primarily English, with the possibility of other languages depending on the specific version. As for region compatibility, this version is intended for the North American region (US), meaning it is compatible with Nintendo Switch consoles from that region.",
+        "elapsed_time": 1.0670812129974365
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Extract the language and region compatibility from 'The Legend of Zelda: Breath of the Wild (Nintendo Switch, US Version)'.",
+        "task": "attribute_extraction",
+        "response": "The 'The Legend of Zelda: Breath of the Wild (Nintendo Switch, US Version)' game has the following language and region compatibility:\n\n- Language: English (default)\n- Region: North America (US and Canada)\n\nThis is based on the game's official Nintendo website and various online sources.",
+        "elapsed_time": 2.0054469108581543
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Extract the language and region compatibility from 'The Legend of Zelda: Breath of the Wild (Nintendo Switch, US Version)'.",
+        "task": "attribute_extraction",
+        "response": "I cannot verify the language and region compatibility for 'The Legend of Zelda: Breath of the Wild (Nintendo Switch, US Version)'.",
+        "elapsed_time": 2.1345419883728027
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "From 'Herschel Little America Backpack, Navy, 25L Capacity', extract the color and capacity.",
+        "task": "attribute_extraction",
+        "response": "The color is Navy and the capacity is 25L.",
+        "elapsed_time": 0.7556171417236328
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "From 'Herschel Little America Backpack, Navy, 25L Capacity', extract the color and capacity.",
+        "task": "attribute_extraction",
+        "response": "From the description 'Herschel Little America Backpack, Navy, 25L Capacity', the color is Navy, and the capacity is 25L.",
+        "elapsed_time": 1.9690370559692383
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "From 'Herschel Little America Backpack, Navy, 25L Capacity', extract the color and capacity.",
+        "task": "attribute_extraction",
+        "response": "The color and capacity of the 'Herschel Little America Backpack' are:\n\n- Color: Navy\n- Capacity: 25L",
+        "elapsed_time": 2.083050012588501
+    },
+    {
+        "handler_name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "prompt": "Identify the processor speed and graphics card from 'ASUS ROG Strix Gaming Desktop, Intel Core i9, NVIDIA RTX 3080'.",
+        "task": "attribute_extraction",
+        "response": "The processor speed for the Intel Core i9 can vary depending on the specific model, as there are several variants of the Intel Core i9. Generally, Intel Core i9 processors have base clock speeds ranging from around 2.5 GHz to over 3.5 GHz, with turbo boost speeds that can exceed 5.0 GHz.\n\nThe graphics card mentioned, the NVIDIA RTX 3080, has a base clock speed of around 1.44 GHz and a boost clock speed of approximately 1.71 GHz.\n\nFor precise specifications, it would be best to refer to the specific model of the Intel Core i9 used in the ASUS ROG Strix Gaming Desktop.",
+        "elapsed_time": 1.5452449321746826
+    },
+    {
+        "handler_name": "runpod_vllm1",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
+        "prompt": "Identify the processor speed and graphics card from 'ASUS ROG Strix Gaming Desktop, Intel Core i9, NVIDIA RTX 3080'.",
+        "task": "attribute_extraction",
+        "response": "The processor speed and graphics card in the ASUS ROG Strix Gaming Desktop, Intel Core i9, NVIDIA RTX 3080 are:\n\n- Processor speed: Intel Core i9\n- Graphics card: NVIDIA RTX 3080",
+        "elapsed_time": 1.8208189010620117
+    },
+    {
+        "handler_name": "runpod_vllm2",
+        "provider": "runpod",
+        "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+        "prompt": "Identify the processor speed and graphics card from 'ASUS ROG Strix Gaming Desktop, Intel Core i9, NVIDIA RTX 3080'.",
+        "task": "attribute_extraction",
+        "response": "Based on the given information, here's the breakdown:\n\n1. Processor: Intel Core i9\n   - The specific model of the Intel Core i9 is not mentioned, but based on the ROG Strix Gaming Desktop, it's likely the Intel Core i9-11900K or i9-12900K, but without further information, we can't be certain.\n\n2. Graphics Card: NVIDIA RTX 3080\n   - The NVIDIA RTX 3080 is a high-end graphics card, but the specific model (e.g., RTX 3080 Founders Edition, RTX 3080 Ti, etc.) is not mentioned.",
+        "elapsed_time": 2.7633888721466064
+    }
+]
