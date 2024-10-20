@@ -12,11 +12,9 @@ from providers.provider_factory import ProviderFactory
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 class BaseModelHandler:
-    def __init__(self, provider: str = None, api_key: str = None, api_base: str = None, model: str = "gpt-4", max_tokens: int = None, temperature: float = 0.7):
+    def __init__(self, provider: str = None,  model: str = "gpt-4", max_tokens: int = None, temperature: float = 0.7):
         self.logger = logging.getLogger(self.__class__.__name__)
-
-        self.provider = ProviderFactory.create_provider(provider, api_key, api_base)
-
+        self.provider = ProviderFactory.create_provider(provider)
         self.model = model
         self.max_tokens = max_tokens
         self.temperature = temperature
