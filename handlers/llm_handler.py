@@ -7,6 +7,7 @@ from models.llm_request_models import BaseLLMRequest
 from openai import RateLimitError, AuthenticationError, OpenAIError, APIConnectionError, Timeout
 import os
 from openai import OpenAI
+from providers.provider_factory import ProviderFactory
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -14,38 +15,11 @@ class BaseModelHandler:
     def __init__(self, provider: str = None, api_key: str = None, api_base: str = None, model: str = "gpt-4", max_tokens: int = None, temperature: float = 0.7):
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.provider = provider
-        self.client = self._initialize_client(api_key, api_base)
+        self.provider = ProviderFactory.create_provider(provider, api_key, api_base)
 
         self.model = model
         self.max_tokens = max_tokens
         self.temperature = temperature
-
-    def _initialize_client(self, api_key: str, api_base: str):
-        if self.provider == "runpod":
-            return self._initialize_runpod_client()
-        elif self.provider == "openai":
-            return self._initialize_openai_client(api_key, api_base)
-        else:
-            raise ValueError("Unsupported provider specified.")
-
-    def _initialize_runpod_client(self):
-        runpod_access_key = os.getenv("RUNPOD_ACCESS_KEY")
-        runpod_endpoint_id = os.getenv("RUNPOD_ENDPOINT_ID")
-        if runpod_access_key and runpod_endpoint_id:
-            return OpenAI(
-                api_key=runpod_access_key,
-                base_url=f"https://api.runpod.ai/v2/{runpod_endpoint_id}/openai/v1"
-            )
-        else:
-            raise ValueError("RunPod access key or endpoint ID not found in environment variables.")
-
-    def _initialize_openai_client(self, api_key: str, api_base: str):
-        if api_key:
-            openai.api_key = api_key
-        if api_base:
-            openai.api_base = api_base
-        return openai
 
     async def invoke(self, request: BaseLLMRequest, llm_name: str, task: str, retries: int = 3) -> Dict[str, Any]:
         model = request.parameters.get("model") if request.parameters else self.model
@@ -55,21 +29,24 @@ class BaseModelHandler:
 
         self.logger.debug("Invoking model: %s with prompt: %s", model, prompt)
 
+        return await self._retry_logic(model, prompt, temperature, max_tokens, llm_name, task, retries)
+
+    async def _retry_logic(self, model: str, prompt: str, temperature: float, max_tokens: int, llm_name: str, task: str, retries: int) -> Dict[str, Any]:
         for attempt in range(retries):
             try:
                 response = await asyncio.to_thread(
-                    self.client.ChatCompletion.acreate,
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=temperature,
-                    max_tokens=max_tokens
+                    self.provider.create_chat_completion,
+                    model,
+                    [{"role": "user", "content": prompt}],
+                    temperature,
+                    max_tokens
                 )
-                self.logger.debug("Received response: %s", response)
+                self.logger.info("Received response: %s", response)
                 return {"llm_name": llm_name, "task": task, "response": response['choices'][0]['message']['content']}
             except (APIConnectionError, Timeout) as e:
                 self.logger.warning("Network-related error during model invocation, attempt %d/%d: %s", attempt + 1, retries, str(e))
                 if attempt < retries - 1:
-                    time.sleep(2 ** attempt)  # Exponential backoff
+                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
                     continue
                 else:
                     self.logger.error("Failed after %d attempts: %s", retries, str(e))
@@ -82,4 +59,7 @@ class BaseModelHandler:
                 raise
             except OpenAIError as e:
                 self.logger.error("General OpenAI API error for model: %s", e)
+                raise
+            except Exception as e:
+                self.logger.error(f"Caught an exception of type: {type(e)}")
                 raise

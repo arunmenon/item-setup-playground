@@ -11,7 +11,7 @@
         },
         "runpod-llama-3b": {
             "type": "vllm",
-            "endpoint": "https://api.runpod.ai/v2/vllm-caiqtd1nirhws2/openai/v1",
+            "endpoint": "vllm-caiqtd1nirhws2",
             "max_tokens": 750,
             "temperature": 0.8
         }
