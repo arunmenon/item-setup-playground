@@ -18,7 +18,8 @@ class OpenAIProvider(BaseProvider):
                 temperature=temperature,
                 max_tokens=max_tokens
             )
-            return response
+            content = response.choices[0].message.content
+            return {"choices": [{"message": {"content": content}}]}
         except Exception as e:
             self.logger.error("Error creating OpenAI chat completion: %s", str(e))
             raise

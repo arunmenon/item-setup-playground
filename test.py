@@ -13,14 +13,14 @@ async def test_vllm_runpod():
         model="neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
         max_tokens=1000,
         temperature=0.7
-    ) 
+    )
 
-    """ handler = BaseModelHandler(
+    """handler = BaseModelHandler(
         provider="openai",
         model="gpt-4o-mini",
         max_tokens=1000,
         temperature=0.7
-    ) """
+    )"""
 
     # Define the prompt to send to the vLLM endpoint
     prompt = "Write a poem on Elon Musk"
