@@ -1,19 +1,21 @@
+# main.py
+import sys
+import os 
+
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 import uvicorn
-from handlers.llm_handler import LLMHandler
-from typing import Dict, List, Any
-from utils  import setup_logging, load_config, get_env_variable
+from common.utils import setup_logging, load_config, get_env_variable
 import logging
-# Define request model for the /enrich-item endpoint
 from models.llm_request_models import LLMRequest
+from entrypoint.llm_manager import LLMManager
+from entrypoint.item_enricher import ItemEnricher  # Import the ItemEnricher class
+from entrypoint.prompt_manager import PromptManager  
+from exceptions.custom_exceptions import StylingGuideNotFoundException
+from fastapi.middleware.cors import CORSMiddleware
 
 
 # Set up logging
 setup_logging()
-
-# Load OpenAI API key from environment
-openai_api_key = get_env_variable("OPENAI_API_KEY")
 
 # Define FastAPI app with metadata
 app = FastAPI(
@@ -22,33 +24,61 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Create LLMHandler instance
-config_path = 'config/config.json'
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Update with your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Load provider configurations
+config_path = os.path.join('providers', 'config.json')
 config = load_config(config_path=config_path)
 
-# Instantiate LLMHandler with the loaded configuration and API key
-logging.debug("Instantiating LLMHandler with the loaded configuration and API key")
-llm_handler = LLMHandler(config=config, api_key=openai_api_key)
+# Load all styling guides at start-up using prompt_manager
+logging.info("Loading all styling guides at application start-up")
+prompt_manager = PromptManager(styling_guides_dir='styling_guides')
+logging.info(f"Loaded styling guides for product types: {list(prompt_manager.styling_guide_cache.keys())}")
 
+# Instantiate LLMManager with the loaded configuration
+logging.debug("Instantiating LLMManager with the loaded configuration")
+llm_manager = LLMManager(config=config)
+
+# Create an instance of ItemEnricher
+item_enricher = ItemEnricher(llm_manager=llm_manager, prompt_manager=prompt_manager)
 
 # Define the /enrich-item endpoint
 @app.post("/enrich-item")
-async def invoke_llms(request: LLMRequest):
-    metadata = request.metadata
-    tasks = request.tasks
-
-    if not metadata or not tasks:
-        logging.warning("Missing metadata or tasks in the request")
-        raise HTTPException(status_code=400, detail="Missing metadata or tasks")
-
+async def enrich_item_endpoint(request: LLMRequest):
     try:
-        logging.debug(f"Invoking LLMHandler with metadata: {metadata} and tasks: {tasks}")
-        results = await llm_handler.fan_out_calls(metadata, tasks)
-        logging.info(f"LLMHandler invocation successful. Results: {results}")
+        # Validate request fields
+        validate_request_fields(request)
+
+        # Enrich the item using the ItemEnricher class
+        results = await item_enricher.enrich_item(request)
+
+        return results
+    except StylingGuideNotFoundException as e:
+        logging.error(str(e))
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        logging.error(f"Error during LLMHandler invocation: {str(e)}")
+        logging.error(f"Error during item enrichment: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-    return results
+
+def validate_request_fields(request: LLMRequest):
+    required_fields = ['item_title', 'short_description', 'long_description', 'item_product_type']
+    missing_fields = [field for field in required_fields if not getattr(request, field, None)]
+    if missing_fields:
+        logging.warning(f"Missing required fields in the request: {missing_fields}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Missing required fields: {', '.join(missing_fields)}"
+        )
 
 # Entry point for running the FastAPI app
 if __name__ == "__main__":

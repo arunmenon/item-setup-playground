@@ -1,0 +1,8 @@
+Provide details on material and fit.
+Describe functional features: Pockets, drawstrings.
+Include care instructions.
+Example Content:
+"Made from a cotton-polyester blend for softness and durability."
+"Kangaroo pocket and adjustable hood for added convenience."
+"Relaxed fit allows for easy layering."
+"Machine washable for effortless care."

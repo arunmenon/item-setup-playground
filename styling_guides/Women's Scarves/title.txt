@@ -1,0 +1,2 @@
+Include material, pattern, and color.
+Example: "Silk Floral Scarf - Pink and Gold"

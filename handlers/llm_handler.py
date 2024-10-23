@@ -36,7 +36,7 @@ class BaseModelHandler:
                     temperature,
                     max_tokens
                 )
-                self.logger.info("Received response: %s", response)
+                self.logger.debug("Received response: %s", response)
                 content = response['choices'][0]['message']['content']
                 return {"task": task, "response": content}
             except (APIConnectionError, Timeout) as e:
