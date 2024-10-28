@@ -12,6 +12,8 @@ from entrypoint.item_enricher import ItemEnricher  # Import the ItemEnricher cla
 from entrypoint.prompt_manager import PromptManager  
 from exceptions.custom_exceptions import StylingGuideNotFoundException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 
 
 # Set up logging
@@ -32,6 +34,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: LLMRequest, exc: RequestValidationError):
+    logging.error(f"Validation error: {exc.errors()}")
+    logging.error(f"Request body: {exc.body}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": exc.body},
+    )
 
 
 # Load provider configurations
@@ -56,6 +66,8 @@ async def enrich_item_endpoint(request: LLMRequest):
     try:
         # Validate request fields
         validate_request_fields(request)
+
+        # Construct metadata from request fields
 
         # Enrich the item using the ItemEnricher class
         results = await item_enricher.enrich_item(request)

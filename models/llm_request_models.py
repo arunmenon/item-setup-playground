@@ -21,9 +21,13 @@ class LLMRequest(BaseModel):
         metadata (Dict[str, Union[str, int, float, List[str]]]): A dictionary containing metadata about the item to be enriched.
         tasks (List[str]): A list of tasks to be performed on the metadata by the LLMs.
     """
-    metadata: Dict[str, Union[str, int, float, List[str]]]
-    tasks: List[str]
-
+    item_title: str
+    short_description: str
+    long_description: str
+    item_product_type: str
+    metadata: Optional[Dict[str, Union[str, int, float, List[str]]]] = None
+    tasks: Optional[List[str]] = None
+    
 class GPT4Request(BaseLLMRequest):
     """
     Request model for interacting with GPT-4.
