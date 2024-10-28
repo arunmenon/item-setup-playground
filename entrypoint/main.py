@@ -1,11 +1,10 @@
 # main.py
-import sys
-import os 
 
+import os
+import logging
 from fastapi import FastAPI, HTTPException
 import uvicorn
 from common.utils import setup_logging, load_config, get_env_variable
-import logging
 from models.llm_request_models import LLMRequest
 from entrypoint.llm_manager import LLMManager
 from entrypoint.item_enricher import ItemEnricher  # Import the ItemEnricher class
@@ -14,7 +13,6 @@ from exceptions.custom_exceptions import StylingGuideNotFoundException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-
 
 # Set up logging
 setup_logging()
@@ -34,8 +32,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: LLMRequest, exc: RequestValidationError):
+async def validation_exception_handler(request, exc: RequestValidationError):
     logging.error(f"Validation error: {exc.errors()}")
     logging.error(f"Request body: {exc.body}")
     return JSONResponse(
@@ -43,12 +42,11 @@ async def validation_exception_handler(request: LLMRequest, exc: RequestValidati
         content={"detail": exc.errors(), "body": exc.body},
     )
 
-
 # Load provider configurations
 config_path = os.path.join('providers', 'config.json')
 config = load_config(config_path=config_path)
 
-# Load all styling guides at start-up using prompt_manager
+# Load all styling guides at start-up using PromptManager
 logging.info("Loading all styling guides at application start-up")
 prompt_manager = PromptManager(styling_guides_dir='styling_guides')
 logging.info(f"Loaded styling guides for product types: {list(prompt_manager.styling_guide_cache.keys())}")
@@ -64,10 +62,8 @@ item_enricher = ItemEnricher(llm_manager=llm_manager, prompt_manager=prompt_mana
 @app.post("/enrich-item")
 async def enrich_item_endpoint(request: LLMRequest):
     try:
-        # Validate request fields
+        # Validate required request fields
         validate_request_fields(request)
-
-        # Construct metadata from request fields
 
         # Enrich the item using the ItemEnricher class
         results = await item_enricher.enrich_item(request)
@@ -80,7 +76,7 @@ async def enrich_item_endpoint(request: LLMRequest):
         raise he
     except Exception as e:
         logging.error(f"Error during item enrichment: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 def validate_request_fields(request: LLMRequest):
     required_fields = ['item_title', 'short_description', 'long_description', 'item_product_type']
