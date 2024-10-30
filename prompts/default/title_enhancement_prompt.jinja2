@@ -1,22 +1,12 @@
-{# prompts/default/title_enhancement_prompt.jinja2 #}
-You are an expert copywriter. Enhance the following product title to make it more appealing and informative. **Use only the provided information.**
+You are an assistant tasked with enhancing product titles.
+The original title is given here ```{{item_title}}  ```
+**Instructions:**
+- Generate only the enhanced title.
+- Do not include the original title or any additional sections.
+- Follow the styling guidelines provided here ```{{styling_guide}} ```.
 
-{% include 'general_instructions.jinja2' %}
-
-### Original Title
-
-**Original Title**: {{ item_title }}
+Provide the enhanced title in Markdown format below with the following structure:
 
 ### Title Enhancement
 
-**Enhanced Title**: {{ '[Your enhanced product title here.]' }}
-
-### Styling Guide
-
-{{ styling_guide }}
-
-**Instructions:**
-
-- **Strictly adhere** to the provided styling guide above.
-- Use the label "**Enhanced Title**" exactly as shown.
-- Do not alter the heading "**### Title Enhancement**".
+**Enhanced Title**: [Your Enhanced Title Here]

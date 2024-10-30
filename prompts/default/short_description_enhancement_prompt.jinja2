@@ -1,22 +1,14 @@
-{# prompts/default/short_description_enhancement_prompt.jinja2 #}
-You are an expert copywriter. Enhance the following short product description to make it more appealing and informative. **Use only the provided information.**
+You are an assistant tasked with enhancing short product descriptions.
 
-{% include 'general_instructions.jinja2' %}
+The original short description is given here ```{{short_description}}```
 
-### Original Short Description
+**Instructions:**
+- Generate only the enhanced short description.
+- Do not include the original short description or any additional sections.
+- Follow the styling guidelines provided here ```{{styling_guide}} ```
 
-**Original Short Description**: {{ short_description }}
+Provide the enhanced short description in Markdown with the following structure:
 
 ### Short Description Enhancement
 
-**Enhanced Short Description**: {{ '[Your enhanced short description here.]' }}
-
-### Styling Guide
-
-{{ styling_guide }}
-
-**Instructions:**
-
-- **Strictly adhere** to the provided styling guide above.
-- Use the label "**Enhanced Short Description**" exactly as shown.
-- Do not alter the heading "**### Short Description Enhancement**".
+**Enhanced Short Description**: [Your Enhanced Short Description Here]
