@@ -25,6 +25,9 @@ class LLMRequest(BaseModel):
     short_description: str
     long_description: str
     item_product_type: str
+    image_url : Optional[str]
+    attributes_list : Optional[str]
+    max_tokens: Optional[int] = 150  
     metadata: Optional[Dict[str, Union[str, int, float, List[str]]]] = None
     tasks: Optional[List[str]] = None
     

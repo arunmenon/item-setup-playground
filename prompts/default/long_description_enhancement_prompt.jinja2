@@ -1,0 +1,23 @@
+{# prompts/default/long_description_enhancement_prompt.jinja2 #}
+You are an expert copywriter. Enhance the following long product description to make it more appealing and informative. **Use only the provided information.**
+
+{% include 'general_instructions.jinja2' %}
+
+### Original Long Description
+
+**Original Long Description**: {{ long_description }}
+
+### Long Description Enhancement
+
+**Enhanced Long Description**:
+{{ '[Your enhanced long description here.]' }}
+
+### Styling Guide
+
+{{ styling_guide }}
+
+**Instructions:**
+
+- **Strictly adhere** to the provided styling guide above.
+- Use the label "**Enhanced Long Description**" exactly as shown.
+- Do not alter the heading "**### Long Description Enhancement**".

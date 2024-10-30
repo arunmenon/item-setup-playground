@@ -13,7 +13,9 @@ class LLMManager:
             provider_config_copy = provider_config.copy()
             name = provider_config_copy.pop('name')
             self.handlers[name] = BaseModelHandler(**provider_config_copy)
+        self.tasks = config.get('tasks', {})    
         logging.debug(f"Initialized handlers: {list(self.handlers.keys())}")
+        logging.debug(f"Initialized tasks: {list(self.tasks.keys())}")
 
     async def fan_out_calls(self, prompts_tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
@@ -28,15 +30,18 @@ class LLMManager:
         logging.debug("Starting fan-out calls to all handlers for each prompt.")
 
         results = {}
-        tasks = []
+        task_coroutines = []
 
         for prompt_task in prompts_tasks:
             prompt = prompt_task['prompt']
             task_name = prompt_task['task']
+            task_config = self.tasks.get(task_name, {})
+            max_tokens = task_config.get('max_tokens', 150)  # Default to 150 if not specified
             for handler_name, handler in self.handlers.items():
-                tasks.append(self.invoke_handler(handler_name, handler, prompt, task_name))
+                task_coroutines.append(
+                    self.invoke_handler(handler_name, handler, prompt, task_name,max_tokens))
 
-        handler_results = await asyncio.gather(*tasks)
+        handler_results = await asyncio.gather(*task_coroutines)
 
         # Organize results by task and handler
         for result in handler_results:
@@ -54,7 +59,7 @@ class LLMManager:
 
         return results
 
-    async def get_response(self, prompt: str) -> Dict[str, Any]:
+    async def get_response(self, prompt: str,task:str) -> Dict[str, Any]:
         """
         Sends the prompt to all handlers concurrently and collects responses.
 
@@ -64,12 +69,17 @@ class LLMManager:
         Returns:
             Dict[str, Any]: A dictionary of responses from all handlers.
         """
-        tasks = []
-        for handler_name, handler in self.handlers.items():
-            tasks.append(self.invoke_handler(handler_name, handler, prompt))
+        logging.debug(f"Sending prompt for task '{task}' to all handlers.")
+        task_config = self.tasks.get(task, {})
+        max_tokens = task_config.get('max_tokens', 150)  # Default to 150
+
+        task_coroutines = [
+            self.invoke_handler(handler_name, handler, prompt, task, max_tokens)
+            for handler_name, handler in self.handlers.items()
+        ]
 
         # Run all handler invocations concurrently
-        handler_results = await asyncio.gather(*tasks, return_exceptions=True)
+        handler_results = await asyncio.gather(*task_coroutines)
 
         results = {}
         for result in handler_results:
@@ -81,7 +91,7 @@ class LLMManager:
 
         return results
     
-    async def invoke_handler(self, handler_name: str, handler: BaseModelHandler, prompt: str, task: str) -> Dict[str, Any]:
+    async def invoke_handler(self, handler_name: str, handler: BaseModelHandler, prompt: str, task: str,max_tokens: int) -> Dict[str, Any]:
         """
         Invokes a handler with the given prompt and task.
 
@@ -95,7 +105,7 @@ class LLMManager:
             Dict[str, Any]: The result of the handler invocation.
         """
         try:
-            response = await handler.invoke(request=BaseLLMRequest(prompt=prompt), task=task)
+            response = await handler.invoke(request=BaseLLMRequest(prompt=prompt,max_tokens=max_tokens), task=task)
             return {
                 'handler_name': handler_name,
                 'model': handler.model,
