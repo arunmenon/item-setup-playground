@@ -11,13 +11,14 @@ from jinja2 import Environment, FileSystemLoader, ChoiceLoader, select_autoescap
 class PromptManager:
     _instance = None
 
-    def __new__(cls, styling_guides_dir: str = 'styling_guides', prompts_dir: str = 'prompts'):
+    def __new__(cls, styling_guides_dir: str = 'styling_guides', prompts_dir: str = 'prompts', config: Dict[str, Any] = None):
         if cls._instance is None:
             cls._instance = super(PromptManager, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, styling_guides_dir: str = 'styling_guides', prompts_dir: str = 'prompts'):
+    def __init__(self, styling_guides_dir: str = 'styling_guides', prompts_dir: str = 'prompts', config: Dict[str, Any] = None):
         if not hasattr(self, 'initialized'):
+            self.config = config
             self.styling_guide_cache: Dict[str, str] = {}
             self.load_all_styling_guides(styling_guides_dir)
             self.prompts_dir = prompts_dir
@@ -86,6 +87,7 @@ class PromptManager:
     ) -> List[Dict[str, Any]]:
         """
         Generates prompts for each task based on the item details and styling guide.
+        Each prompt includes the desired output format.
         """
         product_type = item.get('product_type', '').lower()
         logging.info(f"Generating prompts for product type: '{product_type}' with tasks: {tasks}")
@@ -111,7 +113,7 @@ class PromptManager:
 
         # Remove None or empty values from context
         context = {k: v for k, v in context.items() if v}
-
+        
         prompts_tasks = []
         for task in tasks:
             template_name = f"{task}_prompt.jinja2"
@@ -128,15 +130,29 @@ class PromptManager:
             except Exception as e:
                 logging.error(f"Template for task '{task}' not found: {str(e)}")
                 continue  # Skip this task
-
+            # Fetch task configuration for output_format
+            context_with_format = self.update_task_response_format(context, task)  
+            logging.info(f"context passed is {context_with_format}")
             # Render the prompt
             try:
-                prompt = template.render(**context)
+                prompt = template.render(**context_with_format)
             except Exception as e:
                 logging.error(f"Error rendering template for task '{task}': {str(e)}")
                 continue  # Skip this task
 
-            prompts_tasks.append({'task': task, 'prompt': prompt})
-            logging.debug(f"Generated prompt for task '{task}': {prompt[:50]}...")
+            # Append task, prompt, and output_format
+            prompts_tasks.append({'task': task, 'prompt': prompt, 'output_format': context_with_format['output_format']})
+            logging.info(f"Generated prompt for task '{task}': {prompt}...")
 
         return prompts_tasks
+
+    def update_task_response_format(self, context, task):
+        """
+        Updates the context with the output_format based on the task configuration.
+        """
+        task_config = self.config.get("tasks", {}).get(task, {})
+        output_format = task_config.get("output_format", "json")
+        # Update context with output_format
+        context_with_format = context.copy()
+        context_with_format['output_format'] = output_format
+        return context_with_format

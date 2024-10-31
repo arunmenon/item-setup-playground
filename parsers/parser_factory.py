@@ -1,22 +1,27 @@
 # parsers/parser_factory.py
 
 from parsers.markdown_response_parser import MarkdownResponseParser
+from parsers.json_response_parser import JsonResponseParser
 from parsers.response_parser import ResponseParser
 
 class ParserFactory:
     @staticmethod
-    def get_parser(handler_name: str, patterns_filename: str = "patterns_config.txt", mapping_filename: str = "helper_mapping.txt") -> ResponseParser:
+    def get_parser(output_format: str, patterns_filename: str = "patterns_config.txt", mapping_filename: str = "helper_mapping.txt") -> ResponseParser:
         """
-        Returns an instance of MarkdownResponseParser configured with the specified pattern and mapping files.
+        Returns an instance of the appropriate ResponseParser based on the output format.
 
         Args:
-            handler_name (str): The name of the handler (currently unused but can be utilized for future expansions).
+            output_format (str): Desired output format ('markdown' or 'json').
             patterns_filename (str, optional): The patterns configuration file name. Defaults to "patterns_config.txt".
             mapping_filename (str, optional): The helper mappings configuration file name. Defaults to "helper_mapping.txt".
 
         Returns:
-            ResponseParser: An instance of MarkdownResponseParser.
+            ResponseParser: An instance of the corresponding parser.
         """
-        # Currently, handler_name is not used since all handlers use MarkdownResponseParser.
-        # This can be extended in the future to support multiple parsers based on handler_name.
-        return MarkdownResponseParser(patterns_filename=patterns_filename, mapping_filename=mapping_filename)
+        output_format = output_format.lower()
+        if output_format == "markdown":
+            return MarkdownResponseParser(patterns_filename=patterns_filename, mapping_filename=mapping_filename)
+        elif output_format == "json":
+            return JsonResponseParser()  # No arguments needed
+        else:
+            raise ValueError(f"Unsupported output format: {output_format}")

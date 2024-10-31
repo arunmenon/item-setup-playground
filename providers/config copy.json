@@ -1,6 +1,12 @@
 {
     "providers": [
       {
+        "name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "temperature": 0
+      },
+      {
         "name": "runpod_vllm1",
         "provider": "runpod",
         "model": "neuralmagic/Llama-3.2-1B-Instruct-quantized.w8a8",
@@ -14,28 +20,22 @@
         "temperature": 0,
         "endpoint_id": "vllm-caiqtd1nirhws2"
       }
-      
     ],
     "tasks": {
       "title_enhancement": {
-        "max_tokens": 50,
-        "output_format": "json"
+        "max_tokens": 50
       },
       "short_description_enhancement": {
-        "max_tokens": 100,
-        "output_format": "json"
+        "max_tokens": 100
       },
       "long_description_enhancement": {
-        "max_tokens": 150,
-        "output_format": "json"
+        "max_tokens": 150
       },
       "attribute_extraction": {
-        "max_tokens": 300,
-        "output_format": "json"
+        "max_tokens": 300
       },
       "vision_attribute_extraction": {
-        "max_tokens": 500,
-        "output_format": "json"
+        "max_tokens": 500
       }
     }
   }
