@@ -49,7 +49,7 @@ config = load_config(config_path=config_path)
 # Load all styling guides at start-up using PromptManager
 logging.info("Loading all styling guides at application start-up")
 prompt_manager = PromptManager(styling_guides_dir='styling_guides',config=config)
-logging.info(f"Loaded styling guides for product types: {list(prompt_manager.styling_guide_cache.keys())}")
+logging.info(f"Loaded styling guides for product types: {list(prompt_manager.styling_guide_manager.styling_guide_cache.keys())}")
 
 # Instantiate LLMManager with the loaded configuration
 logging.debug("Instantiating LLMManager with the loaded configuration")

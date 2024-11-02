@@ -13,6 +13,12 @@
         "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
         "temperature": 0,
         "endpoint_id": "vllm-caiqtd1nirhws2"
+      },
+      {
+        "name": "openai",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "temperature": 0
       }
       
     ],
@@ -37,6 +43,17 @@
         "max_tokens": 500,
         "output_format": "json"
       }
+    },
+    
+  "task_execution": {
+    "default_tasks": [
+      "title_enhancement"
+      
+    ],
+    "conditional_tasks": {
+      "attribute_extraction": "attributes_list",
+      "vision_attribute_extraction": "image_url"
     }
+  }
   }
   

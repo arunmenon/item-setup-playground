@@ -32,37 +32,14 @@ class ItemEnricher:
             Dict[str, Any]: A dictionary containing enriched data for each task.
         """
         # Extract request data into a dictionary
-        item = {
-            'item_title': request.item_title,
-            'short_description': request.short_description,
-            'long_description': request.long_description,
-            'product_type': request.item_product_type,
-            'image_url': request.image_url,
-            'attributes_list': request.attributes_list,
-            # Add more fields as needed
-        }
+        item = self.prepare_item(request)
 
         logging.debug(f"Received request for product type: '{item['product_type']}'")
 
-        # Define initial tasks based on available data
-        tasks = [
-            "title_enhancement",
-            "short_description_enhancement",
-            "long_description_enhancement"
-        ]
-
-        # Conditionally add tasks based on provided fields
-        if item.get('attributes_list'):
-            tasks.append("attribute_extraction")
-
-        if item.get('image_url'):
-            tasks.append("vision_attribute_extraction")
-
-        logging.debug(f"Tasks to perform: {tasks}")
-
+        
         # Generate prompts for each task using PromptManager
         try:
-            prompts_tasks = self.prompt_manager.generate_prompts(item, tasks, model=model)
+            prompts_tasks = self.prompt_manager.generate_prompts(item, model=model)
         except StylingGuideNotFoundException as e:
             logging.error(f"Styling guide not found: {str(e)}")
             raise
@@ -77,6 +54,19 @@ class ItemEnricher:
         processed_results = self.process_results(results, task_to_format)
 
         return processed_results
+
+    def prepare_item(self, request):
+        item = {
+            'item_title': request.item_title,
+            'short_description': request.short_description,
+            'long_description': request.long_description,
+            'product_type': request.item_product_type,
+            'image_url': request.image_url,
+            'attributes_list': request.attributes_list,
+            # Add more fields as needed
+        }
+        
+        return item
 
     async def invoke_llms(self, prompts_tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
         """

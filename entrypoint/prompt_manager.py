@@ -2,104 +2,88 @@
 
 import os
 import logging
-import glob
-import difflib  # For fuzzy matching
+from typing import List, Dict, Any, Optional
+from common.utils import load_config, validate_config
+from .styling_guide_manager import StylingGuideManager
+from .template_renderer import TemplateRenderer
+from .task_manager import TaskManager
 
-from typing import List, Dict, Any
-from jinja2 import Environment, FileSystemLoader, ChoiceLoader, select_autoescape
 
 class PromptManager:
     _instance = None
 
-    def __new__(cls, styling_guides_dir: str = 'styling_guides', prompts_dir: str = 'prompts', config: Dict[str, Any] = None):
+    def __new__(cls, 
+                config_path: Optional[str] = None, 
+                styling_guides_dir: str = 'styling_guides', 
+                prompts_dir: str = 'prompts',
+                config: Optional[Dict[str, Any]] = None):
         if cls._instance is None:
             cls._instance = super(PromptManager, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, styling_guides_dir: str = 'styling_guides', prompts_dir: str = 'prompts', config: Dict[str, Any] = None):
+    def __init__(self, 
+                 config_path: Optional[str] = None, 
+                 styling_guides_dir: str = 'styling_guides',
+                 prompts_dir: str = 'prompts',
+                 config:Optional[Dict]= None):
         if not hasattr(self, 'initialized'):
-            self.config = config
-            self.styling_guide_cache: Dict[str, str] = {}
-            self.load_all_styling_guides(styling_guides_dir)
+            # Load and validate the configuration
+             # Load and validate the configuration
+            if config is not None:
+                self.config = config
+                logging.info("Configuration loaded from provided 'config' parameter.")
+            elif config_path is not None:
+                self.config = load_config(config_path)
+                logging.info(f"Configuration loaded from '{config_path}'.")
+            validate_config(self.config)
+
+            self.tasks_config: Dict[str, Dict[str, Any]] = self.config.get('tasks', {})
+            self.task_execution: Dict[str, Any] = self.config.get('task_execution', {})
             self.prompts_dir = prompts_dir
-            self.env = self._initialize_environment()
-            self.initialized = True  # To prevent re-initialization
 
-    def _initialize_environment(self):
-        loaders = []
-        # Load model-specific templates
-        model_dirs = [
-            d for d in os.listdir(self.prompts_dir)
-            if os.path.isdir(os.path.join(self.prompts_dir, d)) and d != 'default'
-        ]
-        for model_dir in model_dirs:
-            model_templates_path = os.path.join(self.prompts_dir, model_dir)
-            loaders.append(FileSystemLoader(model_templates_path))
-        # Load default templates
-        loaders.append(FileSystemLoader(os.path.join(self.prompts_dir, 'default')))
-        # Load general templates (e.g., 'general_instructions.jinja2')
-        loaders.append(FileSystemLoader(self.prompts_dir))
-        env = Environment(
-            loader=ChoiceLoader(loaders),
-            autoescape=select_autoescape(['jinja2'])
-        )
-        return env
+            # Initialize Helper Classes
+            self.styling_guide_manager = StylingGuideManager(styling_guides_dir)
+            self.template_renderer = TemplateRenderer(prompts_dir=prompts_dir)
+            self.task_manager = TaskManager(self.tasks_config, self.task_execution)
 
-    def load_all_styling_guides(self, styling_guides_dir: str) -> None:
-        """
-        Loads all styling guides from the specified directory into the cache.
-        """
-        pattern = os.path.join(styling_guides_dir, '**', '*.txt')
-        for filepath in glob.iglob(pattern, recursive=True):
-            product_type = os.path.basename(os.path.dirname(filepath)).strip(' "\'').lower()
-            logging.info(f"Loading styling guide for product type: {product_type}")
+            self.initialized = True  # Prevent re-initialization
 
-            with open(filepath, 'r', encoding='utf-8') as file:
-                self.styling_guide_cache[product_type] = file.read()
-
-        logging.info(f"Loaded styling guides for product types: {list(self.styling_guide_cache.keys())}")
-
-    def get_styling_guide(self, product_type: str) -> str:
-        """
-        Retrieves the styling guide for the given product type.
-        """
-        product_type = product_type.lower()
-        styling_guide = self.styling_guide_cache.get(product_type)
-
-        if not styling_guide:
-            # Perform fuzzy matching
-            closest_matches = difflib.get_close_matches(
-                product_type, self.styling_guide_cache.keys(), n=1, cutoff=0.6
-            )
-            if closest_matches:
-                matched_product_type = closest_matches[0]
-                logging.info(f"Fuzzy matched '{product_type}' to '{matched_product_type}'")
-                styling_guide = self.styling_guide_cache[matched_product_type]
-            else:
-                error_msg = f"No styling guide found for product type: '{product_type}'"
-                logging.error(error_msg)
-                raise ValueError(error_msg)
-
-        return styling_guide
-
-    def generate_prompts(
-        self, item: Dict[str, Any], tasks: List[str], model: str = None
-    ) -> List[Dict[str, Any]]:
+    def generate_prompts(self, item: Dict[str, Any], model: str = None) -> List[Dict[str, Any]]:
         """
         Generates prompts for each task based on the item details and styling guide.
         Each prompt includes the desired output format.
         """
         product_type = item.get('product_type', '').lower()
-        logging.info(f"Generating prompts for product type: '{product_type}' with tasks: {tasks}")
+        logging.info(f"Generating prompts for product type: '{product_type}'")
 
-        # Retrieve the styling guide
+        styling_guide = self.load_styling_guide(product_type)
+
+        # Prepare context
+        context = self.prepare_prompt_context(item, product_type, styling_guide)
+
+        prompts_tasks = []
+
+        # Handle default tasks
+        default_tasks = self.task_manager.get_default_tasks()
+        logging.debug(f"Default tasks: {default_tasks}")
+        self.handle_tasks(model, context, prompts_tasks, default_tasks, is_conditional=False)
+
+        # Handle conditional tasks
+        self.handle_conditional_tasks(item, model, context, prompts_tasks)
+
+        return prompts_tasks
+
+    def load_styling_guide(self, product_type):
+        # Retrieve the styling guide using StylingGuideManager
         try:
-            styling_guide = self.get_styling_guide(product_type)
+            styling_guide = self.styling_guide_manager.get_styling_guide(product_type)
+            logging.debug(f"Retrieved styling guide for '{product_type}': {styling_guide}")
         except ValueError as e:
             logging.error(str(e))
             raise
+        return styling_guide
 
-        # Prepare context
+    def prepare_prompt_context(self, item, product_type, styling_guide):
         context = {
             'styling_guide': styling_guide,
             'original_title': item.get('item_title', ''),
@@ -108,51 +92,54 @@ class PromptManager:
             'product_type': product_type,
             'image_url': item.get('image_url', ''),
             'attributes_list': item.get('attributes_list', []),
+            'output_format': 'json'
             # Add additional placeholders as needed
         }
 
         # Remove None or empty values from context
         context = {k: v for k, v in context.items() if v}
-        
-        prompts_tasks = []
+        logging.debug(f"Context after filtering: {context}")
+        return context
+
+    def handle_tasks(self, model:Optional[str], context, prompts_tasks, tasks: List[str], is_conditional: bool):
         for task in tasks:
+            if not self.task_manager.is_task_defined(task):
+                logging.warning(f"Task '{task}' is not defined in the tasks configuration. Skipping.")
+                continue
+
             template_name = f"{task}_prompt.jinja2"
 
-            # Load the template
+            # Get task configuration
+            output_format = self.task_manager.get_task_output_format(task)
+
+            context_with_format = context.copy()
+            context_with_format['output_format'] = output_format
+
+            # Optionally, include 'model' in context if the template requires it
+            if model:
+                context_with_format['model'] = model
+
+            
+            # Render the prompt using TemplateRenderer
             try:
-                if model:
-                    # Try to load model-specific template
-                    template_path = os.path.join(model, template_name)
-                    template = self.env.get_template(template_path)
-                else:
-                    # Load default template
-                    template = self.env.get_template(template_name)
-            except Exception as e:
-                logging.error(f"Template for task '{task}' not found: {str(e)}")
-                continue  # Skip this task
-            # Fetch task configuration for output_format
-            context_with_format = self.update_task_response_format(context, task)  
-            logging.info(f"context passed is {context_with_format}")
-            # Render the prompt
-            try:
-                prompt = template.render(**context_with_format)
+                prompt = self.template_renderer.render_template(template_name, context_with_format)
+                logging.debug(f"Rendered prompt for task '{task}': {prompt[:50]}...")
             except Exception as e:
                 logging.error(f"Error rendering template for task '{task}': {str(e)}")
                 continue  # Skip this task
 
             # Append task, prompt, and output_format
-            prompts_tasks.append({'task': task, 'prompt': prompt, 'output_format': context_with_format['output_format']})
-            logging.info(f"Generated prompt for task '{task}': {prompt}...")
+            prompts_tasks.append({
+                'task': task,
+                'prompt': prompt,
+                'output_format': output_format
+            })
+            task_type = "conditional" if is_conditional else "default"
+            logging.info(f"Generated prompt for {task_type} task '{task}'.")
 
-        return prompts_tasks
-
-    def update_task_response_format(self, context, task):
-        """
-        Updates the context with the output_format based on the task configuration.
-        """
-        task_config = self.config.get("tasks", {}).get(task, {})
-        output_format = task_config.get("output_format", "json")
-        # Update context with output_format
-        context_with_format = context.copy()
-        context_with_format['output_format'] = output_format
-        return context_with_format
+    def handle_conditional_tasks(self, item, model, context, prompts_tasks):
+        conditional_tasks = self.task_manager.get_conditional_tasks()
+        for cond_task, condition_key in conditional_tasks.items():
+            if condition_key and item.get(condition_key):
+                # Prepare task-specific context
+                self.handle_tasks(model, context, prompts_tasks, [cond_task], is_conditional=True)
