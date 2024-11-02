@@ -4,7 +4,7 @@ import os
 import logging
 from fastapi import FastAPI, HTTPException
 import uvicorn
-from common.utils import setup_logging, load_config, get_env_variable
+from common.utils import setup_logging, load_config, get_env_variable, validate_config
 from models.llm_request_models import LLMRequest
 from entrypoint.llm_manager import LLMManager
 from entrypoint.item_enricher import ItemEnricher  # Import the ItemEnricher class
@@ -45,6 +45,13 @@ async def validation_exception_handler(request, exc: RequestValidationError):
 # Load provider configurations
 config_path = os.path.join('providers', 'config.json')
 config = load_config(config_path=config_path)
+
+# Validate the configuration
+try:
+    validate_config(config)
+except ValueError as ve:
+    logging.error(f"Configuration validation failed: {ve}")
+    raise
 
 # Load all styling guides at start-up using PromptManager
 logging.info("Loading all styling guides at application start-up")

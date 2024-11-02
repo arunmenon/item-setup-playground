@@ -12,6 +12,7 @@ class LLMManager:
         for provider_config in config['providers']:
             provider_config_copy = provider_config.copy()
             name = provider_config_copy.pop('name')
+            provider_config_copy.pop('required_fields', None)
             self.handlers[name] = BaseModelHandler(**provider_config_copy)
         self.tasks = config.get('tasks', {})    
         logging.debug(f"Initialized handlers: {list(self.handlers.keys())}")

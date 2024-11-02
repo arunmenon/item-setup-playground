@@ -33,12 +33,33 @@ def validate_config(config: dict):
     """
     # Validate providers
     for provider in config.get('providers', []):
-        required_provider_fields = ['name', 'provider', 'model', 'temperature', 'endpoint_id']
-        missing_fields = [field for field in required_provider_fields if field not in provider]
+        provider_name = provider.get('name', 'Unnamed Provider')
+        provider_type = provider.get('provider')
+        
+        if not provider_type:
+            logging.error(f"Provider '{provider_name}' configuration missing 'provider' field.")
+            raise ValueError(f"Provider '{provider_name}' configuration missing 'provider' field.")
+        
+        required_fields = provider.get('required_fields', [])
+
+        if not required_fields:
+            logging.warning(f"Provider '{provider_name}' does not define 'required_fields'. Skipping validation for this provider.")
+            continue  # Skip providers without defined required_fields
+
+        missing_fields = [field for field in required_fields if field not in provider]
+
         if missing_fields:
-            logging.error(f"Provider configuration incomplete: {provider}. Missing fields: {missing_fields}")
-            raise ValueError(f"Provider configuration incomplete: {provider}. Missing fields: {missing_fields}")
+            logging.error(
+                f"Provider '{provider_name}' configuration incomplete. Missing fields: {missing_fields}"
+            )
+            raise ValueError(
+                f"Provider '{provider_name}' configuration incomplete. Missing fields: {missing_fields}"
+            )
+
+
+        logging.info("Provider Configuration validated successfully.")
     
+
     # Ensure 'tasks' section exists
     tasks = config.get('tasks')
     if not tasks or not isinstance(tasks, dict):
@@ -91,7 +112,6 @@ def validate_config(config: dict):
             logging.error(f"Condition for task '{cond_task}' must be a string representing a field name.")
             raise ValueError(f"Condition for task '{cond_task}' must be a string representing a field name.")
     
-    logging.info("Configuration validation passed.")
 
 def get_env_variable(var_name: str) -> str:
     value = os.getenv(var_name)

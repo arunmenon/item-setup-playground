@@ -35,8 +35,7 @@ class PromptManager:
             elif config_path is not None:
                 self.config = load_config(config_path)
                 logging.info(f"Configuration loaded from '{config_path}'.")
-            validate_config(self.config)
-
+            
             self.tasks_config: Dict[str, Dict[str, Any]] = self.config.get('tasks', {})
             self.task_execution: Dict[str, Any] = self.config.get('task_execution', {})
             self.prompts_dir = prompts_dir
