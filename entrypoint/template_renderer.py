@@ -2,8 +2,8 @@
 
 import os
 import logging
+from jinja2 import Environment, FileSystemLoader, select_autoescape, ChoiceLoader
 from typing import Dict, Any
-from jinja2 import Environment, FileSystemLoader, ChoiceLoader, select_autoescape
 
 class TemplateRenderer:
     _instance = None
@@ -51,7 +51,6 @@ class TemplateRenderer:
         Args:
             template_name (str): Name of the template file.
             context (Dict[str, Any]): Context variables for the template.
-            model (str, optional): Model-specific template directory.
 
         Returns:
             str: Rendered template as a string.
@@ -61,15 +60,17 @@ class TemplateRenderer:
             jinja2.TemplateError: If rendering fails.
         """
         model = context.get('model')  # Retrieve 'model' from context
+
         try:
             if model:
                 # Try to load model-specific template
                 template_path = os.path.join(model, template_name)
                 template = self.env.get_template(template_path)
+                logging.debug(f"Loaded model-specific template '{template_path}'.")
             else:
                 # Load default template
                 template = self.env.get_template(template_name)
-            logging.debug(f"Loaded template '{template_name}' for model '{model}'.")
+                logging.debug(f"Loaded default template '{template_name}'.")
         except Exception as e:
             logging.error(f"Template '{template_name}' not found for model '{model}': {e}")
             raise

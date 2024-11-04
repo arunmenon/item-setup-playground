@@ -34,7 +34,7 @@ class ItemEnricher:
         # Extract request data into a dictionary
         item = self.prepare_item(request)
 
-        logging.debug(f"Received request for product type: '{item['product_type']}'")
+        logging.info(f"Received request for product type: '{item['product_type']}'")
 
         
         # Generate prompts for each task using PromptManager
@@ -44,6 +44,7 @@ class ItemEnricher:
             logging.error(f"Styling guide not found: {str(e)}")
             raise
 
+        logging.info(f"prompt_tasks {prompts_tasks}")    
         # Create a mapping from task_name to output_format for parser selection
         task_to_format = {pt['task']: pt['output_format'] for pt in prompts_tasks}
 

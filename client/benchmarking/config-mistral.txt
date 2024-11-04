@@ -1,0 +1,4 @@
+model_family=mistral
+model_name=mistral-7b-instruct-v0.2.Q4_K_M.gguf
+max_tokens=50
+

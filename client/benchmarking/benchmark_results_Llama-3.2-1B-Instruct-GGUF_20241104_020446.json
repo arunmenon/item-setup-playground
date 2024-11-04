@@ -1,0 +1,402 @@
+[
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Hello, how are you?<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "I'm just a language model, I don't have emotions or feelings like humans do. However, I'm functioning properly and ready to help you with any questions or tasks you may have. How can I assist you today?",
+        "response_time_seconds": 1.0642478466033936,
+        "tokens_generated": 37,
+        "throughput_tokens_per_second": 34.76633767039094,
+        "memory_used_mb": 15.140625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Explain relativity simply.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Relativity! I'd be happy to explain it in simple terms.\n\n**What is relativity?**\n\nAlbert Einstein's theory of relativity revolutionized the way we understand space and time. There are two main parts to his theory: special relativity and general relativity.\n\n**Special Relativity (1905)**\n\nImagine you're on a train, and you throw a ball straight up in the air. What happens? The ball comes down and lands in your hand, right? Now, imagine",
+        "response_time_seconds": 1.6435236930847168,
+        "tokens_generated": 71,
+        "throughput_tokens_per_second": 43.1998639865913,
+        "memory_used_mb": -78.109375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Translate 'Good morning' to French.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "The translation of \"Good morning\" in French is \"Bonne journ\u00e9e\".",
+        "response_time_seconds": 0.38034987449645996,
+        "tokens_generated": 10,
+        "throughput_tokens_per_second": 26.291582226072414,
+        "memory_used_mb": 10.6875
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Enhance title: \"Men's Classic Fit Cotton T-Shirt\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few suggestions for an enhanced title:\n\n1. \"Classic Fit Cotton T-Shirt - Soft, Comfortable, and Timeless\"\n2. \"Cotton Classic Fit T-Shirt - Perfect for Everyday Wear\"\n3. \"Men's Classic Fit Cotton Tee - Stylish and Practical\"\n4. \"Fit & Fabulous: Men's Classic Fit Cotton T-Shirt\"\n5. \"Classic Style Reborn - Premium Cotton T-Shirt in a Timeless Fit\"\n\nWhich one do you think best captures the",
+        "response_time_seconds": 1.679368019104004,
+        "tokens_generated": 68,
+        "throughput_tokens_per_second": 40.49142250325819,
+        "memory_used_mb": 2.359375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Improve title: \"Women's High-Waist Yoga Leggings with Pocket\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few suggestions for an improved title:\n\n1. \"Elevate Your Yoga Routine: High-Waist Women's Leggings with Pockets\"\n2. \"Pocket-Fit Yoga Leggings for Women: Perfect for Daily Practice\"\n3. \"High-Waist Women's Leggings with Pockets: Comfort, Support, and Style\"\n4. \"The Ultimate Yoga Legging Upgrade: High Waist and Pockets for All Levels\"\n5. \"Sweat-Ready Women's",
+        "response_time_seconds": 1.7209680080413818,
+        "tokens_generated": 55,
+        "throughput_tokens_per_second": 31.958757944951575,
+        "memory_used_mb": -10.515625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Make this title more appealing: \"4-Pack Plain Crew Neck Tees\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options for an even more appealing title:\n\n1. \"Four-Fold Comfort: The Ultimate Crew Neck Tees\"\n2. \"The 4-Pack Crew Tee Set: Soft, Stylish, and Perfect for Everyone\"\n3. \"Get the Fit You Want in Four: The 4-Pack Plain Crew Neck T-Shirts\"\n4. \"Comfort at Its Best: Four Pack of Premium Crew Necks\"\n5. \"Four Tees in One: The Ultimate Value for Your",
+        "response_time_seconds": 1.6565289497375488,
+        "tokens_generated": 66,
+        "throughput_tokens_per_second": 39.84234625688653,
+        "memory_used_mb": -16.8125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Enhance title: \"Kids' Lightweight Running Shoes\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options:\n\n1. \"Lightweight Kids' Running Shoes: The Ultimate Guide\"\n2. \"Superior Performance for Young Athletes: Lightweight Kids' Running Shoes\"\n3. \"Kids' Running Shoes Designed for Little Legs: Top Picks and Tips\"\n4. \"Effortless Speed: Lightweight Kids' Running Shoes for Every Kid's Needs\"\n5. \"The Best Lightweight Kids' Running Shoes for a Smoother Run\"\n6. \"Little Feet, Big Performance: Lightweight",
+        "response_time_seconds": 1.6612980365753174,
+        "tokens_generated": 63,
+        "throughput_tokens_per_second": 37.92215401028905,
+        "memory_used_mb": -71.34375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Suggest improved title: \"Basic Hoodie with Drawstring\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some improved title suggestions for \"Basic Hoodie with Drawstring\":\n\n1. **Comfortable & Versatile: A Classic Hoodie**\n2. **Drawstring Essentials - Simple, Stylish, and Practical**\n3. **Hooded Delight: The Ultimate Basic Hoodie**\n4. **The Ultimate Comfort Starter Kit - Hoodie**\n5. **Drawstring Chic: Timeless Hoodie Style**\n6. **Everyday Wear, Elevated with a Twist**\n7. **Simple",
+        "response_time_seconds": 1.747206211090088,
+        "tokens_generated": 56,
+        "throughput_tokens_per_second": 32.05116811315672,
+        "memory_used_mb": 41.25
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Rewrite title: \"Women's Lightweight Cardigan Sweater\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "\"Lightweight Women's Cardigan Sweater - Warm & Comfortable Summer Accessory\"",
+        "response_time_seconds": 0.46117401123046875,
+        "tokens_generated": 10,
+        "throughput_tokens_per_second": 21.683789104504772,
+        "memory_used_mb": 1.859375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Suggest title: \"Bluetooth Wireless Earbuds with Charging Case\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some potential title suggestions for your product idea:\n\n1. **SoundBuds Wireless**\n2. **BeatGo Bluetooth Earbuds**\n3. **ChargedUp Earbuds**\n4. **Elevate Audio Earphones**\n5. **WirelessWave Earbuds**\n6. **SoundSphere Wireless Earbuds**\n7. **Freedom Fit Earbuds**\n8. **PowerCharge Earbuds**\n9. **SonicFlow Bluetooth Earbuds**\n10",
+        "response_time_seconds": 1.6853089332580566,
+        "tokens_generated": 43,
+        "throughput_tokens_per_second": 25.514609904115297,
+        "memory_used_mb": -13.015625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Hello, how are you?<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "I'm just a language model, I don't have feelings or emotions like humans do. However, I'm functioning properly and ready to assist you with any questions or tasks you may have. How can I help you today?",
+        "response_time_seconds": 0.8224401473999023,
+        "tokens_generated": 37,
+        "throughput_tokens_per_second": 44.98807617426434,
+        "memory_used_mb": 0.1875
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Explain relativity simply.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Relativity is a complex concept, but I'll try to break it down in simple terms.\n\n**What is Relativity?**\n\nRelativity is a fundamental theory developed by Albert Einstein that describes the nature of space and time. It's a way of understanding how the universe works, from our tiny scales (like atoms and particles) to vast distances and speeds.\n\n**The Big Picture: Space-Time**\n\nImagine you're on a train, and you throw a ball straight up in the air. What happens",
+        "response_time_seconds": 2.0436789989471436,
+        "tokens_generated": 78,
+        "throughput_tokens_per_second": 38.166463539618405,
+        "memory_used_mb": -24.140625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Translate 'Good morning' to French.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "The translation of \"Good morning\" in French is 'Bonne journ\u00e9e'.",
+        "response_time_seconds": 0.3806190490722656,
+        "tokens_generated": 10,
+        "throughput_tokens_per_second": 26.27298876494583,
+        "memory_used_mb": 0.25
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Enhance title: \"Men's Classic Fit Cotton T-Shirt\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options to enhance the title:\n\n1. \"Classic Fit Cotton T-Shirt in Navy Blue - Men's\"\n2. \"Cotton Classic Fit T-Shirt in White - Men's Graphic Tee\"\n3. \"Navy Blue Cotton Classic Fit T-Shirt for Men\"\n4. \"Soft and Comfortable Classic Fit Cotton T-Shirt in Grey\"\n5. \"Classic Fit Cotton Crew-Neck T-Shirt for Men in Black\"\n\nYou can also consider adding a description of the material, size",
+        "response_time_seconds": 1.6824970245361328,
+        "tokens_generated": 70,
+        "throughput_tokens_per_second": 41.604828406337965,
+        "memory_used_mb": -4.3125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Improve title: \"Women's High-Waist Yoga Leggings with Pocket\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options for an improved title:\n\n1. \"Empowered Women's High-Waist Yoga Leggings: Comfort, Style, and Performance\"\n2. \"The Ultimate Workout Legging for Women: High Waist with Pockets & Versatility\"\n3. \"Yoga Chic: High-Waist Leggings for Women with Pocket Functionality\"\n4. \"Get Fit, Feel Fabulous: Women's High-Waist Yoga Leggings with Multiple Pockets\"\n5. \"S",
+        "response_time_seconds": 1.7031428813934326,
+        "tokens_generated": 56,
+        "throughput_tokens_per_second": 32.880388728268876,
+        "memory_used_mb": 27.03125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Make this title more appealing: \"4-Pack Plain Crew Neck Tees\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options:\n\n1. \"Crew Neck Crew Pack: 4 x Plain Tees\"\n2. \"Classic Crew Tee Collection: 4- pack of Unisex Plain Tees\"\n3. \"Plain Tee Perfection: 4-Pack Crew Necks - Perfect for Everyday Style\"\n4. \"Uniquely Unstructured Crews: 4-Pack of Simple, Timeless Plain Tees\"\n5. \"The Classic Tee Collection: 4 Pack Plain Crews in Neutral",
+        "response_time_seconds": 1.7169289588928223,
+        "tokens_generated": 58,
+        "throughput_tokens_per_second": 33.7812462767253,
+        "memory_used_mb": -13.8125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Enhance title: \"Kids' Lightweight Running Shoes\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options:\n\n1. \"Kids' Lightweight Running Shoes for Kids - Top Picks and Reviews\"\n2. \"Superhero Training: Lightweight Running Shoes for Young Athletes\"\n3. \"The Ultimate Guide to Finding the Perfect Kid's Lightweight Running Shoes\"\n4. \"Lightweight Running Shoes for Kids - The Best Options for Fun & Performance\"\n5. \"Running with Confidence: Lightweight Shoes for Kids of All Ages\"\n\nOr if you want a more creative title:\n\n1. \"Zig",
+        "response_time_seconds": 1.6702477931976318,
+        "tokens_generated": 73,
+        "throughput_tokens_per_second": 43.706089777400045,
+        "memory_used_mb": -0.328125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Suggest improved title: \"Basic Hoodie with Drawstring\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few suggestions for an improved title:\n\n1. \"Classic Hoodie with Drawstring: Timeless Style\"\n2. \"Drawstring Hoodie Hoodie: The Ultimate Comfortable Option\"\n3. \"The Simple yet Stylish Drawstring Hoodie\"\n4. \"Hoodie with Drawstring 101 - A Simple, Easy-Wearing Favorite\"\n5. \"Basic but Versatile: Drawstring Hoodie Hoodie Essentials\"\n\nThese titles focus on the core features and benefits of the",
+        "response_time_seconds": 2.2620131969451904,
+        "tokens_generated": 60,
+        "throughput_tokens_per_second": 26.5250441867576,
+        "memory_used_mb": -53.0625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Rewrite title: \"Women's Lightweight Cardigan Sweater\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options:\n\n1. \"Women's Lightweight Cardigan Sweater\"\n2. \"Cozy Women's Lightweight Cardigan Sweater\"\n3. \"Lightweight Ladies Cardigan Sweater for Spring and Fall\"\n4. \"Women's Soft and Comfortable Lightweight Cardigan\"\n5. \"Ladies' Lightweight Knit Cardigan Sweater\"",
+        "response_time_seconds": 1.2751789093017578,
+        "tokens_generated": 38,
+        "throughput_tokens_per_second": 29.799740038680092,
+        "memory_used_mb": 13.203125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Suggest title: \"Bluetooth Wireless Earbuds with Charging Case\"<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some suggested title options for your product:\n\n1. \"Wireless Freedom: Bluetooth Earbuds with Rechargeable Battery\"\n2. \"Elevate Your Sound Experience - Wireless Earbuds with Charging Case\"\n3. \"Blast Off to Freedom: Wireless Earbuds with Long-Lasting Battery Life and Charging Case\"\n4. \"Sound on the Go - Bluetooth Earbuds with 20-Hour Charging Time and Rechargeable Battery\"\n5. \"Unlock Your Sound",
+        "response_time_seconds": 1.7107529640197754,
+        "tokens_generated": 61,
+        "throughput_tokens_per_second": 35.656813860878906,
+        "memory_used_mb": 206.140625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Create an engaging and descriptive title for this item: \"Men's Waterproof Outdoor Jacket with Adjustable Hood, Zippered Pockets, and Breathable Fabric\". Highlight its unique features to attract outdoor enthusiasts.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "**\"Unleash the Adventure: Waterproof Men's Outdoor Jacket with Turbo-Adjusting Hood, Quick-Drying Zippers & Super-Tough Fabric\"\n\nAre you ready to conquer nature like never before? Introducing the ultimate waterproof men's outdoor jacket designed for those who live life on the go. This game-changing jacket features an innovative combination of cutting-edge technology and premium materials that will keep you dry and comfortable in even the most unforgiving conditions.\n\n**Key Features:**\n\n- **Turbo",
+        "response_time_seconds": 2.157715082168579,
+        "tokens_generated": 70,
+        "throughput_tokens_per_second": 32.441725313264044,
+        "memory_used_mb": 352.390625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Improve the following title to make it more enticing: \"Women's Slim Fit Hiking Pants with Quick-Dry Technology and Zippered Pockets\". Emphasize the comfort and functionality aspects to appeal to active women.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options to improve the title to make it more enticing:\n\n1. **\"Elevate Your Outdoor Adventures: Comfort-Driven Hiking Pants with Innovative Quick-Dry Tech & Multi-Pocket Options\"\n2. **\"Comfort, Durable & Active: Women's Slim Fit Hiking Pants with Quick-Drying Technology & Convenient Zipper Pockets for Longer Treks\"\n3. **\"Trail Tough, Active Easy: Super Comfy Hiking Pants with Rapid-Drying Tech &",
+        "response_time_seconds": 1.8759400844573975,
+        "tokens_generated": 62,
+        "throughput_tokens_per_second": 33.05009606313363,
+        "memory_used_mb": 45.984375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Explain the benefits of using eco-friendly materials in sports apparel. Make it understandable for general consumers and highlight both environmental and personal benefits.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "The benefits of using eco-friendly materials in sports apparel are numerous, and I'd be happy to break them down for general consumers. Here's why you should consider making the switch:\n\n**Environmental Benefits:**\n\n1. **Reduced waste**: Traditional polyester, nylon, and spandex often end up in landfills or oceans, contributing to pollution and harming marine life. Eco-friendly materials like organic cotton, recycled polyester, and Tencel minimize this problem.\n2. **Lower carbon footprint**: The production",
+        "response_time_seconds": 1.889345645904541,
+        "tokens_generated": 72,
+        "throughput_tokens_per_second": 38.108431962183055,
+        "memory_used_mb": 118.15625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Write a brief overview of the history and evolution of yoga pants as a popular apparel choice. Include aspects such as material advancements and cultural impact.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Yoga pants, a staple in modern fashion, have undergone significant evolution since their introduction to the world of apparel. The history of yoga pants dates back to 1950s India, where they were initially designed as simple, loose-fitting trousers inspired by traditional Indian sarongs and sari fabric.\n\n**Early Beginnings (1950s-1960s)**\n\nIn India, the concept of \"asana\" (posture) yoga was gaining popularity. To accommodate the growing number of practitioners",
+        "response_time_seconds": 2.1387109756469727,
+        "tokens_generated": 67,
+        "throughput_tokens_per_second": 31.327281134718124,
+        "memory_used_mb": -116.921875
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Describe the design features of this product, followed by three potential benefits: \"Men's Heavy-Duty Work Boots with Steel Toe, Slip-Resistant Outsole, and Waterproof Coating\". Make it appealing to consumers in labor-intensive fields.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "**Product Description:**\n\nIntroducing the rugged and reliable \"WorkStar\" Men's Heavy-Duty Work Boots, designed for those in labor-intensive fields where safety, durability, and performance matter most. These boots are built with top-notch construction and innovative technology to keep you protected on even the toughest jobsites.\n\n**Key Design Features:**\n\n* **Heavy-Duty Steel Toe**: Enhanced protection against foot injuries with a sturdy steel toe cap, meeting OSHA and industry standards for impact resistance.\n* **",
+        "response_time_seconds": 2.0091350078582764,
+        "tokens_generated": 72,
+        "throughput_tokens_per_second": 35.83631747910833,
+        "memory_used_mb": 37.859375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>For this product, \"Women's Convertible Backpack with Laptop Compartment and RFID Protection\", provide a title enhancement, followed by a two-sentence product description emphasizing its versatility for travel and everyday use.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "**Title Enhancements:**\n\n1. **\"AdventureReady Women's Convertible Backpack: Durable & Versatile Travel Companion\"\n2. **\"The Ultimate Travel Bag for Gals: Laptop Compartment & RFID Protection, Everyday Essentials Included\"\n\n**Product Description:**\n\nStay organized and stylish on-the-go with our convertible women's backpack, designed to handle your daily adventures with ease. Whether you're a busy professional or an avid traveler, this bag is perfect for carrying laptops, tablets, books,",
+        "response_time_seconds": 1.9655628204345703,
+        "tokens_generated": 65,
+        "throughput_tokens_per_second": 33.069408580708206,
+        "memory_used_mb": 54.390625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Compare the following two products based on their features and target audiences. Product A: \"Wireless Over-Ear Headphones with Noise Cancellation and 30-Hour Battery Life\". Product B: \"Wireless Earbuds with Compact Charging Case and IPX5 Waterproof Rating\". Provide a short paragraph comparing them.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "When comparing the two products, \"Wireless Over-Ear Headphones with Noise Cancellation and 30-Hour Battery Life\" and \"Wireless Earbuds with Compact Charging Case and IPX5 Waterproof Rating\", we can see that they cater to different types of users.\n\nProduct A's target audience appears to be individuals who prioritize long battery life, noise cancellation, and a more premium listening experience. The headphones are designed for those who want to fully immerse themselves in their music or podcasts without",
+        "response_time_seconds": 2.1219289302825928,
+        "tokens_generated": 76,
+        "throughput_tokens_per_second": 35.81646817449184,
+        "memory_used_mb": 16.734375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Explain the key differences between \"Men's Lightweight Running Shorts with Moisture-Wicking Fabric\" and \"Women's Compression Running Shorts with High Waistband\". Emphasize both functional and stylistic aspects.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "When comparing \"Men's Lightweight Running Shorts with Moisture-Wicking Fabric\" and \"Women's Compression Running Shorts with High Waistband\", let's break down their key differences in both functional and stylistic aspects:\n\n**Functional Aspects:**\n\n1. **Moisture-Wicking Fabric:** \n   - Men's lightweight running shorts typically feature moisture-wicking fabric to keep you dry and cool during intense workouts.\n   - These fabrics are designed for rapid heat dissipation, allowing the wearer to stay comfortable",
+        "response_time_seconds": 2.0137507915496826,
+        "tokens_generated": 67,
+        "throughput_tokens_per_second": 33.271247008891365,
+        "memory_used_mb": -48.125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Provide step-by-step care instructions for \"High-Performance Merino Wool Socks\". Include washing, drying, and storage guidelines to ensure long-lasting durability and comfort.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "**High-Performance Merino Wool Socks Care Instructions**\n\nTo keep your High-Performance Merino Wool Socks looking and feeling their best, follow these step-by-step care instructions:\n\n**Washing:**\n\n1. **Hand washing only:** Wash your socks by hand in cold water (below 30\u00b0C or 86\u00b0F). Use a mesh laundry bag to prevent pilling.\n2. **Mild soap or detergent:** Choose a mild soap or detergent specifically designed for washing delicate items, such",
+        "response_time_seconds": 1.951915979385376,
+        "tokens_generated": 66,
+        "throughput_tokens_per_second": 33.81293083157311,
+        "memory_used_mb": 21.5625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Outline three key considerations when choosing a \"Camping Tent for Family Adventures\". Include factors like size, weather resistance, and ease of setup.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are three key considerations when choosing a camping tent for family adventures:\n\n**I. Size and Capacity**\n\n1. **Number of People**: Calculate the number of people in your family and choose a tent that can accommodate everyone comfortably, considering the size of each person.\n2. **Age Range**: Consider the ages of all family members to ensure the tent is big enough and comfortable for them.\n3. **Activity Level**: Think about what activities you'll be doing while camping (e.g., hiking,",
+        "response_time_seconds": 1.9611217975616455,
+        "tokens_generated": 79,
+        "throughput_tokens_per_second": 40.283066609235796,
+        "memory_used_mb": 103.796875
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Enhance this title to appeal to luxury buyers: \"Men's Leather Jacket\". Emphasize its premium quality and timeless design.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some options to enhance the title:\n\n1. \"Elev\u00e9 Leather Jacket: Handcrafted Luxury Men's Fashion Statement\"\n   - Emphasizes high-quality materials and craftsmanship.\n2. \"Cuir Royal Luxe Leather Jacket\"\n   - References the French term for leather and adds a touch of sophistication.\n3. \"Premium Leather Biker Jacket | Exquisite Elegance\"\n   - Highlights its durability and timeless appeal.\n4. \"Hand-Stitched Luxury Leather Motorcycle Jacket\"\n   -",
+        "response_time_seconds": 1.97275710105896,
+        "tokens_generated": 64,
+        "throughput_tokens_per_second": 32.44190578031392,
+        "memory_used_mb": -143.734375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Rewrite this title to appeal to eco-conscious shoppers: \"Organic Cotton T-Shirt\". Emphasize its sustainable materials and production process.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some rewritten title options that emphasize the sustainable aspects of organic cotton:\n\n1. **Organic Cotton: Naturally Soft, Kind to the Planet**\n2. **Sustainable Cotton Tee - Made from Grown with Love for the Earth**\n3. **Organic Cotton: The Eco-Friendly Choice for a Greener Wardrobe**\n4. **Grow Responsibly: Organic Cotton T-Shirts for a Better Tomorrow**\n5. **Cotton Harvested with Care, Worn with Conscience:",
+        "response_time_seconds": 1.9484128952026367,
+        "tokens_generated": 64,
+        "throughput_tokens_per_second": 32.84724719158869,
+        "memory_used_mb": 27.015625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Generate an engaging and trendy title for this product: \"Women's High-Rise Skinny Jeans\". Highlight its fit and versatility for various occasions.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some engaging and trendy title options for your women's high-rise skinny jeans:\n\n1. **\"Slay All Day in Style: Empowerment Fit High-Rise Skinny Jeans\"**\n2. **\"Skinny Chic x Empowerment: The Ultimate Versatility System\"**\n3. \"Unleash Your Confidence with Our High-Rise Skinny Jeans - For Every Occasion, Every You\"\n4. \"The Perfect Fit for Every Girl: High-Rise Skinny Jeans for Women Who",
+        "response_time_seconds": 1.8359348773956299,
+        "tokens_generated": 62,
+        "throughput_tokens_per_second": 33.77026100618027,
+        "memory_used_mb": -85.703125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Improve this title for a more fashionable appeal: \"Floral Print Summer Dress\". Focus on its design, comfort, and seasonal relevance.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some suggestions for a more fashionable appeal title:\n\n1. \"Blossom in Bloom: The Ultimate Floral Print Dress for Summer\"\n2. \"Sun-Kissed Floral Dream: The Perfect Wear for Warm Weather\"\n3. \"Floral Oasis: Comfortable and Beautifully Designed for Hot Summers\"\n4. \"Seeds of Style: Why You Need a Floral Print Sundress Now\"\n5. \"Garden Party Chic: Elegant Floral Prints for Summer Nights\"\n\nThese titles incorporate elements like",
+        "response_time_seconds": 1.888538122177124,
+        "tokens_generated": 68,
+        "throughput_tokens_per_second": 36.00668644253206,
+        "memory_used_mb": 5.359375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Enhance the following title with a luxurious twist: \"Silk Scarf\". Highlight its material quality and the elegance it adds to outfits.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options with a luxurious twist:\n\n1. ** opulent Silk Wrap**: This title combines the natural, lustrous texture of silk with the grandeur of luxury, implying that it adds an air of sophistication and refinement to any outfit.\n2. **Velvet Dreamweave Silk Scarf**: The use of \"Dreamweave\" conveys a sense of softness and tactility, while \"Velvet\" evokes a feeling of opulence and indulgence.\n3.",
+        "response_time_seconds": 1.867764949798584,
+        "tokens_generated": 67,
+        "throughput_tokens_per_second": 35.87175142526641,
+        "memory_used_mb": -10.265625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Make this title more appealing to a fashion-forward audience: \"Oversized Hoodie\". Emphasize its relaxed fit, comfort, and streetwear style.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some rewritten options:\n\n1. **\"Cozy Revival: The Ultimate Oversized Hoodie for the Modern Gentleman\"**\n2. \"Sleeve-Deep Comfort: Elevate Your Streetwear Style with Our Oversized Hoodies\"\n3. \"**The Loose Fit Leader**: Unleash Your Inner Streetwear Icon with Our Oversized Hoodies\"\n4. \"Hoodie Revival: Experience the Ultimate in Relaxed, Comfortable Wear with Our Oversized Style\"\n5",
+        "response_time_seconds": 1.8333940505981445,
+        "tokens_generated": 56,
+        "throughput_tokens_per_second": 30.544442959073642,
+        "memory_used_mb": 59.78125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Suggest a more appealing title for this item aimed at athleisure fans: \"Men's Jogger Pants\". Emphasize comfort, versatility, and trendy style.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some alternative title suggestions for men's jogger pants that emphasize comfort, versatility, and trendy style:\n\n1. **Jogger Bliss**: This title conveys a sense of comfort and relaxation, suggesting that the pants will bring you joy throughout your day.\n2. **Fusion Joggers**: This name highlights the blend of functionality (jogger-style) with fashion-forward designs (fusion).\n3. **Elevate Your Sweat**: This title positions the jogger pants as a high",
+        "response_time_seconds": 1.8704359531402588,
+        "tokens_generated": 68,
+        "throughput_tokens_per_second": 36.35516088419675,
+        "memory_used_mb": -23.296875
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Enhance this title to target winter shoppers: \"Wool Blend Overcoat\". Highlight its warmth, comfort, and classic style.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options to enhance the title:\n\n1. \"Winter Warmth at its Finest: Wool Blend Overcoat\"\n2. \"Cozy Comfort in Every Stitch: Classic Wool Overcoat Winter Wear\"\n3. \"Wrap Up in Style: Elegant Wool Blend Overcoat for Frosty Days Ahead\"\n4. \"Thermal Perfection: Premium Wool Blend Overcoat for Winter's Chill\"\n5. \"Stay Warm and Stylish with Our Luxurious Wool Blend Overcoat\"\n\nThese options highlight",
+        "response_time_seconds": 1.8750848770141602,
+        "tokens_generated": 66,
+        "throughput_tokens_per_second": 35.1984066476483,
+        "memory_used_mb": -1.140625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Rewrite this title to capture a casual and trendy appeal: \"Women's Denim Jacket\". Emphasize its classic design and versatility for everyday wear.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options:\n\n1. \"Denim Diva's Best Friend: The Timeless Classic\"\n2. \"Elevate Your Style: Denim Jacket for Women\"\n3. \"The Original Darling: Why Invest in This Classic Denim Jacket\"\n4. \"Dress to Impress, Not Dress Up: The Versatile Denim Jacket for Every Occasion\"\n5. \"Timeless Elegance Unveiled: The Ultimate Denim Jacket for Women\"\n\nThese revised titles capture",
+        "response_time_seconds": 1.874265193939209,
+        "tokens_generated": 60,
+        "throughput_tokens_per_second": 32.01254560668434,
+        "memory_used_mb": 20.84375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Create a catchy title for this fashion piece: \"Plaid Button-Up Shirt\". Focus on its retro look and ability to layer with other pieces.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some catchy title options for your fashion piece:\n\n1. \"Plaid Perfection: The Ultimate Layering Layer\"\n2. \"Button-Up with the Best of the Past\"\n3. \"The Plaid Revival: Timeless Style for the Modern Era\"\n4. \"Shirt Up! The Classic Plaid Shirt Reborn\"\n5. \"Layering Done Right: Unleashing Your Inner Retro Cool\"\n6. \"Plaid Meets Perfection: Layering 90s",
+        "response_time_seconds": 1.867363691329956,
+        "tokens_generated": 58,
+        "throughput_tokens_per_second": 31.059830642145446,
+        "memory_used_mb": 1.203125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Suggest an upscale title for this item: \"Cashmere Sweater\". Emphasize its luxurious feel, softness, and premium quality.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few upscale title suggestions for the \"Cashmere Sweater\":\n\n1. **\"Velvet Verve Cashmere Sweater\"**\n2. **\"Pure Opulence Cashmere Scarf: Softest Luxury Sweater Ever\"**\n3. **\"Luxury Cashmere Dream Sweater: Warmth and Charm in Every Fibre\"**\n4. **\"Cashmere Couture Sweater: Exceptional Softness, Exquisite Quality\"**\n5. **\"Tuscan Velvet",
+        "response_time_seconds": 1.9419670104980469,
+        "tokens_generated": 47,
+        "throughput_tokens_per_second": 24.202264892206454,
+        "memory_used_mb": -39.875
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Rewrite this title to focus on comfort and versatility for loungewear: \"Fleece Joggers\". Highlight the material\u2019s softness and suitability for indoor and outdoor wear.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here's a rewritten title that focuses on comfort and versatility for loungewear, highlighting the fleece's softness and suitability for indoor and outdoor wear:\n\n\"Cozy Fleece Joggers: The Ultimate Comfort Wear for Everyday Living\"\n\nThis title emphasizes the fleece material's plush texture and ability to provide warmth and comfort in various settings. By using \"cozy,\" you've created a sense of relaxation and welcome, while also highlighting its versatility for indoor and outdoor activities.\n\nAlternatively, here are some more options",
+        "response_time_seconds": 1.8917224407196045,
+        "tokens_generated": 78,
+        "throughput_tokens_per_second": 41.23226448079195,
+        "memory_used_mb": 22.625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Make this title more appealing to an audience looking for practical yet stylish pieces: \"Waterproof Hiking Boots\". Emphasize durability, comfort, and outdoor compatibility.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options for a more appealing title:\n\n1. \"Waterproof Hiking Boots for Active Adventurers: Durable, Comfortable, and Versatile Options\"\n2. \"Seamless Performance: Waterproof Hiking Boots for Outdoor Enthusiasts\"\n3. \"Unbeatable Combination of Durability and Style: Waterproof Hiking Boots for Any Terrain\"\n4. \"Stay Dry, Stay Happy: The Ultimate Waterproof Hiking Boots for Active Explorers\"\n5. \"Hy",
+        "response_time_seconds": 1.8761329650878906,
+        "tokens_generated": 59,
+        "throughput_tokens_per_second": 31.447664476827764,
+        "memory_used_mb": -20.125
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Enhance the title of this fashion item aimed at business professionals: \"Men's Tailored Fit Dress Pants\". Highlight the sophistication and ideal fit for office settings.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options to enhance the title:\n\n1. **Professional Tailored Fit Dress Pants for Business Success**: This title emphasizes the importance of fit in business settings, conveying that these pants are tailored to ensure success and confidence.\n2. **Luxury Fit Professional Dress Pants for Corporate Wear**: This option highlights the high-end quality and sophistication of the dress pants while also emphasizing their suitability for formal corporate wear.\n3. **Elevated Tailored Fit Workwear Dress Pants**: This title adds a",
+        "response_time_seconds": 1.8814451694488525,
+        "tokens_generated": 80,
+        "throughput_tokens_per_second": 42.52050567247467,
+        "memory_used_mb": -6.21875
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Rewrite the title for this item to make it stand out in the athleisure category: \"Women's Cropped Workout Tank\". Emphasize breathability and stylish fit for active lifestyles.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some rewritten title options for the \"Women's Cropped Workout Tank\" in the athleisure category:\n\n1. **Sweat-Chic Fit: Women's High-Performance Cropped Tank**\n2. **Elevate Your Sweat Style: Women's Breathable Cropped Workout Tank**\n3. **Run, Jump, Repeat: The Ultimate Stylish Women's Crop Jogger**\n4. **Comfort + Performance: Women's High-Limit Cropped T-Shirt for Active Lifestyles",
+        "response_time_seconds": 1.9789750576019287,
+        "tokens_generated": 54,
+        "throughput_tokens_per_second": 27.286852248373368,
+        "memory_used_mb": -0.875
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Make this product title more appealing to evening wear shoppers: \"Sequin Cocktail Dress\". Emphasize its glamorous style and suitability for special occasions.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options to make the product title more appealing:\n\n1. \"Glamorous Evening Wear: Sequin Cocktail Dress - Elevate Your Night Out\"\n2. \"Sequin Magic: Ultra-Glamorous Cocktail Dress for Special Occasions\"\n3. \"Dress Up, Shine Bright: Sequin Cocktail Dress - Perfect for Nightclubs or Weddings\"\n4. \"Sequined Sophistication: Showstopping Cocktail Dress for Evening Events\"\n5. \"Luxe in the",
+        "response_time_seconds": 1.9446909427642822,
+        "tokens_generated": 60,
+        "throughput_tokens_per_second": 30.853231575559743,
+        "memory_used_mb": -3.171875
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Enhance this title to appeal to eco-conscious consumers looking for quality basics: \"Recycled Cotton Hoodie\". Emphasize sustainability and comfort.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few options to enhance the title for eco-conscious consumers:\n\n1. **Sustainable Cotton Hoodie Essentials**: This title emphasizes that this hoodie is made with recycled cotton, appealing to environmentally aware consumers.\n\n2. **Comfortable Eco-Friendly Recycled Cotton Hoodie**: Highlighting the comfort aspect can be very attractive to those prioritizing quality over quantity of resources used in production.\n\n3. **Eco-Inspired Recycled Cotton Crew Neck Hoodie for a Sustainable Lifestyle**: This title",
+        "response_time_seconds": 1.9288818836212158,
+        "tokens_generated": 71,
+        "throughput_tokens_per_second": 36.80888944153857,
+        "memory_used_mb": 8.734375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Create a more appealing title for this product aimed at the upscale fashion market: \"Men's Silk Pajama Set\". Highlight the luxury and comfort of this nightwear.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some suggestions for a more appealing title that targets the upscale fashion market:\n\n1. **\"Elev\u00e9 Nightwear: Luxurious Silk Pajama Sets for Sophisticated Men\"\n2. \"Silk Oasis: The Ultimate Comfortable and Stylish Sleepwear Collection\"\n3. \"Royal Nights: High-End, Handmade Silk Pajamas for Regal Gentlemen\"\n4. \"Somnius: Artisanal Silks for the Modern Man's Indulgence\"\n",
+        "response_time_seconds": 1.907383680343628,
+        "tokens_generated": 54,
+        "throughput_tokens_per_second": 28.311031784790956,
+        "memory_used_mb": 22.859375
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Improve this title for seasonal promotion: \"Thermal Base Layer Shirt\". Emphasize warmth, moisture-wicking features, and suitability for winter sports.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are some improved title options for your seasonal promotion:\n\n1. \"Thermal Base Layer Shirt: Extreme Cold-Weather Wear for Peak Performance\"\n2. \"Warmth, Breathability, and Endurance: Ultimate Winter Sports Base Layers\"\n3. \"Stay Warm, Dry, and Focused: Thermal Base Layers for Winter Sports Enthusiasts\"\n4. \"Thermal Base Layer for the Extreme Season: Engineered for Cold-Weather Athletics and Activities\"\n5. \"Unleash Your",
+        "response_time_seconds": 1.9370677471160889,
+        "tokens_generated": 61,
+        "throughput_tokens_per_second": 31.490896532047962,
+        "memory_used_mb": 45.90625
+    },
+    {
+        "prompt": "<|begin_of_text|><|start_header_id|>system<|end_header_id|><|eot_id|><|start_header_id|>user<|end_header_id|>Rewrite this title to appeal to outdoor enthusiasts: \"Convertible Hiking Pants\". Emphasize functionality, durability, and adaptability for changing weather conditions.<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+        "completion": "Here are a few rewritten title options that emphasize functionality, durability, and adaptability for changing weather conditions:\n\n1. \"Weather Warrior Hiking Pants: Ultimate Performance for Unpredictable Adventures\"\n2. \"Tough on Rain, Dry in Snow - Versatile Hiking Pants for Every Outdoor Enthusiast's Needs\"\n3. \"Flexibility and Comfort: Convertible Hiking Pants for Endurance Activities in Changing Weather\"\n4. \"Adaptability at Its Finest: Durable H",
+        "response_time_seconds": 1.8860559463500977,
+        "tokens_generated": 63,
+        "throughput_tokens_per_second": 33.40303882391073,
+        "memory_used_mb": -7.328125
+    }
+]

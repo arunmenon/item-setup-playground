@@ -1,0 +1,12 @@
+# General prompts
+prompt1=[INST] Hello, how are you? [/INST]
+prompt2=[INST] Explain the theory of relativity in simple terms. [/INST]
+prompt3=[INST] Translate 'Good morning' to French. [/INST]
+# Title enhancement prompts
+prompt4=[INST] Enhance the title of this product for a more appealing presentation: "Men's Classic Fit Cotton T-Shirt" [/INST]
+prompt5=[INST] Generate an engaging product title for this item: "Women's High-Waist Yoga Leggings with Pocket" [/INST]
+prompt6=[INST] Provide a more descriptive and attractive title for this product: "4-Pack Plain Crew Neck Tees" [/INST]
+prompt7=[INST] Create a catchy title for this product: "Kids' Lightweight Running Shoes" [/INST]
+prompt8=[INST] Suggest an improved product title for a men's hooded sweatshirt: "Basic Hoodie with Drawstring" [/INST]
+prompt9=[INST] Rewrite the title of this item to make it stand out: "Women's Lightweight Cardigan Sweater" [/INST]
+prompt10=[INST] Suggest an enhanced product title for this entry: "Bluetooth Wireless Earbuds with Charging Case" [/INST]
