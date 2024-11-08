@@ -1,5 +1,6 @@
 from providers.openai_provider import OpenAIProvider
 from providers.runpod_provider import RunPodProvider
+from providers.gemini_provider import GeminiProvider
 import logging
 
 
@@ -20,6 +21,11 @@ class ProviderFactory:
         elif provider_name == "runpod":
             ProviderFactory.logger.info(f"Creating RunPod provider ")
             return RunPodProvider(**kwargs)
+        elif provider_name == "gemini":
+            ProviderFactory.logger.info(f"Creating Gemini provider")
+            model = kwargs.get('model', 'gemini-1.5-flash')
+            return GeminiProvider(model=model)
+
         else:
             ProviderFactory.logger.error(f"Unsupported provider: {provider_name}")
             raise ValueError(f"Unsupported provider: {provider_name}")
