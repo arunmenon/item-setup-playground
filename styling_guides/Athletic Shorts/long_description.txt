@@ -1,8 +1,0 @@
-Provide details on fabric technology.
-Describe fit and additional features.
-Include usage scenarios.
-Example Content:
-"Made with quick-dry fabric to keep you cool and dry."
-"Elastic waistband with drawstring for adjustable fit."
-"Side pockets for convenient storage."
-"Ideal for running, gym sessions, and outdoor activities."

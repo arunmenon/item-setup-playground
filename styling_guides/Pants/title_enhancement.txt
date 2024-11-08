@@ -1,0 +1,72 @@
+# Pants Product Title Enhancement Guidelines
+Enhance pants product titles by following these concise guidelines. Arrange elements in the sequence provided.
+---
+## Title Structure:
+
+1. **[Global Brand License]** *(include if applicable)*
+2. **["by"]** *(include only if Global Brand License is included)*
+3. **Brand** *(must be included)*
+4. **Clothing Size Group** *(must be included; use "Kids" if Age Group is Child/Toddler; "Unisex" if for both Men's and Women's)*
+5. **[Clothing Style]** *(include if applicable)*
+6. **[Clothing Feature]** *(include if applicable)*
+7. **[Theme or Pattern]** *(choose one if applicable)*
+8. **[Pant Rise]** *(include if applicable)*
+9. **[Pant Leg Cut]** *(include if applicable)*
+10. **[Pant Style]** *(include if applicable)*
+11. **Product Type Name [Pants]** *(must be included)*
+12. **[Retail Packaging]** *(include if applicable; use "Set" if it's a set; list up to 2 items/features separated by "and")*
+13. **, [Color]** *(include if applicable; if multiple colors, separate with "/")*
+14. **, [Count Per Pack]** *(include if count is more than 1)*
+15. **[Clothing Size]** *(include if applicable; can include size range)*
+---
+## Guidelines:
+
+- **Mandatory Elements**: Brand, Clothing Size Group, Product Type Name [Pants].
+- **Global Brand License and "by"**: Include only if applicable.
+- **Attributes Limit**: Include up to **3 attributes** from steps 5–10 to describe style, fit, and features.
+- **"Or" Choices**: For options listed with "or", select only **one** (cannot combine Theme & Pattern).
+- **Order Matters**: Follow the sequence provided.
+- **Separators**: Use commas to separate the Product Type Name, Color, Count Per Pack, and Clothing Size.
+- **Singular Form**: Use singular forms unless referring to sets or multiple items.
+- **Clothing Size**: Optional; can include size range (e.g., "Sizes XS-XXL").
+- **Color Formatting**: If multiple colors, separate them with a "/" (e.g., "Blue/White").
+- **Retail Packaging**: If applicable, use "Set" and list up to 2 included items separated by "and".
+- **Character Limit**: Ensure the title is concise and within any platform-specific limits.
+
+---
+
+## Examples:
+
+1. **With Global Brand License and Multiple Attributes**:
+
+   ```
+   Disney by Nike Kids Athletic Stretch Slim Fit [Pants], Red/Black
+   ```
+
+2. **Without Global Brand License**:
+
+   ```
+   Adidas Men's Relaxed Fit Straight Leg [Pants], Navy
+   ```
+
+3. **With Retail Packaging and Multiple Colors**:
+
+   ```
+   Gap Women's Bootcut Mid-Rise [Pants] Set, Blue/White, Sizes XS-XL
+   ```
+
+4. **With Theme and Count Per Pack**:
+
+   ```
+   Marvel Unisex Camouflage Cargo [Pants], Green, 2-Pack
+   ```
+
+5. **Minimal Elements**:
+
+   ```
+   Lee Men's [Pants], Khaki
+   ```
+
+---
+
+By following these guidelines, you'll create clear and standardized product titles that are helpful for customers.

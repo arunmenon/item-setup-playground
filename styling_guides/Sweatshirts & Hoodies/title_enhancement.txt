@@ -1,0 +1,81 @@
+# Sweatshirts & Hoodies Product Title Enhancement Guidelines
+Enhance product titles for sweatshirts and hoodies by following these concise guidelines. Ensure the final title is **90 characters or less**, including spaces.
+---
+## Title Structure:
+Arrange elements in the following sequence:
+
+1. **[Global Brand License]** *(include only if applicable)*
+2. **["by"]** *(include only if Global Brand License is included)*
+3. **Brand** *(must be included)*
+4. **Clothing Size Group or Gender** *(must be included; use "Women's", "Men's", or "Unisex")*
+5. **[Clothing Style or Clothing Fit]** *(include if applicable; choose one)*
+6. **[Theme or Pattern]** *(include if applicable; choose one; cannot combine Theme and Pattern)*
+7. **[Clothing Neck Style or Clothing Shoulder Style]** *(include if significant; choose one; max 2 attributes from steps 5–8)*
+8. **[Sleeve Style]** *(include if significant)*
+9. **Sweatshirt & Hoodie Type [Product Type]** *(must be included; list Product Type Name within [ ] brackets; use singular form unless multipacks)*
+10. **, [Color]** *(include if applicable)*
+11. **, [Count Per Pack]** *(include if count is greater than 1; format as "#-Piece", "#pc", or "# Pack")*
+12. **, [Clothing Size]** *(include if applicable; e.g., "Sizes XS-XXXL")*
+---
+## Guidelines:
+
+- **Mandatory Elements**: Brand, Clothing Size Group or Gender, Sweatshirt & Hoodie Type [Product Type].
+- **Global Brand License and "by"**: Include only if applicable.
+- **Clothing Size Group or Gender**:
+  - Use "Women's", "Men's", or "Unisex".
+  - Can combine multiple if applicable; for example, "Women's & Plus Size".
+- **Attributes Limit**:
+  - Include up to **2 significant attributes** from steps 5–8.
+  - Use singular form.
+- **"Or" Choices**:
+  - For options listed with "or", select only **one**.
+  - Cannot combine Theme and Pattern.
+  - Cannot select both options in "Clothing Neck Style or Clothing Shoulder Style".
+- **Order Matters**: Follow the sequence provided.
+- **Commas**:
+  - Use commas to separate the Product Type Name, Color, Count Per Pack, and Clothing Size.
+- **Count Per Pack**:
+  - Include if the count is greater than 1.
+  - Format with "-Piece", "pc", or "Pack" after the number (e.g., "3-Pack", "7-Piece").
+- **Clothing Size**:
+  - Include if only one size is available or to specify size range.
+  - Examples: "Sizes XS-XXXL", "One Size".
+- **Character Limit**:
+  - Do not exceed **90 characters**, including spaces.
+---
+## Examples:
+ 
+1. **With Global Brand License and Attributes**:
+
+   ```
+   Disney by Gap Women's Graphic Pullover [Hoodie], Red
+   ```
+
+2. **With Clothing Fit and Sleeve Style**:
+
+   ```
+   Nike Men's Slim Fit Long Sleeve [Sweatshirt], Blue
+   ```
+
+3. **With Theme and Count Per Pack**:
+
+   ```
+   Marvel Unisex Camouflage Zip-Up [Hoodie], Green, 2-Pack
+   ```
+
+4. **With Clothing Size Range**:
+
+   ```
+   Adidas Women's V-Neck [Sweatshirt], Black, Sizes XS-XXL
+   ```
+
+5. **Minimal Elements**:
+
+   ```
+   Champion Men's [Hoodie], Gray
+   ```
+
+---
+
+By following these guidelines, you'll create clear and standardized product titles that are helpful for customers.
+-------------------- Sweatshirts & Hoodies Title Done ----------------------------

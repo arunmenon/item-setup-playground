@@ -1,1 +1,105 @@
-Create product titles by starting with the Brand Name or License Name if applicable, followed by the Style Name. Include Descriptive Features such as the clothing top style, character, sports league/team, or material to provide detailed information. Next, specify the Apparel Style and Clothing Type, mention the Count Per Pack, and optionally add the Clothing Size Group in parentheses. For example, a correctly formatted title would be "Time and Tru Alex Animal Print Silk Top (Women's)" or "George Alex Wool Shirt (Men's Big & Tall).
+# T-Shirt Product Title Enhancement Guidelines
+Enhance T-Shirt product titles by following these guidelines. Ensure the final title is 90 characters or less, including spaces.
+---
+## Mandatory Elements:
+
+1. **Brand**
+   - Must be included.
+   - Example: Nike
+2. **Gender**
+   - Must be included.
+   - Use "Men's", "Women's", or "Unisex".
+   - Example: Men's
+3. **Product Type Name**
+   - Must be included as [T-Shirt].
+   - Use singular form unless it's a multipack.
+   - Example: [T-Shirt]
+---
+## Optional Elements (Include if Applicable and Significant):
+- **Global Brand License**
+  - Include only if applicable.
+  - Place at the beginning.
+  - Example: Disney
+- **"by"**
+  - Include only if Global Brand License is present.
+  - Place after Global Brand License.
+  - Example: Disney by
+- **Clothing Style or Clothing Fit**
+  - Choose one.
+  - Use singular form.
+  - Example: Slim Fit
+- **Clothing Feature**
+  - Use singular form.
+  - Example: Moisture-Wicking
+- **Theme or Pattern**
+  - Choose one.
+  - Use singular form.
+  - Example: Camouflage
+- **Material**
+  - Use singular form.
+  - Example: Cotton
+- **Clothing Neck Style or Clothing Shoulder Style**
+  - Choose one.
+  - Use singular form.
+  - Example: V-Neck
+- **Sleeve Length Style**
+  - Use singular form.
+  - Example: Short Sleeve
+- **Clothing Top Style**
+  - Use singular form.
+  - Example: Graphic
+
+- **T-Shirt Type**
+  - Use singular form.
+  - Example: Polo
+
+- **Color**
+  - Use singular form.
+  - Precede with a comma.
+  - Example: , Blue
+
+- **Count Per Pack**
+  - Include if greater than 1.
+  - Format as #-Pack, #-Piece, or #ct.
+  - Precede with a comma.
+  - Example: , 3-Pack
+
+- **Clothing Size**
+  - Include if only one size is available or specifying a size range.
+  - Precede with a comma.
+  - Example: , Size M or , Sizes XS-XXL
+
+---
+
+## Construction Guidelines:
+
+- **Order**: Arrange elements in the sequence provided.
+- **Singular Form**: Use singular forms unless referring to multipacks.
+- **"Or" Choices**: For elements listed with "or", select only one.
+- **Style Descriptors**: Limit to a maximum of two significant styles.
+- **Commas**: Use commas to separate the Product Type Name, Color, Count Per Pack, and Clothing Size.
+- **Character Limit**: Do not exceed 90 characters, including spaces.
+
+---
+
+## Examples:
+
+1. **With Global Brand License and Multipack**:
+
+   Marvel by Under Armour Men's Graphic Cotton Crew Neck Short Sleeve [T-Shirt], Black, 3-Pack
+
+2. **Without Global Brand License**:
+
+   Adidas Women's Slim Fit V-Neck [T-Shirt], Red
+
+3. **With Size Range**:
+
+   Unisex Moisture-Wicking Polyester Crew Neck [T-Shirt], Blue, Sizes S-XL
+
+4. **Minimal Elements**:
+
+   Gap Men's [T-Shirt], Gray
+
+---
+
+By following these guidelines, you'll create clear and concise product titles that are standardized and optimized for customer understanding.
