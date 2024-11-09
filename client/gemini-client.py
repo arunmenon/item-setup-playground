@@ -10,7 +10,7 @@ response = model.generate_content(
                 candidate_count=1,
                 stop_sequences=["x"],
                 max_output_tokens=200,
-                temperature=1.0,
+                temperature=0.0,
             ),
         )
 print(response.text)
