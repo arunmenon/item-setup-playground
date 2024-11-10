@@ -46,17 +46,17 @@ class PromptManager:
 
             self.initialized = True  # Prevent re-initialization
 
-    def generate_prompts(self, item: Dict[str, Any], model: str = None) -> List[Dict[str, Any]]:
+    def generate_prompts(self, item: Dict[str, Any], family_name: str) -> List[Dict[str, Any]]:
         """
-        Generates prompts for each task based on the item details and styling guide.
-        Each prompt includes the desired output format.
+    Generates prompts for each task based on the item details and styling guide.
+    Each prompt includes the desired output format.
 
-        Args:
-            item (Dict[str, Any]): The input data containing item details.
-            model (str, optional): The model to use for template selection. Defaults to None.
+    Args:
+        item (Dict[str, Any]): The input data containing item details.
+        family_name (str): The model family name used for template selection.
 
-        Returns:
-            List[Dict[str, Any]]: A list of dictionaries containing task details and generated prompts.
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries containing task details and generated prompts.
         """
         product_type = item.get('product_type', '').lower()
         logging.info(f"Generating prompts for product type: '{product_type}'")
@@ -67,16 +67,16 @@ class PromptManager:
         # Handle default tasks
         default_tasks = self.task_manager.get_default_tasks()
         logging.debug(f"Default tasks: {default_tasks}")
-        self.handle_tasks(model, item, product_type, prompts_tasks, default_tasks, is_conditional=False)
+        self.handle_tasks(family_name, item, product_type, prompts_tasks, default_tasks, is_conditional=False)
 
         # Handle conditional tasks
-        self.handle_conditional_tasks(item, model, product_type, prompts_tasks)
+        self.handle_conditional_tasks(item, family_name, product_type, prompts_tasks)
 
         return prompts_tasks
 
     def handle_tasks(
         self, 
-        model: Optional[str], 
+        family_name: Optional[str], 
         item: Dict[str, Any],
         product_type: str,
         prompts_tasks: List[Dict[str, Any]], 
@@ -109,9 +109,9 @@ class PromptManager:
             context_with_format = context.copy()
             context_with_format['output_format'] = output_format
 
-            # Include 'model' in context if provided
-            if model:
-                context_with_format['model'] = model
+            # Include 'family' in context if provided
+            if family_name:
+                context_with_format['family'] = family_name
 
             # Render the prompt using TemplateRenderer
             try:
@@ -129,12 +129,12 @@ class PromptManager:
                 'output_format': output_format
             })
             task_type = "conditional" if is_conditional else "default"
-            logging.info(f"Generated prompt for {task_type} task '{task}'.")
+            logging.debug(f"Generated prompt for {task_type} task '{task}'.")
 
     def handle_conditional_tasks(
         self, 
         item: Dict[str, Any], 
-        model: Optional[str], 
+        family_name: Optional[str], 
         product_type: str,
         prompts_tasks: List[Dict[str, Any]]
     ):
@@ -145,7 +145,7 @@ class PromptManager:
         for cond_task, condition_key in conditional_tasks.items():
             if condition_key and item.get(condition_key):
                 # Process the conditional task
-                self.handle_tasks(model, item, product_type, prompts_tasks, [cond_task], is_conditional=True)
+                self.handle_tasks(family_name, item, product_type, prompts_tasks, [cond_task], is_conditional=True)
 
     def prepare_prompt_context(self, item: Dict[str, Any], product_type: str, styling_guide: str) -> Dict[str, Any]:
         """

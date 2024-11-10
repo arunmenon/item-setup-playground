@@ -1,5 +1,8 @@
 {# prompts/default/attribute_extraction_prompt.jinja2 #}
 You are an expert data extractor. Extract the specified attributes from the provided product descriptions. **Use only the provided information.**
+
+{% include 'general_instructions.jinja2' %}
+
 ### Original Descriptions
 
 **Original Short Description**: {{ short_description }}
@@ -12,6 +15,8 @@ You are an expert data extractor. Extract the specified attributes from the prov
 {% for attribute in attributes_list %}
 - **{{ attribute }}**: {{ '[Your extracted value here.]' }}
 {% endfor %}
+
+
 **Instructions:**
 
 - Use the label "**Extracted Attributes**" exactly as shown.

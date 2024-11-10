@@ -20,21 +20,26 @@ class JsonResponseParser(ResponseParser):
             dict: Parsed JSON data.
         """
         try:
-            # Use regex to extract JSON content between triple backticks if present
+            # Attempt to extract JSON content between triple backticks if present
             json_content = re.search(r'```json\s*\n?(.*?)\n?```', response, re.DOTALL)
+            
             if json_content:
                 json_str = json_content.group(1)
-                logging.debug("Extracted JSON from code block.")
+                logging.info("Extracted JSON from code block.{json_str}")
             else:
+                # Fallback: Use the entire response as JSON
                 json_str = response.strip()
-                logging.debug("No code block found. Using stripped response.")
+                logging.info("No code block found. Attempting to parse full response.")
 
+            # Validate JSON starts properly if not caught by regex
             if not json_str.startswith(('{', '[')):
                 logging.warning("Response does not start with JSON object or array.")
                 raise ValueError("Response does not contain valid JSON.")
-            
+
+            # Attempt to parse JSON
             parsed_json = json.loads(json_str)
-            
             return parsed_json
+
         except json.JSONDecodeError as e:
+            logging.error(f"Failed to parse JSON response: {e}\nResponse: {response}")
             raise ValueError(f"Failed to parse JSON response: {e}")

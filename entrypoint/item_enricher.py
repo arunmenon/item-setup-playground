@@ -3,7 +3,8 @@
 import asyncio
 import logging
 from typing import Dict, Any, List
-from models.llm_request_models import LLMRequest
+from handlers.llm_handler import BaseModelHandler
+from models.llm_request_models import BaseLLMRequest, LLMRequest
 from exceptions.custom_exceptions import StylingGuideNotFoundException
 from parsers.parser_factory import ParserFactory
 
@@ -20,7 +21,7 @@ class ItemEnricher:
         self.llm_manager = llm_manager
         self.prompt_manager = prompt_manager
 
-    async def enrich_item(self, request: LLMRequest, model: str):
+    async def enrich_item(self, request: LLMRequest):
         """
         Enriches an item based on the provided request and model.
 
@@ -33,18 +34,31 @@ class ItemEnricher:
         """
         # Extract request data into a dictionary
         item = self.prepare_item(request)
-
         logging.info(f"Received request for product type: '{item['product_type']}'")
+        # Collect unique family names
+        family_names = set(self.llm_manager.family_names.values())
+        logging.info(f"family names '{family_names}'")
 
+        # Generate prompts per family
+        prompts_per_family = {}
+        for family_name in family_names:
+            prompts = self.prompt_manager.generate_prompts(item, family_name=family_name)
+            prompts_per_family[family_name] = prompts
+            logging.debug(f"Generated prompts for family '{family_name}': {prompts}")
+
+        # Associate prompts with handlers
+        prompts_tasks = []
+        for handler_name, handler in self.llm_manager.handlers.items():
+            # Get the family_name associated with the handler
+            family_name = self.llm_manager.get_family_name(handler_name)
+            prompts = prompts_per_family[family_name]
+            for prompt_task in prompts:
+                prompt_task_copy = prompt_task.copy()
+                prompt_task_copy['provider_name'] = handler_name
+                prompts_tasks.append(prompt_task_copy)
         
-        # Generate prompts for each task using PromptManager
-        try:
-            prompts_tasks = self.prompt_manager.generate_prompts(item, model=model)
-        except StylingGuideNotFoundException as e:
-            logging.error(f"Styling guide not found: {str(e)}")
-            raise
-
-        logging.info(f"prompt_tasks {prompts_tasks}")    
+        
+        logging.debug(f"prompt_tasks {prompts_tasks}")    
         # Create a mapping from task_name to output_format for parser selection
         task_to_format = {pt['task']: pt['output_format'] for pt in prompts_tasks}
 
@@ -62,8 +76,8 @@ class ItemEnricher:
             'short_description': request.short_description,
             'long_description': request.long_description,
             'product_type': request.item_product_type,
-            'image_url': request.image_url,
-            'attributes_list': request.attributes_list,
+            #'image_url': request.image_url,
+            #'attributes_list': request.attributes_list,
             # Add more fields as needed
         }
         
@@ -71,10 +85,10 @@ class ItemEnricher:
 
     async def invoke_llms(self, prompts_tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
-        Invokes the LLMManager to get responses for each prompt.
+        Invokes each handler with its associated prompts.
 
         Args:
-            prompts_tasks (List[Dict[str, Any]]): A list of dictionaries containing 'task', 'prompt', and 'output_format'.
+            prompts_tasks (List[Dict[str, Any]]): A list of dictionaries containing 'task', 'prompt', and 'provider_name'.
 
         Returns:
             Dict[str, Any]: A dictionary with tasks as keys and handler responses as values.
@@ -85,36 +99,58 @@ class ItemEnricher:
         for prompt_task in prompts_tasks:
             task_name = prompt_task['task']
             prompt = prompt_task['prompt']
-            tasks_list.append(self.invoke_single_llm(task_name, prompt))
+            provider_name = prompt_task['provider_name']
+            handler = self.llm_manager.handlers.get(provider_name)
+            if not handler:
+             logging.error(f"Handler '{provider_name}' not found. Skipping prompt for task '{task_name}'.")
+             continue
+            
+            
+            tasks_list.append(self.invoke_single_llm(task_name, prompt,provider_name,handler))
 
         # Run all LLM invocations concurrently
         task_results = await asyncio.gather(*tasks_list)
 
         results = {}
-        for task_name, handler_responses in task_results:
-            results[task_name] = handler_responses
+        for task_name, handler_name, handler_response in task_results:
+            if task_name not in results:
+                results[task_name] = {}
+            results[task_name][handler_name] = handler_response
+            logging.info(f"Stored result for task '{task_name}' from handler '{handler_name}': {handler_response}")
+
 
         logging.info(f"LLMManager invocation successful. Results: {results}")
         return results
 
-    async def invoke_single_llm(self, task_name: str, prompt: str) -> (str, Dict[str, Any]):
+    # entrypoint/item_enricher.py
+
+    async def invoke_single_llm(self, task_name: str, prompt: str, handler_name: str, handler: BaseModelHandler) -> (str, str, Dict[str, Any]):
         """
         Invokes the LLMManager for a single task and prompt.
 
         Args:
             task_name (str): The name of the task.
             prompt (str): The prompt to send to the LLM.
+            handler_name (str): The name of the handler.
+            handler (BaseModelHandler): The handler instance.
 
         Returns:
-            Tuple[str, Dict[str, Any]]: The task name and its corresponding handler responses.
+            Tuple[str, str, Dict[str, Any]]: The task name, handler name, and its corresponding response.
         """
         try:
-            handler_responses = await self.llm_manager.get_response(prompt, task_name)
-            logging.debug(f"Received responses for task '{task_name}': {handler_responses}")
-            return task_name, handler_responses
+            # Get max_tokens from task config
+            task_config = self.llm_manager.tasks.get(task_name, {})
+            max_tokens = task_config.get('max_tokens', 150)
+
+            # Invoke the handler with the prompt
+            response = await handler.invoke(request=BaseLLMRequest(prompt=prompt, max_tokens=max_tokens), task=task_name)
+            logging.debug(f"Received response for task '{task_name}' from handler '{handler_name}': {response}")
+
+            return task_name, handler_name, {'response': response['response'], 'error': None}
         except Exception as e:
-            logging.error(f"Error invoking LLMManager for task '{task_name}': {str(e)}")
-            return task_name, {'error': str(e)}
+            logging.error(f"Error invoking handler '{handler_name}' for task '{task_name}': {str(e)}")
+            return task_name, handler_name, {'response': None, 'error': str(e)}
+
 
     def process_results(self, results: Dict[str, Any], task_to_format: Dict[str, str]) -> Dict[str, Any]:
         """
@@ -150,17 +186,21 @@ class ItemEnricher:
         Returns:
             Dict[str, Any]: The parsed response or an error message.
         """
+        logging.debug(f"response to be parsed is {response} ")    
         try:
-            if isinstance(response, dict) and 'error' in response:
+            if isinstance(response, dict) and response.get('error') is not None:
                 # If the handler returned an error, propagate it
                 return {
                     'handler_name': handler_name,
                     'error': response['error']
                 }
+            response_content = response.get('response', '')
+
 
             # Use ParserFactory to get the appropriate parser based on output_format
             parser = ParserFactory.get_parser(output_format)
-            parsed_response = parser.parse(response)
+           
+            parsed_response = parser.parse(response_content)
 
             return {
                 'handler_name': handler_name,

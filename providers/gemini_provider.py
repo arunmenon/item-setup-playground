@@ -14,7 +14,7 @@ class GeminiProvider(BaseProvider):
         genai.configure(api_key=self.api_key)
         self.model_instance = genai.GenerativeModel(model)
 
-    def create_chat_completion(self, messages: list, temperature: float, max_tokens: int):
+    def create_chat_completion(self,model:str, messages: list, temperature: float, max_tokens: int):
         try:
             # Prepare the prompt
             prompt = "\n".join([msg['content'] for msg in messages])
@@ -25,7 +25,7 @@ class GeminiProvider(BaseProvider):
                 generation_config=genai.types.GenerationConfig(
                 # Only one candidate for now.
                 candidate_count=1,
-                stop_sequences=["x"],
+                #stop_sequences=["x"],
                 max_output_tokens=max_tokens,
                 temperature=temperature,
             )

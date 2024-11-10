@@ -39,17 +39,11 @@ class BaseModelHandler:
                 self.logger.debug("Received response: %s", response)
                 content = response['choices'][0]['message']['content']
                 return {"task": task, "response": content}
-            except (APIConnectionError, Timeout) as e:
-                self.logger.warning("Network-related error during model invocation, attempt %d/%d: %s", attempt + 1, retries, str(e))
+            except Exception as e:  # Broad exception for debugging
+                self.logger.error(f"An error occurred: {type(e)} - {str(e)}")
                 if attempt < retries - 1:
                     await asyncio.sleep(2 ** attempt)
                     continue
                 else:
                     self.logger.error("Failed after %d attempts: %s", retries, str(e))
                     raise
-            except (RateLimitError, AuthenticationError, OpenAIError) as e:
-                self.logger.error("API error during model invocation: %s", e)
-                raise
-            except Exception as e:
-                self.logger.error(f"Caught an unexpected exception: {type(e)} - {str(e)}")
-                raise

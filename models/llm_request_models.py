@@ -1,5 +1,5 @@
 # llm_request_models.py
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict, List, Union, Optional
 
 class BaseLLMRequest(BaseModel):
@@ -25,16 +25,9 @@ class LLMRequest(BaseModel):
     short_description: str
     long_description: str
     item_product_type: str
-    image_url : Optional[str]
-    attributes_list : Optional[str]
-    max_tokens: Optional[int] = 150  
-    metadata: Optional[Dict[str, Union[str, int, float, List[str]]]] = None
-    tasks: Optional[List[str]] = None
+    image_url : Optional[str] = None 
+    attributes_list : Optional[List[str]] = None
+    #max_tokens: Optional[int] = 150  
+    #metadata: Optional[Dict[str, Union[str, int, float, List[str]]]] = None
+    #tasks: Optional[List[str]] = None
     
-class GPT4Request(BaseLLMRequest):
-    """
-    Request model for interacting with GPT-4.
-    
-    Inherits from BaseLLMRequest and includes attributes specific to GPT-4 requests.
-    """
-    model: str = "gpt-4"

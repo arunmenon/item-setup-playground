@@ -19,7 +19,7 @@ setup_logging()
 
 # Define FastAPI app with metadata
 app = FastAPI(
-    title="LLM Enrichment API",
+    title="Gen AI Item  Enrichment API",
     description="An API for enriching items using various Language Models (LLMs) to extract or transform metadata.",
     version="1.0.0"
 )
@@ -70,10 +70,11 @@ item_enricher = ItemEnricher(llm_manager=llm_manager, prompt_manager=prompt_mana
 async def enrich_item_endpoint(request: LLMRequest):
     try:
         # Validate required request fields
+
         validate_request_fields(request)
 
         # Enrich the item using the ItemEnricher class
-        results = await item_enricher.enrich_item(request,model=None)
+        results = await item_enricher.enrich_item(request)
 
         return results
     except StylingGuideNotFoundException as e:
@@ -99,4 +100,4 @@ def validate_request_fields(request: LLMRequest):
 if __name__ == "__main__":
     port = int(get_env_variable("PORT") or 5000)
     logging.info(f"Starting server on port {port}")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0",log_level="debug" ,port=port)
