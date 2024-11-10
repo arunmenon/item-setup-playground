@@ -116,7 +116,7 @@ class ItemEnricher:
             if task_name not in results:
                 results[task_name] = {}
             results[task_name][handler_name] = handler_response
-            logging.info(f"Stored result for task '{task_name}' from handler '{handler_name}': {handler_response}")
+            logging.debug(f"Stored result for task '{task_name}' from handler '{handler_name}': {handler_response}")
 
 
         logging.info(f"LLMManager invocation successful. Results: {results}")
