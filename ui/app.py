@@ -1,144 +1,122 @@
-import requests
-import streamlit as st
-import pandas as pd
-from database_handler import DatabaseHandler
+import gradio as gr
+import json
 from api_client import APIClient
-from ui_components import display_single_sku_input, display_model_responses, display_leaderboard
-from styles import get_css  # Import the CSS function
+from database_handler import DatabaseHandler
+from ui_helpers import display_single_sku_input
+from styles import get_css
 
-# Initialize instances
-db_handler = DatabaseHandler()
+# Initialize API client and database handler
 api_client = APIClient()
+db_handler = DatabaseHandler()
 
-# Ensure tables are created in the database if they don't already exist
-db_handler.create_tables_if_not_exists()
-
-# Streamlit App configuration
-st.set_page_config(page_title="Item Setup Playground", layout="wide")
-
-# Apply custom CSS styling
-st.markdown(get_css(), unsafe_allow_html=True)
-
-# Main Title and description
-st.markdown('<div class="title">Item Setup Playground Interface</div>', unsafe_allow_html=True)
-
-# User Choice: Single SKU or Bulk Upload
-st.markdown('<div class="subheader">Choose Input Method</div>', unsafe_allow_html=True)
-choice = st.radio("Would you like to process a single SKU or upload a CSV file for bulk processing?", ("Single SKU", "Bulk Upload"))
-
-# Ensure session state is available for storing preferences in bulk
-if "preferences" not in st.session_state:
-    st.session_state["preferences"] = {}
-
-# Function to process a single SKU
 def process_single_sku(gtin, title, short_description, long_description, product_type):
+    """
+    Process a single SKU by sending data to the API and retrieving model responses.
+    """
     try:
+        # Send data to the API and get responses
         data = api_client.process_single_sku(gtin, title, short_description, long_description, product_type)
-        st.success("Enrichment generated successfully!")
-        model_responses = display_model_responses(data)
+        model_responses = data.get("title_enhancement", {})
+        
+        if not model_responses:
+            return gr.update(choices=["No responses available"]), "{}"
+        
+        # Extract and format responses for display
+        formatted_responses = [
+            f"{model_name}: {details.get('response', {}).get('enhanced_title', 'NA')}"
+            for model_name, details in model_responses.items()
+        ]
+        
+        # Return formatted responses and serialized model responses
+        return gr.update(choices=formatted_responses), json.dumps(model_responses)
+    except Exception as e:
+        return gr.update(choices=[f"Error: {e}"]), "{}"
 
-        # Display model responses in a table
-        if model_responses:
-            response_df = pd.DataFrame([
-                {"Model": model_name, "Enhanced Title": enhanced_title} for model_name, enhanced_title in model_responses.items()
-            ])
-            st.table(response_df)
+def save_preference(selected_response, model_responses_json, gtin, product_type):
+    """
+    Save the user's preferred model response to the database and update the leaderboard.
+    """
+    print(f"Received selected_response: {selected_response}")
+    print(f"Received model_responses_json: {model_responses_json}")
+    print(f"Received gtin: {gtin}, product_type: {product_type}")
 
-            # Select preferred response
-            selected_response = st.radio(
-                "Select your preferred response:",
-                options=[(model_name, enhanced_title) for model_name, enhanced_title in model_responses.items()],
-                format_func=lambda x: f"{x[0]}: {x[1]}"
-            )
+    if not selected_response:
+        print("No response selected by the user.")
+        return "Please select a response before saving."
 
-            # Save preference
-            if st.button("Save Preference", key=f"save_{gtin}"):
-                db_handler.save_preference(gtin, product_type, "title_enhancement", model_responses, selected_response[1])
-                st.success("Preference saved successfully!")
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error: {e}")
+    try:
+        # Deserialize model responses
+        model_responses = json.loads(model_responses_json)
+        print(f"Deserialized model_responses: {model_responses}")
+    except json.JSONDecodeError as e:
+        print(f"JSON decoding failed: {e}")
+        return "Error: Failed to process model responses."
 
-# Function to handle single SKU flow
-def process_single_sku_flow():
-    gtin, title, short_description, long_description, product_type = display_single_sku_input()
+    # Save preference in the database
+    db_handler.save_preference(gtin, product_type, "title_enhancement", model_responses, selected_response)
+    print(f"Saved preference for GTIN: {gtin}, Product Type: {product_type}")
 
-    if st.button("Generate Enrichment"):
-        with st.spinner("Generating enrichment..."):
-            process_single_sku(gtin, title, short_description, long_description, product_type)
+    # Extract model name from the selected response
+    try:
+        model_name = selected_response.split(":")[0].strip()
+        print(f"Extracted model_name: {model_name}")
+    except Exception as e:
+        print(f"Failed to extract model name: {e}")
+        return "Error: Failed to extract model name from the selected response."
 
-# Function to handle bulk upload flow
-def process_bulk_upload_flow():
-    uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
-        st.write("CSV file loaded successfully!")
+    # Update leaderboard
+    db_handler.increment_model_preference("title_enhancement", product_type, model_name)
+    print(f"Incremented preference count for model: {model_name} in leaderboard.")
 
-        # Normalize column names for flexible access
-        data.columns = [col.lower().replace(" ", "_") for col in data.columns]
+    return "Preference saved successfully!"
 
-        # Required columns with normalized names
-        required_columns = {"long_description", "gtin", "product_type", "title", "short_description"}
+def get_leaderboard():
+    """
+    Retrieve the leaderboard data from the database.
+    """
+    leaderboard_df = db_handler.get_leaderboard()
+    return leaderboard_df
 
-        if not required_columns.issubset(data.columns):
-            missing_cols = required_columns - set(data.columns)
-            st.error(f"CSV must contain the following columns: {', '.join(required_columns)}. Missing columns: {', '.join(missing_cols)}")
-        else:
-            for index, row in data.iterrows():
-                gtin = row["gtin"]
-                title = row["title"]
-                short_desc = row["short_description"]
-                long_desc = row["long_description"]
-                product_type = row["product_type"]
-                
-                with st.spinner(f"Processing SKU {gtin}..."):
-                    try:
-                        response_data = api_client.process_single_sku(gtin, title, short_desc, long_desc, product_type)
-                        model_responses = display_model_responses(response_data)
+# Retrieve the initial leaderboard data
+initial_leaderboard_data = get_leaderboard()
 
-                        if model_responses:
-                            st.markdown(f"**SKU: {gtin} ({product_type} - {title}) - Model Responses**")
-                            response_df = pd.DataFrame([
-                                {"Model": model_name, "Enhanced Title": enhanced_title} for model_name, enhanced_title in model_responses.items()
-                            ])
-                            st.table(response_df)
+# Gradio Interface
+with gr.Blocks(css=get_css()) as app:
+    gr.Markdown("# Item Setup Playground Interface")
 
-                            selected_response = st.radio(
-                                f"Select your preferred response for SKU {gtin}:",
-                                options=[(model_name, enhanced_title) for model_name, enhanced_title in model_responses.items()],
-                                format_func=lambda x: f"{x[0]}: {x[1]}",
-                                key=f"response_{index}"
-                            )
+    # Input Components
+    gtin, title, short_desc, long_desc, product_type = display_single_sku_input()
+    
+    # Generate Enrichment Button
+    generate_btn = gr.Button("Generate Enrichment")
+    
+    # Model Responses Display and Preference Selection
+    model_responses_output = gr.Radio(label="Select your preferred response:")
+    save_btn = gr.Button("Save Preference")
+    feedback_output = gr.Textbox(label="Feedback", interactive=False)
+    
+    # Leaderboard Display
+    leaderboard_output = gr.Dataframe(
+        headers=["Task Type", "Product Type", "Model", "Preference Count"],
+        value=initial_leaderboard_data
+    )
 
-                            # Store preference in session state
-                            st.session_state["preferences"][gtin] = {
-                                "gtin": gtin,
-                                "product_type": product_type,
-                                "task_type": "title_enhancement",
-                                "model_responses": model_responses,
-                                "winner_response": selected_response[1] if selected_response else "NA"
-                            }
-                        else:
-                            st.warning(f"No model responses available for SKU {gtin}.")
-                    except requests.exceptions.RequestException as e:
-                        st.error(f"Error processing SKU {gtin}: {e}")
+    # State Components to hold intermediate data
+    state_model_responses = gr.State(value="{}")  # Initialize with an empty JSON object
 
-            # Bulk save preferences after collecting all
-            if st.button("Save All Preferences"):
-                for pref in st.session_state["preferences"].values():
-                    db_handler.save_preference(
-                        pref["gtin"], pref["product_type"], pref["task_type"],
-                        pref["model_responses"], pref["winner_response"]
-                    )
-                st.success("All preferences saved successfully!")
-                # Clear session state preferences after saving
-                st.session_state["preferences"].clear()
+    # Define actions for buttons
+    generate_btn.click(
+        fn=process_single_sku, 
+        inputs=[gtin, title, short_desc, long_desc, product_type],
+        outputs=[model_responses_output, state_model_responses]
+    )
 
-# Route the logic based on user choice
-if choice == "Single SKU":
-    process_single_sku_flow()
-elif choice == "Bulk Upload":
-    process_bulk_upload_flow()
+    save_btn.click(
+        fn=save_preference,
+        inputs=[model_responses_output, state_model_responses, gtin, product_type],
+        outputs=feedback_output
+    )
 
-# Leaderboard Section
-st.markdown('<div class="subheader">Leaderboard</div>', unsafe_allow_html=True)
-display_leaderboard(db_handler)
+# Launch the Gradio app
+if __name__ == "__main__":
+    app.launch()

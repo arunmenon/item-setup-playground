@@ -16,11 +16,12 @@ class ProviderFactory:
     @staticmethod
     def create_provider(provider_name, **kwargs):
         if provider_name == "openai":
-            ProviderFactory.logger.debug(f"Creating OpenAI provider ")
+            ProviderFactory.logger.info(f"Creating OpenAI provider ")
             return OpenAIProvider()
         elif provider_name == "runpod":
             ProviderFactory.logger.info(f"Creating RunPod provider ")
-            return RunPodProvider(**kwargs)
+            endpoint_id = kwargs.get("endpoint_id")
+            return RunPodProvider(endpoint_id=endpoint_id)
         elif provider_name == "gemini":
             ProviderFactory.logger.info(f"Creating Gemini provider")
             model = kwargs.get('model', 'gemini-1.5-flash')

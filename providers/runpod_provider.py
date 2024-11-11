@@ -5,9 +5,9 @@ from openai import OpenAI
 from providers.base_provider import BaseProvider
 
 class RunPodProvider(BaseProvider):
-    def __init__(self,api_key=None,endpoint_id=None):
+    def __init__(self,endpoint_id=None):
         self.logger = logging.getLogger(self.__class__.__name__)
-        runpod_api_key = api_key or os.getenv("RUNPOD_API_KEY")
+        runpod_api_key = os.getenv("RUNPOD_API_KEY")
         runpod_endpoint_id = endpoint_id or os.getenv("RUNPOD_ENDPOINT_ID")
 
         if not runpod_api_key or not runpod_endpoint_id:
