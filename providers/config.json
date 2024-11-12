@@ -1,58 +1,48 @@
 {
-    "providers": [
-
-      {
-        "name": "openai",
-        "provider": "openai",
-        "model": "gpt-4o-mini",
-        "family": "default",
-        "temperature": 0.2,
-        "required_fields": ["name", "provider", "model", "temperature"]
-      },
-      
-	        {
-	          "name": "gemini",
-	          "provider": "gemini",
-	          "model": "gemini-pro",
-	          "family": "default",
-	          "temperature": 0.2,
-	          "required_fields": ["name", "provider", "model", "temperature"]
-	        }
-     
-      
-    ],
-    "tasks": {
-      "title_enhancement": {
-        "max_tokens": 200,
-        "output_format": "json"
-      },
-      "short_description_enhancement": {
-        "max_tokens": 100,
-        "output_format": "json"
-      },
-      "long_description_enhancement": {
-        "max_tokens": 150,
-        "output_format": "json"
-      },
-      "attribute_extraction": {
-        "max_tokens": 300,
-        "output_format": "json"
-      },
-      "vision_attribute_extraction": {
-        "max_tokens": 500,
-        "output_format": "json"
-      }
+  "providers": [
+    {
+      "name": "openai",
+      "provider": "openai",
+      "model": "gpt-4o",
+      "family": "default",
+      "temperature": 0.2,
+      "required_fields": [
+        "name",
+        "provider",
+        "model",
+        "temperature"
+      ]
+    }
+  ],
+  "tasks": {
+    "title_enhancement": {
+      "max_tokens": 200,
+      "output_format": "json"
     },
-    
+    "short_description_enhancement": {
+      "max_tokens": 100,
+      "output_format": "json"
+    },
+    "long_description_enhancement": {
+      "max_tokens": 150,
+      "output_format": "json"
+    },
+    "attribute_extraction": {
+      "max_tokens": 300,
+      "output_format": "json"
+    },
+    "vision_attribute_extraction": {
+      "max_tokens": 500,
+      "output_format": "json"
+    }
+  },
   "task_execution": {
     "default_tasks": [
       "title_enhancement"
-      
     ],
     "conditional_tasks": {
       "attribute_extraction": "attributes_list",
       "vision_attribute_extraction": "image_url"
     }
   }
-  }
-  
+}
