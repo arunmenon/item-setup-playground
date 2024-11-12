@@ -4,6 +4,8 @@ from api_client import APIClient
 from database_handler import DatabaseHandler
 from ui_helpers import display_single_sku_input
 from styles import get_css
+import plotly.express as px
+import pandas as pd  # Ensure pandas is imported
 
 # Initialize API client and database handler
 api_client = APIClient()
@@ -19,7 +21,7 @@ def process_single_sku(gtin, title, short_description, long_description, product
         model_responses = data.get("title_enhancement", {})
         
         if not model_responses:
-            return gr.update(choices=["No responses available"]), "{}"
+            return gr.update(choices=["No responses available"]), {}
         
         # Extract and format responses for display
         formatted_responses = [
@@ -27,10 +29,10 @@ def process_single_sku(gtin, title, short_description, long_description, product
             for model_name, details in model_responses.items()
         ]
         
-        # Return formatted responses and serialized model responses
-        return gr.update(choices=formatted_responses), json.dumps(model_responses)
+        # Return formatted responses and model responses dict
+        return gr.update(choices=formatted_responses), model_responses
     except Exception as e:
-        return gr.update(choices=[f"Error: {e}"]), "{}"
+        return gr.update(choices=[f"Error: {e}"]), {}
 
 def save_preference(selected_response, model_responses_json, gtin, product_type):
     """
@@ -45,11 +47,10 @@ def save_preference(selected_response, model_responses_json, gtin, product_type)
         return "Please select a response before saving."
 
     try:
-        # Deserialize model responses
-        model_responses = json.loads(model_responses_json)
-        print(f"Deserialized model_responses: {model_responses}")
-    except json.JSONDecodeError as e:
-        print(f"JSON decoding failed: {e}")
+        # Use model_responses directly since it's a dict
+        model_responses = model_responses_json
+    except Exception as e:
+        print(f"Failed to process model responses: {e}")
         return "Error: Failed to process model responses."
 
     # Save preference in the database
@@ -70,6 +71,20 @@ def save_preference(selected_response, model_responses_json, gtin, product_type)
 
     return "Preference saved successfully!"
 
+def generate_leaderboard_plot():
+    leaderboard_df = db_handler.get_leaderboard()
+    if leaderboard_df.empty:
+        return None
+    fig = px.bar(
+        leaderboard_df,
+        x="model_name",
+        y="preference_count",
+        color="product_type",
+        barmode="group",
+        title="Model Preferences by Product Type"
+    )
+    return fig
+
 def get_leaderboard():
     """
     Retrieve the leaderboard data from the database.
@@ -79,43 +94,66 @@ def get_leaderboard():
 
 # Retrieve the initial leaderboard data
 initial_leaderboard_data = get_leaderboard()
+if initial_leaderboard_data.empty:
+    initial_leaderboard_data = pd.DataFrame(columns=["Task Type", "Product Type", "Model", "Preference Count"])
+
+initial_plot = generate_leaderboard_plot()
+if initial_plot is None:
+    initial_plot = px.Figure()
 
 # Gradio Interface
 with gr.Blocks(css=get_css()) as app:
     gr.Markdown("# Item Setup Playground Interface")
 
-    # Input Components
-    gtin, title, short_desc, long_desc, product_type = display_single_sku_input()
-    
-    # Generate Enrichment Button
-    generate_btn = gr.Button("Generate Enrichment")
-    
-    # Model Responses Display and Preference Selection
-    model_responses_output = gr.Radio(label="Select your preferred response:")
-    save_btn = gr.Button("Save Preference")
-    feedback_output = gr.Textbox(label="Feedback", interactive=False)
-    
-    # Leaderboard Display
-    leaderboard_output = gr.Dataframe(
-        headers=["Task Type", "Product Type", "Model", "Preference Count"],
-        value=initial_leaderboard_data
-    )
+    with gr.Tabs():
+        with gr.TabItem("Item Enrichment"):
+            with gr.Row():
+                with gr.Column():
+                    gtin, title, short_desc, long_desc, product_type = display_single_sku_input()
+                    generate_btn = gr.Button("Generate Enrichment")
+                with gr.Column():
+                    model_responses_output = gr.Radio(label="Select your preferred response:")
+                    save_btn = gr.Button("Save Preference")
+                    feedback_output = gr.Textbox(label="Feedback", interactive=False)
+                    model_responses_json = gr.JSON(visible=False)  # Hidden component
 
-    # State Components to hold intermediate data
-    state_model_responses = gr.State(value="{}")  # Initialize with an empty JSON object
+            # Define actions for buttons
+            generate_btn.click(
+                fn=process_single_sku, 
+                inputs=[gtin, title, short_desc, long_desc, product_type],
+                outputs=[model_responses_output, model_responses_json]
+            )
 
-    # Define actions for buttons
-    generate_btn.click(
-        fn=process_single_sku, 
-        inputs=[gtin, title, short_desc, long_desc, product_type],
-        outputs=[model_responses_output, state_model_responses]
-    )
+            save_btn.click(
+                fn=save_preference,
+                inputs=[model_responses_output, model_responses_json, gtin, product_type],
+                outputs=feedback_output
+            )
 
-    save_btn.click(
-        fn=save_preference,
-        inputs=[model_responses_output, state_model_responses, gtin, product_type],
-        outputs=feedback_output
-    )
+        with gr.TabItem("Leaderboard & Analytics"):
+            gr.Markdown("## Leaderboard")
+            refresh_button = gr.Button("Refresh Data")
+            leaderboard_output = gr.Dataframe(
+                headers=["Task Type", "Product Type", "Model", "Preference Count"],
+                value=initial_leaderboard_data
+            )
+            gr.Markdown("## Analytics")
+            analytics_plot = gr.Plot(value=initial_plot)
+
+            # Define the refresh function
+            def refresh_leaderboard_and_analytics():
+                updated_leaderboard_data = get_leaderboard()
+                if updated_leaderboard_data.empty:
+                    updated_leaderboard_data = pd.DataFrame(columns=["Task Type", "Product Type", "Model", "Preference Count"])
+                updated_plot = generate_leaderboard_plot()
+                return updated_leaderboard_data, updated_plot
+
+            # Action for refresh button
+            refresh_button.click(
+                fn=refresh_leaderboard_and_analytics,
+                inputs=[],
+                outputs=[leaderboard_output, analytics_plot]
+            )
 
 # Launch the Gradio app
 if __name__ == "__main__":
