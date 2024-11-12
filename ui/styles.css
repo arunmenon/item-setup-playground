@@ -1,0 +1,47 @@
+/* Adjust the padding and margins of Gradio components */
+.gradio-container {
+    padding: 20px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Style buttons */
+button {
+    background-color: #007BFF;  /* Bootstrap primary color */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Style sliders */
+input[type="range"] {
+    width: 100%;
+}
+
+/* Adjust DataFrame styling */
+.dataframe table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dataframe th, .dataframe td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.dataframe tr:nth-child(even){background-color: #f2f2f2;}
+
+.dataframe th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #007BFF;
+    color: white;
+}
