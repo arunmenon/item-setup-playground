@@ -5,6 +5,7 @@ def create_item_enrichment_tab(process_single_sku_fn, save_preference_fn, produc
     with gr.TabItem("Item Enrichment"):
         gr.Markdown("## Enter Product Information")
         with gr.Row():
+            # Left Column: Input Fields
             with gr.Column():
                 gtin = gr.Textbox(label="GTIN", placeholder="Enter GTIN", max_lines=1)
                 product_type = gr.Dropdown(
@@ -16,22 +17,23 @@ def create_item_enrichment_tab(process_single_sku_fn, save_preference_fn, produc
                 short_desc = gr.Textbox(label="Short Description", placeholder="Enter Short Description", lines=2)
                 long_desc = gr.Textbox(label="Long Description", placeholder="Enter Long Description", lines=3)
                 generate_btn = gr.Button("Generate Enrichment")
+            # Right Column: Generated Enrichments and Feedback
             with gr.Column():
                 gr.Markdown("### Generated Enrichments")
                 model_responses_output = gr.Radio(label="Select your preferred response:")
+                
+                gr.Markdown("### Provide Detailed Feedback")
+                with gr.Row():
+                    relevance = gr.Slider(label="Relevance", minimum=1, maximum=5, step=1, value=3)
+                    clarity = gr.Slider(label="Clarity", minimum=1, maximum=5, step=1, value=3)
+                with gr.Row():
+                    compliance = gr.Slider(label="Compliance", minimum=1, maximum=5, step=1, value=3)
+                    accuracy = gr.Slider(label="Accuracy", minimum=1, maximum=5, step=1, value=3)
+                comments = gr.Textbox(label="Additional Comments", placeholder="Enter any additional feedback here...", lines=2)
+                
                 save_btn = gr.Button("Save Preference")
                 feedback_output = gr.Textbox(label="Feedback", interactive=False)
                 model_responses_json = gr.JSON(visible=False)  # Hidden component
-
-        gr.Markdown("---")
-        gr.Markdown("## Provide Detailed Feedback")
-        with gr.Row():
-            relevance = gr.Slider(label="Relevance", minimum=1, maximum=5, step=1, value=3)
-            clarity = gr.Slider(label="Clarity", minimum=1, maximum=5, step=1, value=3)
-        with gr.Row():
-            compliance = gr.Slider(label="Compliance", minimum=1, maximum=5, step=1, value=3)
-            accuracy = gr.Slider(label="Accuracy", minimum=1, maximum=5, step=1, value=3)
-        comments = gr.Textbox(label="Additional Comments", placeholder="Enter any additional feedback here...", lines=2)
 
         # Define actions for buttons
         generate_btn.click(
@@ -55,6 +57,7 @@ def create_item_enrichment_tab(process_single_sku_fn, save_preference_fn, produc
             ],
             outputs=feedback_output
         )
+
 
 def create_leaderboard_tab(get_leaderboard_fn):
     with gr.TabItem("Leaderboard"):
