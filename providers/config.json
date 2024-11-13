@@ -8,25 +8,27 @@
         "family": "default",
         "temperature": 0.2,
         "required_fields": ["name", "provider", "model", "temperature"]
-      },
-      
-	        {
-	          "name": "gemini-pro",
-	          "provider": "gemini",
-	          "model": "gemini-pro",
-	          "family": "default",
-	          "temperature": 0.2,
-	          "required_fields": ["name", "provider", "model", "temperature"]
-	        },
+      },     
+	        
           {
-            "name": "llama-3.2-3B",
-            "provider": "runpod",
-            "model": "neuralmagic/Llama-3.2-3B-Instruct-FP8-dynamic",
+            "name": "llama-3.2-3B-gguf",
+            "provider": "local",
+            "model": "Llama-3.2-3B-gguf",
             "family": "llama",
             "temperature": 0.2,
-            "endpoint_id": "vllm-caiqtd1nirhws2",
-            "required_fields": ["name", "provider", "model", "temperature","endpoint_id"]
+            "provider_port" : 8000,
+            "required_fields": ["name", "provider", "model", "temperature","provider_port"]
+          },
+          {
+            "name": "llama-3.2-1B-gguf",
+            "provider": "local",
+            "model": "Llama-3.2-1B-gguf",
+            "family": "llama",
+            "temperature": 0.2,
+            "provider_port" : 8001,
+            "required_fields": ["name", "provider", "model", "temperature","provider_port"]
           }
+
            
     ],
     "tasks": {
