@@ -1,0 +1,24 @@
+SKU,GTIN,Task,Model_1,Response_1,Model_2,Response_2,Similarity_Score
+NVF5JOWH,98009049898670,title_enhancement,openai-gpt-4o-mini,"Cozy Unisex [Sweatshirt], Perfect for Casual Wear",llama-3.2-3B-gguf,"Champion Men's Slim Fit Long Sleeve Sweatshirt, Gray",0.60935378074646
+0V5ISDSG,43357679141462,title_enhancement,openai-gpt-4o-mini,"Cozy Unisex [Sweatshirt], Perfect for Casual Wear",llama-3.2-3B-gguf,"Champion Men's Grey Hoodie, One Size",0.5498048663139343
+H6BQ7ENS,30421833517505,title_enhancement,openai-gpt-4o-mini,"Unisex Soft Cotton [T-Shirt], White",llama-3.2-3B-gguf,"H6BQ7ENS Soft Cotton T-Shirt for Men, Unisex",0.8268792629241943
+VADDSFM1,11987462666634,title_enhancement,openai-gpt-4o-mini,"VADDSFM1 Unisex Cozy [Sweatshirt], Casual Style",llama-3.2-3B-gguf,"Champion Unisex Hoodie, Black, XS-XXXL",0.6810324192047119
+U74RBFZL,45547693493840,title_enhancement,openai-gpt-4o-mini,"Durable Unisex Classic Fit [Jeans], Blue",llama-3.2-3B-gguf,"Wrangler Men's Relaxed Fit Straight Leg Jeans, Blue, Black",0.6467640995979309
+BRI5DTUF,77167258677439,title_enhancement,openai-gpt-4o-mini,"BRI5DTUF Unisex Soft Cotton [T-Shirt], Gray",llama-3.2-3B-gguf,Bri5dtuf Men's Soft Cotton T-Shirt,0.8860427141189575
+AN8K2HJZ,13257368231872,title_enhancement,openai-gpt-4o-mini,"Durable Unisex Classic Fit [Jeans], Blue",llama-3.2-3B-gguf,"Lee Men's Durable Denim Jeans, Black, Set of 1, XS-L",0.6957677602767944
+7DHYUVTY,52020415154872,title_enhancement,openai-gpt-4o-mini,"Durable Unisex Classic Fit [Jeans], Blue",llama-3.2-3B-gguf,"Lee Men's Slim Fit Jeans, Blue",0.7059726119041443
+8T1NK54G,72701716671673,title_enhancement,openai-gpt-4o-mini,"Durable Kids Classic Fit [Jeans], Blue",llama-3.2-3B-gguf,"Lee Jeans - 8T1NK54G, Kids Stretch Skinny Fit Mid-Rise Dark Wash, Men's, Durable Denim, Blue",0.7355892658233643
+5RXYQW0P,80343074142456,title_enhancement,openai-gpt-4o-mini,"Unisex Casual & Dress Shoe, Classic Style, Comfortable Fit, Black",llama-3.2-3B-gguf,"5RXYQW0P - Men's & Women's Unisex Casual & Dress Oxford Shoe, Black, Wide & Cap Toe, Low Heel Style",0.7764073610305786
+BQ9O9BPV,12786298744429,title_enhancement,openai-gpt-4o-mini,"Comfort Brand Unisex Comfortable Stylish [Pants], Black",llama-3.2-3B-gguf,"Disney by Nike Kids Athletic Stretch Slim Fit [Pants], Blue/White, Sizes XS-XXL, Set",0.5746889114379883
+3WR6IOG2,54305886089733,title_enhancement,openai-gpt-4o-mini,"Unisex Soft Cotton [T-Shirt], Ideal for Everyday Use",llama-3.2-3B-gguf,"Soft Cotton Men's T-Shirt, Blue",0.8200322389602661
+XSJOXOJQ,50292068472248,title_enhancement,openai-gpt-4o-mini,"Comfort Brand Unisex Comfortable Stylish [Pants], Black",llama-3.2-3B-gguf,"Lee Unisex Comfortable and Stylish Pants, XS-XXL, Khaki",0.7867512702941895
+T9GYJRL1,51266369445606,title_enhancement,openai-gpt-4o-mini,"Cozy Unisex [Sweatshirt], Perfect for Casual Wear",llama-3.2-3B-gguf,"Champion Women's Sweatshirts, Comfortable & Cozy Casual Wear, Various Sizes XS-XXXL",0.6688153743743896
+AHBF6QKQ,78093314832609,title_enhancement,openai-gpt-4o-mini,"Durable Unisex Classic Fit [Jeans], Blue",llama-3.2-3B-gguf,"AHBF6QKQ Durable Denim Jeans, Unisex, Everyday Wear",0.8352956771850586
+BBGF6DEK,99414953072613,title_enhancement,openai-gpt-4o-mini,"Unisex Soft Cotton [T-Shirt], Ideal for Everyday Use",llama-3.2-3B-gguf,"Soft Cotton T-Shirt by Men's, Black, 3-Pack",0.7607226371765137
+I4ZTQLFM,74740892189317,title_enhancement,openai-gpt-4o-mini,"Unisex Soft Cotton [T-Shirt], Ideal for Everyday Use",llama-3.2-3B-gguf,"Soft Cotton Casual T-Shirt, Men's",0.8437623381614685
+24OCJ9RX,15716566806243,title_enhancement,openai-gpt-4o-mini,"Durable Unisex Classic Fit [Jeans], Blue",llama-3.2-3B-gguf,"Levi's Kids Stretch Skinny Fit Mid-Rise [Jeans], 24OCJ9RX, Durable Denim Jeans for Everyday Wear",0.651694655418396
+N9VTETE8,39465700865457,title_enhancement,openai-gpt-4o-mini,"Unisex Soft Cotton [T-Shirt], Ideal for Everyday Use",llama-3.2-3B-gguf,"Soft Cotton Men's T-Shirt, Red",0.7955501079559326
+9O2THIEN,19637124959400,title_enhancement,openai-gpt-4o-mini,"Unisex Casual & Dress Shoe, Classic Style, Comfortable Fit, Black, Size 10",llama-3.2-3B-gguf,"9O2THIEN Men's Casual & Dress Oxford Shoe, Wide & Cap Toe, Black, Size 10-12",0.7997313141822815
+Q8949GNO,44800124083109,title_enhancement,openai-gpt-4o-mini,"Unisex Casual & Dress Shoe, Classic & Stylish, Low Heel, Round Toe, Black",llama-3.2-3B-gguf,"Q8949GNO Casual & Dress Shoes - Classic and Stylish Footwear for Men, Women, and Unisex, Black, Wide & Low Heel Style, Round Toe",0.7255380153656006
+Z5GFFWLT,27826988696646,title_enhancement,openai-gpt-4o-mini,"Unisex Casual & Dress Shoe, Classic Style, Comfortable Fit, Black",llama-3.2-3B-gguf,"Clarks Unisex Derby Shoe, Waterproof & Lightweight, Black",0.733810305595398
+LSD6ZL5L,14357084613538,title_enhancement,openai-gpt-4o-mini,"Unisex Cozy [Sweatshirt], Gray",llama-3.2-3B-gguf,"Champion Unisex Sweatshirt, Gray",0.819403350353241
