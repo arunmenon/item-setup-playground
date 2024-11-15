@@ -1,15 +1,40 @@
-Evaluate the following product title according to the style guide provided.
+Evaluate the following product title for quality and compliance with the provided style guide. Adherence to the style guide is the highest priority.
 
-Product Title:
+### Evaluation Criteria:
+1. **Adherence to Style Guide** (Critical): Does the title follow all the rules and formatting guidelines outlined in the style guide?
+2. **Clarity**: Does the title clearly and accurately describe the product? Avoid ambiguous or vague language.
+3. **Relevance**: Is the title relevant to the product's type, attributes, and intended use? Avoid unnecessary or misleading information.
+4. **Length**: Is the title concise and within recommended character limits while still providing sufficient detail?
+5. **Keywords**: Does the title include relevant keywords (e.g., product type, brand name, unique attributes) for search optimization?
+
+### Scoring:
+Provide a quality score on a scale from **1 to 10**:
+- **1–3 (Poor)**: Major issues with adherence to the style guide, clarity, or relevance.
+- **4–6 (Fair)**: Moderate issues with one or more aspects; room for improvement.
+- **7–8 (Good)**: Meets most criteria but may have minor issues or improvement opportunities.
+- **9–10 (Excellent)**: Fully adheres to the style guide, is clear, concise, relevant, and optimized for search.
+
+### Product Title:
 {{ response_content }}
 
-Style Guide:
+### Style Guide:
 {{ styling_guide }}
 
-Provide a quality score between 1 and 5 (5 being excellent), and explain your reasoning.
+Provide the following in your response:
+1. A quality score between **1 and 10**, based on the above criteria.
+2. A detailed explanation for the score, addressing each criterion (adherence to the style guide, clarity, relevance, length, keywords).
+3. Specific suggestions for improvement, if applicable, to help the title fully meet the style guide and optimization standards.
 
-Your response should be in JSON format:
+Your response should be in the following JSON format:
+```json
 {
   "quality_score": <score>,
-  "reasoning": "<explanation>"
+  "reasoning": {
+    "adherence_to_style_guide": "<explanation>",
+    "clarity": "<explanation>",
+    "relevance": "<explanation>",
+    "length": "<explanation>",
+    "keywords": "<explanation>"
+  },
+  "suggestions": "<improvement suggestions or 'None' if the title is excellent>"
 }

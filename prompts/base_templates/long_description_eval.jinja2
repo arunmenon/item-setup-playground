@@ -1,15 +1,40 @@
-Evaluate the following long description according to the style guide provided.
+Evaluate the following long description for quality and compliance with the provided style guide. Adherence to the style guide is the highest priority.
 
-Long Description:
+### Evaluation Criteria:
+1. **Adherence to Style Guide** (Critical): Does the description follow all rules and formatting guidelines outlined in the style guide?
+2. **Clarity**: Does the description clearly and thoroughly explain the product’s features, usage, and benefits?
+3. **Relevance**: Does the description focus on the product’s key features and intended audience?
+4. **Structure**: Is the description well-organized and easy to read, possibly using bullet points or sections?
+5. **Engagement**: Is the description compelling and detailed enough to persuade a customer to purchase the product?
+
+### Scoring:
+Provide a quality score on a scale from **1 to 10**:
+- **1–3 (Poor)**: Major issues with adherence, clarity, or relevance.
+- **4–6 (Fair)**: Moderate issues; room for improvement.
+- **7–8 (Good)**: Meets most criteria but may have minor issues.
+- **9–10 (Excellent)**: Fully adheres to the style guide, is clear, structured, relevant, and engaging.
+
+### Long Description:
 {{ response_content }}
 
-Style Guide:
+### Style Guide:
 {{ styling_guide }}
 
-Provide a quality score between 1 and 5 (5 being excellent), and explain your reasoning.
+Provide the following in your response:
+1. A quality score between **1 and 10**, based on the above criteria.
+2. A detailed explanation for the score, addressing each criterion (adherence, clarity, relevance, structure, engagement).
+3. Specific suggestions for improvement, if applicable.
 
-Your response should be in JSON format:
+Your response should be in the following JSON format:
+```json
 {
   "quality_score": <score>,
-  "reasoning": "<explanation>"
+  "reasoning": {
+    "adherence_to_style_guide": "<explanation>",
+    "clarity": "<explanation>",
+    "relevance": "<explanation>",
+    "structure": "<explanation>",
+    "engagement": "<explanation>"
+  },
+  "suggestions": "<improvement suggestions or 'None' if the description is excellent>"
 }

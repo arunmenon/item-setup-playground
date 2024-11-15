@@ -77,7 +77,7 @@ def call_api(item_data: Dict[str, Any]) -> Dict[str, Any]:
 
 def prepare_item(row: pd.Series) -> Dict[str, Any]:
     return {
-        'item_id': row['item_id'],
+        'item_id': row['catlg_item_id'],
         'item_title': row['item_title'],
         'short_description': row['short_description'],
         'long_description': row['long_description'],
