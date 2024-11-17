@@ -1,35 +1,37 @@
 # providers/openai_provider.py
-import json
 import os
 import logging
-import httpx
 import requests
+import json
 from providers.base_provider import BaseProvider
 
 
 class OpenAIProvider(BaseProvider):
-    def __init__(self):
+    def __init__(self, model='gpt-4o', api_base=None, version=None, temperature=None, max_tokens=None):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.use_elements_llm = True
-        self.base_api = os.getenv("ELEMENTS_API_BASE", "https://wmtllmgateway.prod.walmart.com/wmtllmgateway/v1/openai")
         self.api_key = os.getenv("ELEMENTS_API_KEY")
-        self.client = self.setup_http_client(self.api_key)
+        self.model = model
+        self.api_base = api_base
+        self.api_version = version
+        self.temperature = temperature
+        self.max_tokens = max_tokens
 
-    def setup_http_client(self, api_key: str) -> httpx.Client:
+        if not self.api_key:
+            raise ValueError("ELEMENTS_API_KEY is missing from environment variables.")
         ca_bundle_path = os.getenv("WMT_CA_PATH")
         cert_file_name = "ca-bundle.crt"
         self.resolved_file_path = os.path.join(ca_bundle_path, cert_file_name)
-        self.headers = {
-            "X-Api-Key"   : api_key,
-            "Content-Type": "application/json"
-        }
 
+        self.headers = {
+            'x-api-key'   : self.api_key,
+            'Content-Type': 'application/json'
+        }
 
     def create_chat_completion(self, model: str, messages: list, temperature: float, max_tokens: int):
         payload = {
             "model"            : model,
             "task"             : "chat/completions",
-            "api-version"      : '2024-02-01',
+            "api-version"      : self.api_version,
             "model-params"     : {
                 "messages": messages
             },
@@ -42,10 +44,16 @@ class OpenAIProvider(BaseProvider):
         }
 
         try:
-            response = requests.request("POST", self.base_api, headers=self.headers, data=json.dumps(payload), verify=self.resolved_file_path)
+            response = requests.post(
+                self.api_base,
+                headers=self.headers,
+                data=json.dumps(payload),
+                verify=self.resolved_file_path
+            )
+            response.raise_for_status()
             response_data = response.json()
             content = response_data['choices'][0]['message']['content']
             return {"choices": [{"message": {"content": content}}]}
-        except BaseException as e:
+        except requests.exceptions.RequestException as e:
             self.logger.error("Error creating OpenAI chat completion: %s", str(e))
             raise
