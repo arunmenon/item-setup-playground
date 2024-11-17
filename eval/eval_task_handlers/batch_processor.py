@@ -1,39 +1,83 @@
+import json
+import sqlite3
 from datetime import datetime
-import pandas as pd
 import logging
-import os
-from eval.config.constants import TASK_MAPPING
 import asyncio  # Required for managing async tasks
+from eval.config.constants import TASK_MAPPING
 
 
 class BatchProcessor:
-    def __init__(self, batch_size, detail_file=None, winner_file=None):
+    def __init__(self, batch_size, db_path=None):
         """
         Initialize the BatchProcessor.
 
         Args:
             batch_size (int): Number of records to process in each batch.
-            detail_file (str, optional): Path to the detailed results file. Defaults to timestamp-based name.
-            winner_file (str, optional): Path to the winner results file. Defaults to timestamp-based name.
+            db_path (str): Path to the SQLite database file.
         """
         self.batch_size = batch_size
+        self.db_path = db_path or "results.db" 
 
-        # Generate default file names with timestamp if not provided
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.detail_file = detail_file or f"detail_results_{timestamp}.csv"
-        self.winner_file = winner_file or f"winner_results_{timestamp}.csv"
+        # Initialize the database and create tables if they don't exist
+        self._initialize_database()
 
-        logging.info(f"BatchProcessor initialized with:")
-        logging.info(f"  Detail file: {self.detail_file}")
-        logging.info(f"  Winner file: {self.winner_file}")
+    def _initialize_database(self):
+        """
+        Create necessary tables in the SQLite database if they do not exist.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+
+            # Create detail_results table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS detail_results (
+                    item_id TEXT,
+                    item_product_type TEXT,
+                    task TEXT,
+                    model_name TEXT,
+                    model_version TEXT,
+                    quality_score INTEGER,
+                    reasoning TEXT,
+                    suggestions TEXT,
+                    is_winner BOOLEAN,
+                    PRIMARY KEY (item_id, task, model_name, model_version)
+                )
+            """)
+
+            # Create winner_results table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS winner_results (
+                    item_id TEXT,
+                    item_product_type TEXT,
+                    task TEXT,
+                    model_name TEXT,
+                    model_version TEXT,
+                    quality_score INTEGER,
+                    reasoning TEXT,
+                    suggestions TEXT,
+                    is_winner BOOLEAN,
+                    PRIMARY KEY (item_id, task, model_name, model_version)
+                )
+            """)
+
+            conn.commit()
 
     def process_batches(self, df, api_handler, evaluator, prepare_item):
-        detail_results = []
-        winner_results = []
+        """
+        Process data in batches and save results to the database after each batch.
 
+        Args:
+            df (pd.DataFrame): Input DataFrame.
+            api_handler (APIHandler): API handler instance.
+            evaluator (Evaluator): Evaluator instance.
+            prepare_item (callable): Function to prepare item data for API.
+        """
         for start in range(0, len(df), self.batch_size):
             batch = df.iloc[start:start + self.batch_size]
             logging.info(f"Processing batch {start // self.batch_size + 1}")
+
+            detail_results = []
+            winner_results = []
 
             for _, row in batch.iterrows():
                 item_id = row['catlg_item_id']
@@ -46,18 +90,15 @@ class BatchProcessor:
                         self._evaluate_item(item_data, enrichment_results, evaluator)
                     )
                     detail_results.extend(detail)
-                    if winner:
-                        winner_results.extend(winner)
+                    winner_results.extend(winner)
                 else:
                     logging.warning(f"No enrichment results for item: {item_id}")
 
-            # Save results for detail and winner views
+            # Persist results after processing each batch
             if detail_results:
-                self._save_results(detail_results, self.detail_file)
-                detail_results.clear()  # Clear after saving
+                self._save_to_db(detail_results, "detail_results")
             if winner_results:
-                self._save_results(winner_results, self.winner_file)
-                winner_results.clear()  # Clear after saving
+                self._save_to_db(winner_results, "winner_results")
 
     async def _evaluate_item(self, item_data, enrichment_results, evaluator):
         """
@@ -101,24 +142,24 @@ class BatchProcessor:
                 )
                 task_context.append((task, model_name))  # Track the task and model name
 
-
         # Await and process results
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for idx,result  in enumerate(results):
+        for idx, result in enumerate(results):
             if isinstance(result, dict):
                 # Ensure necessary fields are added
                 task, model_name = task_context[idx]
 
                 ordered_result = {
-                "item_id": item_data["item_id"],
-                "item_product_type": product_type,
-                "task": task,
-                "model_name": model_name,
-                "quality_score": result.get("quality_score"),
-                "reasoning": result.get("reasoning"),
-                "suggestions": result.get("suggestions"),
-                "is_winner": False,  # Default to False
+                    "item_id": item_data["item_id"],
+                    "item_product_type": product_type,
+                    "task": task,
+                    "model_name": model_name,
+                    "model_version": item_data.get("model_version", "1.0"),  # Default version
+                    "quality_score": result.get("quality_score"),
+                    "reasoning": result.get("reasoning"),
+                    "suggestions": result.get("suggestions"),
+                    "is_winner": False,  # Default to False
                 }
                 detail_results.append(ordered_result)
 
@@ -148,21 +189,52 @@ class BatchProcessor:
         return detail_results, winner_results
 
 
-    def _save_results(self, results, file_path):
+    def _save_to_db(self, results, table_name):
         """
-        Save results to a CSV file.
+        Save results to a SQLite database with an upsert operation.
 
         Args:
             results (list[dict]): Results to save.
-            file_path (str): Path to the output file.
+            table_name (str): Name of the table to insert the data.
         """
-        field_order = [
-        "item_id", "item_product_type", "task", "model_name",
-        "quality_score", "reasoning", "suggestions", "is_winner"
-        ]
-        df = pd.DataFrame(results)
-        df = df[field_order]
-        write_mode = 'a' if os.path.exists(file_path) else 'w'
-        header = not os.path.exists(file_path)  # Write header only if file doesn't exist
-        df.to_csv(file_path, mode=write_mode, header=header, index=False)
-        logging.info(f"Results saved to '{file_path}' with {len(df)} rows.")
+        if not results:
+            logging.info(f"No results to save for {table_name}.")
+            return
+
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+
+            # Prepare the data for insertion with serialization
+            data_to_insert = [
+                (
+                    result["item_id"],
+                    result["item_product_type"],
+                    result["task"],
+                    result["model_name"],
+                    result["model_version"],
+                    result["quality_score"],
+                    json.dumps(result.get("reasoning", {})),  # Serialize reasoning as JSON string
+                    json.dumps(result.get("suggestions", "None")),  # Serialize suggestions as JSON string
+                    result["is_winner"],
+                )
+                for result in results
+            ]
+
+            # Insert or replace into the appropriate table
+            cursor.executemany(f"""
+                INSERT INTO {table_name} (
+                    item_id, item_product_type, task, model_name, model_version,
+                    quality_score, reasoning, suggestions, is_winner
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(item_id, task, model_name, model_version)
+                DO UPDATE SET
+                    quality_score=excluded.quality_score,
+                    reasoning=excluded.reasoning,
+                    suggestions=excluded.suggestions,
+                    is_winner=excluded.is_winner
+            """, data_to_insert)
+
+            conn.commit()
+            logging.info(f"{len(results)} rows upserted into {table_name}.")
+
