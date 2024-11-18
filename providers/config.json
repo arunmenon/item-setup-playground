@@ -34,7 +34,7 @@
       "name": "llama3-8b-orca-1024-w8a8",
       "provider": "elements_openai",
       "model": "llama3-8b-orca-1024-w8a8",
-      "family": "default",
+      "family": "llama",
       "temperature": 0.1,
       "api_base": "https://llama3-8b-orca-1024-w8a8-stage.element.glb.us.walmart.net/llama3-8b-orca-1024-w8a8/v1/completions",
       "required_fields": [
@@ -48,7 +48,7 @@
       "name": "meta-llama/Llama-3.2-1B",
       "provider": "elements_openai",
       "model": "meta-llama/Llama-3.2-1B",
-      "family": "default",
+      "family": "llama",
       "temperature": 0.1,
       "api_base": "https://llama-3-dot-2-1b-stage.element.glb.us.walmart.net/llama-3-dot-2-1b/v1/completions",
       "required_fields": [
@@ -62,7 +62,7 @@
       "name": "meta-llama/Llama-3.2-3B",
       "provider": "elements_openai",
       "model": "meta-llama/Llama-3.2-3B",
-      "family": "default",
+      "family": "llama",
       "temperature": 0.1,
       "api_base": "https://llama-3-dot-2-3b-stage.element.glb.us.walmart.net/llama-3-dot-2-3b/v1/completions",
       "required_fields": [
@@ -75,7 +75,7 @@
   ],
   "tasks": {
     "title_enhancement": {
-      "max_tokens": 2000,
+      "max_tokens": 2400,
       "output_format": "json"
     },
     "short_description_enhancement": {
@@ -97,7 +97,7 @@
   },
   "task_execution": {
     "default_tasks": [
-      "title_enhancement", "short_description_enhancement", "long_description_enhancement"
+      "title_enhancement"
     ],
     "conditional_tasks": {
       "attribute_extraction": "attributes_list",
