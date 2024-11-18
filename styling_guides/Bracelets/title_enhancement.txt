@@ -1,0 +1,113 @@
+# Bracelets Product Title Enhancement Guidelines
+Enhance Bracelets product titles by following these guidelines. Ensure the final title is 90 characters or less, including spaces.
+---
+## ALL FINE JEWELRY:
+
+1. **Brand or License Name**
+   - Include only if Global Brand License.
+   - Place at the beginning.
+   - Example: Time and Tru
+2. **Style Name/Shape**
+   - Include only if applicable.
+3. **Stone Color**
+   - Include only if applicable.
+   - Example: White
+4. **Gemstone Type/Pearl Type**
+   - Include only if applicable.
+   - Example: Diamond
+5. **Product Type**
+   - Must Include.
+   - Example: Ring
+6. **Total Carat Weight**
+    - Include when applicable.
+    - For precious stone Must include "ct. t.w" to end for carat total weight
+    - Example : 1/10 ct. t.w.
+7. **Metal Stamp**
+    - Include only if applicable.
+    - Example: 14K or 925 Sterling
+8. **Meta Type**
+    - Include only if applicable.
+    - Precede with a comma.
+    - Example: , Gold or , Platinum
+9. **Chain Length Size**
+    - Include only if applicable.
+    - Precede with a comma.
+    - Provide value in inches
+10. **Chain Pattern**
+    - Include only if applicable.
+    - Precede with a comma.
+11. **Items Included**
+    - Only include if Retail Packaging is Selected or Item calls out specifically
+    - Enclose in brackets ()
+    - Precede with includes or comes with
+    - Include maximum 2
+    - Example: includes designer box or comes with designer box
+
+---
+---
+## ALL FASHION JEWELRY:
+
+1. **Brand or License Name**
+   - Include only if Global Brand License.
+   - Place at the beginning.
+   - Example: JeenMata
+2. **Style Name/Shape**
+   - Include only if applicable.
+3. **Stone Color**
+   - Include only if applicable.
+   - Example: White
+4. **Stone Name**
+   - Include only if applicable and stone is precious or semi precious
+5. **Theme Inscription**
+   - Include only if applicable.
+6. **Product Type**
+   - Must Include.
+   - Example: Ring
+7. **Meta Type**
+    - Include only if applicable.
+    - Precede with a comma.
+    - Example: , Sterling Silver
+8. **Items Included**
+    - Include only if applicable.
+    - Precede with a comma.
+9. **Diameter/Chain Length Size**
+    - Include only if applicable.
+    - Precede with a comma.
+    - Provide value in inches
+10. **Precious Stone**
+    - Include only if applicable.
+    - Precede with a comma.
+    - Example: Diamond
+11. **Total Carat Weight**
+    - Include when applicable.
+    - For precious stone Must include "ct. t.w" to end for carat total weight
+    - Example : 1/10 ct. t.w.
+12. **Count Per Pack**
+    - Include only if applicable.
+    - Precede with a comma.
+13. **Model**
+    - Include only if Global Brand License.
+    - Place at the end.
+---
+
+## Construction Guidelines:
+
+- **Order**: Arrange elements in the sequence provided.
+- **Character Limit**: Do not exceed 90 characters, including spaces.
+- **Capitalize**: The first letter of each word should be capitalized, except for articles, conjunctions, prepositions, and acronyms. Avoid all caps, unless present in brand name.
+- **Special Characters**: Avoid special characters, except if Apostrophes is present in Brand Name.
+
+---
+
+## Examples:
+
+1. **ALL FINE JEWELRY **:
+   Gemstone Tennis Bracelet 7-5/8 ct. t.w. in Sterling Silver
+
+2. **ALL FASHION JEWELRY**:
+   Circle Pendant Necklace 1/4 ct t.w. in Sterling Silver, 16” + 2” Extender
+   Jupiter Natural Red Corundum Necklace, Silver Plated, 16" +2" Length
+
+---
+
+By following these guidelines, you'll create clear and concise product titles that are standardized and optimized for customer understanding.
