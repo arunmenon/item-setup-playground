@@ -143,7 +143,8 @@ class ItemEnricher:
             max_tokens = task_config.get('max_tokens', 150)
 
             # Invoke the handler with the prompt
-            response = await handler.invoke(request=BaseLLMRequest(prompt=prompt, max_tokens=max_tokens), task=task_name)
+            # response = await handler.invoke(request=BaseLLMRequest(prompt=prompt, max_tokens=max_tokens), task=task_name)
+            response = await handler.invoke(request=BaseLLMRequest(prompt=prompt, parameters={'max_tokens': max_tokens}), task=task_name)
             logging.debug(f"Received response for task '{task_name}' from handler '{handler_name}': {response}")
 
             return task_name, handler_name, {'response': response['response'], 'error': None}
