@@ -36,10 +36,13 @@ class BatchProcessor:
                     task TEXT,
                     model_name TEXT,
                     model_version TEXT,
-                    quality_score INTEGER,
+                    quality_score TEXT,
                     reasoning TEXT,
                     suggestions TEXT,
                     is_winner BOOLEAN,
+                    enriched_content TEXT,
+                    prompt_version TEXT,
+                    eval_prompt_version TEXT,
                     PRIMARY KEY (item_id, task, model_name, model_version)
                 )
             """)
@@ -52,10 +55,13 @@ class BatchProcessor:
                     task TEXT,
                     model_name TEXT,
                     model_version TEXT,
-                    quality_score INTEGER,
+                    quality_score TEXT,
                     reasoning TEXT,
                     suggestions TEXT,
                     is_winner BOOLEAN,
+                    enriched_content TEXT,
+                    prompt_version TEXT,
+                    eval_prompt_version TEXT,
                     PRIMARY KEY (item_id, task, model_name, model_version)
                 )
             """)
@@ -132,15 +138,36 @@ class BatchProcessor:
                 enriched_content = model_data.get("response", {}).get(f"enhanced_{task}")
                 if not enriched_content:
                     logging.warning(f"No enriched content for task '{task_name}' by provider '{model_name}'.")
-                    continue
 
-                # Create async tasks for evaluation
-                tasks.append(
-                    evaluator.evaluate_task(
-                        item_data, product_type, task, model_name, enriched_content
+                    # Directly construct the result with '-NA-' values
+                    ordered_result = {
+                        "item_id"            : item_data["item_id"],
+                        "item_product_type"  : product_type,
+                        "task"               : task,
+                        "model_name"         : model_name,
+                        "model_version"      : "1",  # Default version
+                        "quality_score"      : 0,
+                        "reasoning"          : "-NA-",
+                        "suggestions"        : "-NA-",
+                        "is_winner"          : False,  # Default to False
+                        "enriched_content"   : "-NA-",
+                        "prompt_version"     : "1",
+                        "eval_prompt_version": "1",
+                    }
+                    detail_results.append(ordered_result)
+
+                    # Group result for winner selection
+                    if task not in task_detail_results:
+                        task_detail_results[task] = []
+                    task_detail_results[task].append(ordered_result)
+                else:
+                    # Create async tasks for evaluation
+                    tasks.append(
+                        evaluator.evaluate_task(
+                            item_data, product_type, task, model_name, enriched_content
+                        )
                     )
-                )
-                task_context.append((task, model_name))  # Track the task and model name
+                    task_context.append((task, model_name, enriched_content))  # Track the task and model name
 
         # Await and process results
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -148,18 +175,22 @@ class BatchProcessor:
         for idx, result in enumerate(results):
             if isinstance(result, dict):
                 # Ensure necessary fields are added
-                task, model_name = task_context[idx]
+                task, model_name, enriched_content = task_context[idx]
 
+                # Ensure necessary fields are added
                 ordered_result = {
-                    "item_id": item_data["item_id"],
-                    "item_product_type": product_type,
-                    "task": task,
-                    "model_name": model_name,
-                    "model_version": item_data.get("model_version", "1.0"),  # Default version
-                    "quality_score": result.get("quality_score"),
-                    "reasoning": result.get("reasoning"),
-                    "suggestions": result.get("suggestions"),
-                    "is_winner": False,  # Default to False
+                    "item_id"            : item_data["item_id"],
+                    "item_product_type"  : product_type,
+                    "task"               : task,
+                    "model_name"         : model_name,
+                    "model_version"      : "1",  # Default version
+                    "quality_score"      : result.get("quality_score", 0),
+                    "reasoning"          : result.get("reasoning", "-NA-"),
+                    "suggestions"        : result.get("suggestions", "-NA-"),
+                    "is_winner"          : False,  # Default to False
+                    "enriched_content"   : enriched_content,
+                    "prompt_version"     : "1",
+                    "eval_prompt_version": "1",
                 }
                 detail_results.append(ordered_result)
 
@@ -216,6 +247,9 @@ class BatchProcessor:
                     json.dumps(result.get("reasoning", {})),  # Serialize reasoning as JSON string
                     json.dumps(result.get("suggestions", "None")),  # Serialize suggestions as JSON string
                     result["is_winner"],
+                    result["enriched_content"],
+                    result["prompt_version"],
+                    result["eval_prompt_version"]
                 )
                 for result in results
             ]
@@ -224,15 +258,19 @@ class BatchProcessor:
             cursor.executemany(f"""
                 INSERT INTO {table_name} (
                     item_id, item_product_type, task, model_name, model_version,
-                    quality_score, reasoning, suggestions, is_winner
+                    quality_score, reasoning, suggestions, is_winner,
+                    enriched_content, prompt_version, eval_prompt_version
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(item_id, task, model_name, model_version)
                 DO UPDATE SET
                     quality_score=excluded.quality_score,
                     reasoning=excluded.reasoning,
                     suggestions=excluded.suggestions,
-                    is_winner=excluded.is_winner
+                    is_winner=excluded.is_winner,
+                    enriched_content=excluded.enriched_content,
+                    prompt_version=excluded.prompt_version,
+                    eval_prompt_version=excluded.eval_prompt_version
             """, data_to_insert)
 
             conn.commit()

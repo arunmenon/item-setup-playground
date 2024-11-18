@@ -1,6 +1,7 @@
 import logging
 import json
 from models.llm_request_models import BaseLLMRequest
+from parsers.parser_factory import ParserFactory
 
 
 class Evaluator:
@@ -40,7 +41,7 @@ class Evaluator:
 
             # Invoke the LLM handler asynchronously
             response = await self.handler.invoke(
-                request=BaseLLMRequest(prompt=prompt, max_tokens=200), task=f'{task}_eval'
+                request=BaseLLMRequest(prompt=prompt, parameters={'max_tokens': 2400}), task=f'{task}_eval'
             )
 
             logging.debug(f"LLM Eval handler response for model {model_name} for {task}: {response}")
@@ -54,7 +55,9 @@ class Evaluator:
     def parse_llm_response(self, response_text):
         logging.debug(f"Raw LLM response: {response_text}")
         try:
-            parsed = json.loads(response_text)
+            parser = ParserFactory.get_parser("json")
+            parsed = parser.parse(response_text)
+            # parsed = json.loads(response_text)
             return {
                 "quality_score": parsed.get("quality_score"),
                 "reasoning": {

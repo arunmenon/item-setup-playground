@@ -1,3 +1,10 @@
+import sys
+import os
+import traceback
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(1, os.path.join(base_dir, "../"))
+
 from eval.eval_task_handlers.input_handler import InputHandler
 from eval.eval_task_handlers.api_handler import APIHandler
 from eval.eval_task_handlers.evaluator import Evaluator
@@ -24,27 +31,35 @@ def main():
 
     # Initialize LLM handler
     provider_config = {
-        "name": "openai-gpt-4o-mini",
-        "provider": "openai",
-        "model": "gpt-4o-mini",
-        "temperature": 0.2,
+        "name"           : "gpt-4o",
+        "provider"       : "openai",
+        "model"          : "gpt-4o",
+        "family"         : "default",
+        "temperature"    : 0.2,
+        "version"        : "2024-02-01",
+        "api_base"       : "https://wmtllmgateway.prod.walmart.com/wmtllmgateway/v1/openai",
+        "required_fields": []
     }
-    handler = BaseModelHandler(**provider_config)
+    try:
+        handler = BaseModelHandler(**provider_config)
 
-    input_handler = InputHandler(args.input)
-    api_handler = APIHandler(API_URL)
-    evaluator = Evaluator(TASK_MAPPING, template_renderer, styling_guide_manager, handler)
+        input_handler = InputHandler(args.input)
+        api_handler = APIHandler(API_URL)
+        evaluator = Evaluator(TASK_MAPPING, template_renderer, styling_guide_manager, handler)
 
-    # Initialize the BatchProcessor
-    batch_processor = BatchProcessor(args.batch_size)
+        # Initialize the BatchProcessor
+        batch_processor = BatchProcessor(args.batch_size)
 
-    # Load input data
-    df = input_handler.load_data()
+        # Load input data
+        df = input_handler.load_data()
 
-    # Process batches
-    batch_processor.process_batches(
-        df, api_handler, evaluator, prepare_item
-    )
+        # Process batches
+        batch_processor.process_batches(
+            df, api_handler, evaluator, prepare_item
+        )
+    except Exception as e:
+        print (f"Error : {e}")
+        print (f"Traceback : {traceback.print_exc()}")
 
     logging.info("Batch processing completed.")
 

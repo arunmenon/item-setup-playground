@@ -25,7 +25,7 @@ class JsonResponseParser(ResponseParser):
             
             if json_content:
                 json_str = json_content.group(1)
-                logging.info("Extracted JSON from code block.{json_str}")
+                logging.info(f"Extracted JSON from code block.{json_str}")
             else:
                 # Fallback: Use the entire response as JSON
                 json_str = response.strip()
