@@ -16,7 +16,7 @@
       ]
     },
     {
-      "name": "gemini1.5-flash",
+      "name": "gemini-1.5-flash",
       "provider": "gemini",
       "model": "gemini-1.5-flash",
       "version": "001",
@@ -79,15 +79,15 @@
       "output_format": "json"
     },
     "short_description_enhancement": {
-      "max_tokens": 100,
+      "max_tokens": 2000,
       "output_format": "json"
     },
     "long_description_enhancement": {
-      "max_tokens": 150,
+      "max_tokens": 2000,
       "output_format": "json"
     },
     "attribute_extraction": {
-      "max_tokens": 300,
+      "max_tokens": 2000,
       "output_format": "json"
     },
     "vision_attribute_extraction": {
@@ -97,7 +97,7 @@
   },
   "task_execution": {
     "default_tasks": [
-      "title_enhancement"
+      "title_enhancement", "short_description_enhancement", "long_description_enhancement"
     ],
     "conditional_tasks": {
       "attribute_extraction": "attributes_list",
