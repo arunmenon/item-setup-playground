@@ -1,58 +1,107 @@
 {
-    "providers": [
-
-      {
-        "name": "openai",
-        "provider": "openai",
-        "model": "gpt-4o-mini",
-        "family": "default",
-        "temperature": 0.2,
-        "required_fields": ["name", "provider", "model", "temperature"]
-      },
-      
-	        {
-	          "name": "gemini",
-	          "provider": "gemini",
-	          "model": "gemini-pro",
-	          "family": "default",
-	          "temperature": 0.2,
-	          "required_fields": ["name", "provider", "model", "temperature"]
-	        }
-     
-      
-    ],
-    "tasks": {
-      "title_enhancement": {
-        "max_tokens": 200,
-        "output_format": "json"
-      },
-      "short_description_enhancement": {
-        "max_tokens": 100,
-        "output_format": "json"
-      },
-      "long_description_enhancement": {
-        "max_tokens": 150,
-        "output_format": "json"
-      },
-      "attribute_extraction": {
-        "max_tokens": 300,
-        "output_format": "json"
-      },
-      "vision_attribute_extraction": {
-        "max_tokens": 500,
-        "output_format": "json"
-      }
+  "providers": [
+    {
+      "name": "gpt-4o",
+      "provider": "openai",
+      "model": "gpt-4o",
+      "family": "default",
+      "temperature": 0.2,
+      "version": "2024-02-01",
+      "api_base": "https://wmtllmgateway.prod.walmart.com/wmtllmgateway/v1/openai",
+      "required_fields": [
+        "name",
+        "provider",
+        "model",
+        "temperature"
+      ]
     },
-    
+    {
+      "name": "gemini-1.5-flash",
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "version": "001",
+      "api_base": "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/google-genai",
+      "family": "default",
+      "temperature": 0.2,
+      "required_fields": [
+        "name",
+        "provider",
+        "model",
+        "temperature"
+      ]
+    },
+    {
+      "name": "llama3-8b-orca-1024-w8a8",
+      "provider": "elements_openai",
+      "model": "llama3-8b-orca-1024-w8a8",
+      "family": "llama",
+      "temperature": 0.1,
+      "api_base": "https://llama3-8b-orca-1024-w8a8-stage.element.glb.us.walmart.net/llama3-8b-orca-1024-w8a8/v1/completions",
+      "required_fields": [
+        "name",
+        "provider",
+        "model",
+        "temperature"
+      ]
+    },
+    {
+      "name": "meta-llama/Llama-3.2-1B",
+      "provider": "elements_openai",
+      "model": "meta-llama/Llama-3.2-1B",
+      "family": "llama",
+      "temperature": 0.1,
+      "api_base": "https://llama-3-dot-2-1b-stage.element.glb.us.walmart.net/llama-3-dot-2-1b/v1/completions",
+      "required_fields": [
+        "name",
+        "provider",
+        "model",
+        "temperature"
+      ]
+    },
+    {
+      "name": "meta-llama/Llama-3.2-3B",
+      "provider": "elements_openai",
+      "model": "meta-llama/Llama-3.2-3B",
+      "family": "llama",
+      "temperature": 0.1,
+      "api_base": "https://llama-3-dot-2-3b-stage.element.glb.us.walmart.net/llama-3-dot-2-3b/v1/completions",
+      "required_fields": [
+        "name",
+        "provider",
+        "model",
+        "temperature"
+      ]
+    }
+  ],
+  "tasks": {
+    "title_enhancement": {
+      "max_tokens": 2000,
+      "output_format": "json"
+    },
+    "short_description_enhancement": {
+      "max_tokens": 2000,
+      "output_format": "json"
+    },
+    "long_description_enhancement": {
+      "max_tokens": 2000,
+      "output_format": "json"
+    },
+    "attribute_extraction": {
+      "max_tokens": 2000,
+      "output_format": "json"
+    },
+    "vision_attribute_extraction": {
+      "max_tokens": 500,
+      "output_format": "json"
+    }
+  },
   "task_execution": {
     "default_tasks": [
-      "title_enhancement"
-      
+      "title_enhancement", "short_description_enhancement", "long_description_enhancement"
     ],
     "conditional_tasks": {
       "attribute_extraction": "attributes_list",
       "vision_attribute_extraction": "image_url"
     }
   }
-  }
-  
+}
