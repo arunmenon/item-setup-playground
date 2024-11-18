@@ -60,7 +60,7 @@ class ElementsProvider(BaseProvider):
             "temperature": temperature,
             "max_tokens" : max_tokens
         }
-
+        print (f"Payload {model_key} : {json.dumps(payload)}")
         try:
             response = requests.post(
                 config['url'],
