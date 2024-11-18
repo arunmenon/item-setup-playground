@@ -17,9 +17,10 @@ class BaseModelHandler:
         self.temperature = temperature
 
     async def invoke(self, request: BaseLLMRequest, task: str, retries: int = 3) -> Dict[str, Any]:
-        model = request.parameters.get("model") if request.parameters else self.model
-        max_tokens = request.parameters.get("max_tokens") if request.parameters else self.max_tokens
-        temperature = request.parameters.get("temperature") if request.parameters else self.temperature
+        model = request.parameters.get("model") if request.parameters.get("model") else self.model
+        # max_tokens = request.parameters.get("max_tokens") if request.parameters else self.max_tokens
+        max_tokens = request.parameters.get("max_tokens") if request.parameters.get("max_tokens") else self.max_tokens
+        temperature = request.parameters.get("temperature") if request.parameters.get("temperature") else self.temperature
         prompt = request.prompt
 
         self.logger.debug("Invoking model: %s with prompt: %s", model, prompt)
