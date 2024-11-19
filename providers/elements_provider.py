@@ -18,6 +18,10 @@ class ElementsProvider(BaseProvider):
         'meta-llama/Llama-3.2-3B' : {
             'url'        : 'https://llama-3-dot-2-3b-stage.element.glb.us.walmart.net/llama-3-dot-2-3b/v1/completions',
             'api_key_env': "ELEMENTS_API_KEY_META_LLAMA3_3B",
+        },
+        'meta-llama/Llama-3.1-405B-Instruct-FP8': {
+            'url'        : 'https://llama-3-dot-1-405b-fp8-stage.element.glb.us.walmart.net/llama-3-dot-1-405b-fp8/v1/completions',
+            'api_key_env': "ELEMENTS_API_KEY_META_LLAMA3_405B",
         }
     }
 
@@ -60,7 +64,7 @@ class ElementsProvider(BaseProvider):
             "temperature": temperature,
             "max_tokens" : max_tokens
         }
-
+        print (f"Payload {model_key} : {json.dumps(payload)}")
         try:
             response = requests.post(
                 config['url'],

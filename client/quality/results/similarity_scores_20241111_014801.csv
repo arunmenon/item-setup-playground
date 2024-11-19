@@ -1,0 +1,19 @@
+SKU,GTIN,Task,Model_1,Response_1,Model_2,Response_2,Similarity_Score
+8T1NK54G,72701716671673,title_enhancement,openai,"Durable Kids Classic Fit [Jeans], Blue",gemini,"Durable Denim Kids [Jeans], Blue",0.9331867694854736
+XSJOXOJQ,50292068472248,title_enhancement,openai,"Stylish Unisex Comfortable [Pants], Black",gemini,"Brand Unisex [Pants], [Color]",0.7857651710510254
+VV3NHP6D,35282394252928,title_enhancement,openai,"Unisex Soft Cotton [T-Shirt], Ideal for Everyday Use",gemini,"Men's Cotton Crew Neck Short Sleeve [T-Shirt], White",0.5159461498260498
+9O2THIEN,19637124959400,title_enhancement,openai,"Unisex Casual & Dress Shoe, Classic Style, Comfortable Fit, Black, Size 9",gemini,"Casual & Dress Shoes, Classic & Stylish Footwear",0.7166396975517273
+NVF5JOWH,98009049898670,title_enhancement,openai,"Cozy Unisex [Sweatshirt], Perfect for Casual Wear",gemini,"Cozy & Comfortable Sweatshirt, Black",0.7463668584823608
+VADDSFM1,11987462666634,title_enhancement,openai,"VADDSFM1 Unisex Cozy [Sweatshirt], Perfect for Casual Wear",gemini,"Cozy & Comfortable [Sweatshirt], Black",0.6680808663368225
+AN8K2HJZ,13257368231872,title_enhancement,openai,"Durable Unisex Classic Fit [Jeans], Blue",gemini,"Brand Kids Classic Fit [Jeans], Blue",0.7885842323303223
+5RXYQW0P,80343074142456,title_enhancement,openai,"Unisex Casual & Dress Shoe, Classic Style, Comfortable Fit, Black, Size 10",gemini,"Unisex Casual & Dress Oxford Shoe, Round Toe, Black",0.7570028305053711
+T9GYJRL1,51266369445606,title_enhancement,openai,"Cozy Unisex [Sweatshirt], Perfect for Casual Wear",gemini,"Cozy & Comfortable [Sweatshirt], Black",0.7515318989753723
+I4ZTQLFM,74740892189317,title_enhancement,openai,"Unisex Soft Cotton [T-Shirt], Ideal for Everyday Use",gemini,"Men's Cotton Crew Neck Short Sleeve [T-Shirt], White",0.5159461498260498
+Q8949GNO,44800124083109,title_enhancement,openai,"Unisex Casual & Dress Shoe, Classic Style, Comfortable Fit, Black, Size 10",gemini,"Men's Casual & Dress Oxford Shoe, Black",0.594929575920105
+0V5ISDSG,43357679141462,title_enhancement,openai,"Cozy Unisex [Sweatshirt], Perfect for Casual Wear",gemini,"Cozy & Comfortable Sweatshirt, Casual Wear",0.8075947761535645
+U74RBFZL,45547693493840,title_enhancement,openai,"Durable Denim Unisex Classic Fit [Jeans], Blue",gemini,"Brand Kids Classic Fit [Jeans], Blue",0.8007537722587585
+7DHYUVTY,52020415154872,title_enhancement,openai,"Durable Denim Unisex Classic Fit [Jeans], Blue",gemini,"Durable Denim [Jeans], Blue",0.8962350487709045
+BQ9O9BPV,12786298744429,title_enhancement,openai,"Comfortable Unisex Casual [Pants], Black",gemini,"Brand Unisex [Pants], [Color]",0.7673413753509521
+AHBF6QKQ,78093314832609,title_enhancement,openai,"Durable Unisex Classic Fit [Jeans], Blue",gemini,"Brand Kids Classic Fit [Jeans], Blue",0.7885842323303223
+24OCJ9RX,15716566806243,title_enhancement,openai,"Durable Denim Unisex Classic Fit [Jeans], Blue",gemini,"Brand Clothing Size Group [Jeans], Color",0.6590827107429504
+Z5GFFWLT,27826988696646,title_enhancement,openai,"Unisex Casual & Dress Shoe, Classic Style, Comfortable Fit, Black",gemini,"Men's Casual & Dress Oxford Shoe, Round Toe, Black",0.6819562911987305

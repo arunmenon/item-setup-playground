@@ -1,6 +1,11 @@
 # main.py
-
+import sys
 import os
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(1, os.path.join(base_dir, "../"))
+
+
 import logging
 from fastapi import FastAPI, HTTPException
 import uvicorn

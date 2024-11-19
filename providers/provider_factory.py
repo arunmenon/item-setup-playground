@@ -1,3 +1,4 @@
+from providers.local_provider import LocalProvider
 from providers.elements_provider import ElementsProvider
 from providers.openai_provider import OpenAIProvider
 from providers.runpod_provider import RunPodProvider
@@ -35,6 +36,10 @@ class ProviderFactory:
             model = kwargs.get('model', 'Unknown')
             ProviderFactory.logger.info(f"Creating {model} provider")
             return ElementsProvider(**clean_kwargs)
+        elif provider_name=="local":
+            ProviderFactory.logger.info(f"Creating Local provider")
+            provider_port = kwargs.get("provider_port")
+            return LocalProvider(port=provider_port)
         else:
             ProviderFactory.logger.error(f"Unsupported provider: {provider_name}")
             raise ValueError(f"Unsupported provider: {provider_name}")

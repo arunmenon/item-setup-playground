@@ -4,18 +4,11 @@ from openai import OpenAI
 
 from providers.base_provider import BaseProvider
 
-class RunPodProvider(BaseProvider):
-    def __init__(self,endpoint_id=None):
+class LocalProvider(BaseProvider):
+    def __init__(self,port):
         self.logger = logging.getLogger(self.__class__.__name__)
-        runpod_api_key = os.getenv("RUNPOD_API_KEY")
-        runpod_endpoint_id = endpoint_id or os.getenv("RUNPOD_ENDPOINT_ID")
-
-        if not runpod_api_key or not runpod_endpoint_id:
-            raise ValueError("RUNPOD_API_KEY or RUNPOD_ENDPOINT_ID is missing from environment variables.")
-
         self.client = OpenAI(
-            api_key=runpod_api_key,
-            base_url=f"https://api.runpod.ai/v2/{runpod_endpoint_id}/openai/v1",
+            base_url=f"http://localhost:{port}/v1",
         )
 
     def create_chat_completion(self, model: str, messages: list, temperature: float, max_tokens: int):

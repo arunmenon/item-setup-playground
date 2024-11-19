@@ -1,1 +1,20 @@
 {% extends "base_templates/title_enhancement_base.jinja2" %}
+
+{% block system_prompt %}
+You are an assistant tasked with enhancing product titles. Use all input information provided below to create a clear, concise, and informative title.
+**Original Title:**
+{{ original_title }}
+{% if original_short_description %}
+**Short Description:**
+{{ original_short_description }}
+{% endif %}
+{% if original_long_description %}
+**Long Description:**
+{{ original_long_description }}
+{% endif %}
+{% include "includes/instructions.jinja2" %}
+{% endblock %}
+
+{% block output_format %}
+{% include "includes/output_format.jinja2" %}
+{% endblock %}
