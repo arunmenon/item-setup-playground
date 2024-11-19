@@ -31,14 +31,24 @@ def main():
     styling_guide_manager = StylingGuideManager()
 
     # Initialize LLM handler
+    # provider_config = {
+    #     "name"           : "gpt-4o",
+    #     "provider"       : "openai",
+    #     "model"          : "gpt-4o",
+    #     "family"         : "default",
+    #     "temperature"    : 0.2,
+    #     "version"        : "2024-02-01",
+    #     "api_base"       : "https://wmtllmgateway.prod.walmart.com/wmtllmgateway/v1/openai",
+    #     "required_fields": []
+    # }
+
     provider_config = {
-        "name"           : "gpt-4o",
-        "provider"       : "openai",
-        "model"          : "gpt-4o",
-        "family"         : "default",
-        "temperature"    : 0.2,
-        "version"        : "2024-02-01",
-        "api_base"       : "https://wmtllmgateway.prod.walmart.com/wmtllmgateway/v1/openai",
+        "name"           : "meta-llama/Llama-3.1-405B-Instruct-FP8",
+        "provider"       : "elements_openai",
+        "model"          : "meta-llama/Llama-3.1-405B-Instruct-FP8",
+        "family"         : "llama",
+        "temperature"    : 0.1,
+        "api_base"       : "https://llama-3-dot-1-405b-fp8-stage.element.glb.us.walmart.net/llama-3-dot-1-405b-fp8/v1/completions",
         "required_fields": []
     }
     try:
