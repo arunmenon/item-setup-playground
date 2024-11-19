@@ -23,27 +23,40 @@ def main():
     styling_guide_manager = StylingGuideManager()
 
     # Initialize LLM handler
-    provider_config = {
+    provider_config_1 = {
         "name": "openai-gpt-4o-mini",
         "provider": "openai",
         "model": "gpt-4o-mini",
         "temperature": 0.2,
     }
-    handler = BaseModelHandler(**provider_config)
+    handler_1 = BaseModelHandler(**provider_config_1)
+    provider_config_2 = {
+        "name": "openai-gpt-4o-mini",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "temperature": 0.2,
+    }
+    handler_2 = BaseModelHandler(**provider_config_2)
+
 
     input_handler = InputHandler(args.input)
     api_handler = APIHandler(API_URL)
-    evaluator = Evaluator(TASK_MAPPING, template_renderer, styling_guide_manager, handler)
+    evaluator_1 = Evaluator(TASK_MAPPING, template_renderer, styling_guide_manager, handler_1,evaluator_id="gpt4_1")
+    evaluator_2 = Evaluator(TASK_MAPPING, template_renderer, styling_guide_manager, handler_2,evaluator_id="gpt4_2")
+
 
     # Initialize the BatchProcessor
     batch_processor = BatchProcessor(args.batch_size)
+
+    # List of evaluators
+    evaluators = [evaluator_1, evaluator_2]
 
     # Load input data
     df = input_handler.load_data()
 
     # Process batches
     batch_processor.process_batches(
-        df, api_handler, evaluator, prepare_item
+        df, api_handler, evaluators, prepare_item
     )
 
     logging.info("Batch processing completed.")

@@ -4,13 +4,14 @@ from models.llm_request_models import BaseLLMRequest
 
 
 class Evaluator:
-    def __init__(self, task_mapping, template_renderer, styling_guide_manager, handler):
+    def __init__(self, task_mapping, template_renderer, styling_guide_manager, handler,evaluator_id):
         self.task_mapping = task_mapping
         self.template_renderer = template_renderer
         self.styling_guide_manager = styling_guide_manager
         self.handler = handler  # Injected dependency for model invocation
+        self.id = evaluator_id  # Assign evaluator_id
 
-    async def evaluate_task(self, item_data, product_type, task, model_name, enriched_content):
+    async def evaluate_task(self, item_data, product_type, task, model_name, enriched_content,evaluator_id=None):
         """
         Evaluate the enriched content for a specific task using the LLM handler.
 
@@ -20,10 +21,12 @@ class Evaluator:
             task (str): The task to evaluate (e.g., "title").
             model_name (str): The name of the LLM model.
             enriched_content (str): The enriched content to evaluate.
+            evaluator_id (str): Identifier for the evaluator instance (e.g., 'LLM1', 'LLM2').
 
         Returns:
             dict: A structured evaluation result, or None if an error occurs.
         """
+        evaluator_id = evaluator_id or 'LLM'  # Default evaluator_id if not provided
         logging.debug(f"Evaluating  '{task}' generated  for item '{item_data['item_id']}'  using model '{model_name}'")
         try:
             # Fetch the styling guide for the given product type and task
@@ -57,6 +60,10 @@ class Evaluator:
             parsed = json.loads(response_text)
             return {
                 "quality_score": parsed.get("quality_score"),
+                "relevance": parsed.get("relevance"),
+                "clarity": parsed.get("clarity"),
+                "compliance": parsed.get("compliance"),
+                "accuracy": parsed.get("accuracy"),
                 "reasoning": {
                     "adherence_to_style_guide": parsed.get("reasoning", {}).get("adherence_to_style_guide", "No reasoning provided."),
                     "clarity": parsed.get("reasoning", {}).get("clarity", "No reasoning provided."),
@@ -70,6 +77,10 @@ class Evaluator:
             logging.error(f"Failed to parse LLM response: {e}")
             return {
                 "quality_score": None,
+                "relevance": None,
+                "clarity": None,
+                "compliance": None,
+                "accuracy": None,
                 "reasoning": "Parsing error",
                 "suggestions": "Parsing error",
             }

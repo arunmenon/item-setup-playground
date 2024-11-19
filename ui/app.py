@@ -1,10 +1,15 @@
 import gradio as gr
 import pandas as pd
+from ui.database_handler import DatabaseHandler
 from utils import load_product_types_from_file
-from handlers import process_single_sku, save_preference, get_leaderboard
-from plots import generate_leaderboard_plot
-from ui_components import create_item_enrichment_tab, create_leaderboard_tab, create_analytics_tab
+from handlers import process_single_sku, save_preference
+from plots import generate_leaderboard_plot, generate_winner_model_comparison_plot
+from ui_components import create_feedback_tab, create_item_enrichment_tab, create_leaderboard_tab, create_analytics_tab
 import os
+
+# Initialize database handler and create tables
+db_handler = DatabaseHandler()
+db_handler.create_tables()
 
 # Load product types from 'product_types.txt'
 product_types = load_product_types_from_file('product_types.txt')
@@ -18,8 +23,13 @@ with gr.Blocks(css="styles.css") as app:
 
     with gr.Tabs():
         create_item_enrichment_tab(process_single_sku, save_preference, product_types)
-        create_leaderboard_tab(get_leaderboard)
-        create_analytics_tab(generate_leaderboard_plot, get_leaderboard)
+        create_leaderboard_tab(db_handler.get_leaderboard,product_types)
+        create_analytics_tab(generate_leaderboard_plot,
+                              db_handler.get_leaderboard,
+                              generate_winner_model_comparison_plot,
+                              db_handler.get_evaluations, 
+                              product_types)
+        create_feedback_tab(db_handler.get_evaluations, product_types)
 
 if __name__ == "__main__":
     app.launch()
