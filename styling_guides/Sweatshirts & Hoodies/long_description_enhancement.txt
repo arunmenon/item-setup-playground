@@ -1,8 +1,63 @@
-Detail dimensions and styling options.
-Describe the design inspiration.
-Include care instructions.
-Example Content:
-"Measures 70 x 20 inches, perfect for draping or knotting."
-"Features an intricate floral pattern inspired by nature."
-"Pairs well with dresses, blouses, and coats."
-"Hand wash or dry clean recommended."
+## Structure the content for Long Description by referring to the following guidelines for "Sweatshirts & Hoodies" Product.
+
+** Guidelines:**
+1. Begin the description with the product name, bolded having no bullet.
+2. Include atleast 3 bullet points having attributes and respective values, each being in the format [Attribute]: [Value]
+4. [Attribute] in each bullet point should begin with a capital letter.
+5. [Value] in each bullet point should begin with a capital letter if it is not a number.
+6. Write with sentence fragments for [Value] and do not include ending punctuation.
+7. Do not include promotional text such as free shipping, discounts, or pricing information or text promoting another retailer.
+8. It is acceptable to include promotional text about other items in the product line, such as accessories, other colors or variations available, or other products from the same manufacturer that work with the item.
+9. Do not use special characters such as #, * or !.
+10. Do not repeat the same information, and include only the unique and important ones.
+
+## Extract the values for the following attributes that are either mandatory or applicable as optional, based on the provided details, and present them as bullet points:
+1. **Name**: Material
+    - **Requirement**: Mandatory
+    - **Details**: The name and percentage of the fabric material(s) that make up 5% or more of the garment. If there are multiple materials, they should be separated by a "/". Example values like 100% Cotton, 97% Cotton/3% Spandex, etc.
+2. **Name**: Care
+    - **Requirement**: Mandatory
+    - **Details**: The cleaning instructions for the fabric, as found on the fabric care label. If there are multiple care instructions, they should be separated by a semicolon. Example values like Machine washable, Hand wash, Dry clean, Spot clean, Wipe clean, etc.
+3. **Name**: Country of Origin
+    - **Requirement**: Mandatory
+    - **Details**: The country where the garment was produced. Example values like Imported, Made in USA, Made in USA of imported materials, Made in USA and imported, etc.
+4. **Name**: Size
+    - **Requirement**: Optional
+    - **Details**: The clothing size as it appears on the garment label worn by the model of a height X. This value should be in format "Model is 0.0" and is wearing a size X". Example values like Model is 5.8" and is wearing a size 12, etc.
+5. **Name**: Weight
+    - **Requirement**: Optional
+    - **Details**: The terms that describe the weight of the garment. Example values like Lightweight, Mid-weight, Heavyweight, Fine gauge, traditional jersey stitch, etc.
+6. **Name**: Fit
+    - **Requirement**: Optional
+    - **Details**: The terms that describe the way a garment will fit when worn. If there are multiple values, they should be separated by a semicolon. Example values like Fitted, oversized, relaxed, loose, etc.
+7. **Name**: Neckline
+    - **Requirement**: Optional
+    - **Details**: A neck style of the upper garment. Example values like Crew neck, V-neck, U-neck, Cowl neck, etc.
+8. **Name**: Closure
+    - **Requirement**: Optional
+    - **Details**: The type of fastener used to keep an item closed and to facilitate putting on the item. Example values like Pullover style, Button front, Back button with keyhole, etc.
+9. **Name**: Sleeves
+    - **Requirement**: Optional
+    - **Details**: The terms describing sleeve length of garment. Example values like Short, long, blouse, illusion, elbow-length, 3/4 sleeves, etc.
+10. **Name**: Pockets
+    - **Requirement**: Optional
+    - **Details**: The number and location of the pockets if they are present else mention None. Example values like 2 front patch pockets, None etc.
+11. **Name**: Features
+    - **Requirement**: Optional
+    - **Details**: The distinguishing characteristics of a product that describe its appearance, components, and capabilities. Features often highlight the usefulness/advantages of the product to consumers. If there are multiple values, they should be separated by a semicolon. Example values like Trims, special hems, decorative details, unlined or lined, etc.
+
+## Refer to the example how the structured version of the "long description" should look like
+Example 1:
+
+**MOSHU Oversized Sweaters for Women Cable Knit Chunky Pullover Sweater**:
+• Material: 45% acrylic/ 55% polyester
+• Care: Machine washable
+• Country of Origin: Imported
+• Size: Model is 5’10” and is wearing a size 14
+• Weight: Lightweight
+• Fit: Fitted
+• Neckline: Classic crewneck
+• Closure: Button front
+• Sleeves: Long sleeves
+• Pockets: None
+• Features: Soft; gentle
