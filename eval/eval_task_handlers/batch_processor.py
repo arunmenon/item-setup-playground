@@ -2,7 +2,9 @@ import json
 import sqlite3
 from datetime import datetime
 import logging
-import asyncio  # Required for managing async tasks
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from eval.config.constants import TASK_MAPPING
 
 
@@ -16,9 +18,10 @@ class BatchProcessor:
             db_path (str): Path to the SQLite database file.
         """
         self.batch_size = batch_size
-        self.db_path = db_path or "results.db" 
+        self.db_path = db_path or "results.db"
+        self.executor = ThreadPoolExecutor(max_workers=batch_size)
 
-        # Initialize the database and create tables if they don't exist
+        # Initialize the database and create tables if they do not exist
         self._initialize_database()
 
     def _initialize_database(self):
@@ -68,9 +71,9 @@ class BatchProcessor:
 
             conn.commit()
 
-    def process_batches(self, df, api_handler, evaluator, prepare_item):
+    async def process_batches(self, df, api_handler, evaluator, prepare_item):
         """
-        Process data in batches and save results to the database after each batch.
+        Process the data in batches concurrently.
 
         Args:
             df (pd.DataFrame): Input DataFrame.
@@ -78,33 +81,71 @@ class BatchProcessor:
             evaluator (Evaluator): Evaluator instance.
             prepare_item (callable): Function to prepare item data for API.
         """
-        for start in range(0, len(df), self.batch_size):
-            batch = df.iloc[start:start + self.batch_size]
-            logging.info(f"Processing batch {start // self.batch_size + 1}")
+        tasks = [asyncio.create_task(self._process_single_batch(
+            df.iloc[start:start + self.batch_size], api_handler, evaluator, prepare_item))
+            for start in range(0, len(df), self.batch_size)]
+        await asyncio.gather(*tasks)
 
-            detail_results = []
-            winner_results = []
+    async def _process_single_batch(self, batch, api_handler, evaluator, prepare_item):
+        """
+        Process data in batches and save results to the database after each batch.
 
-            for _, row in batch.iterrows():
-                item_id = row['catlg_item_id']
+        Args:
+            batch (pd.DataFrame): Input batch DataFrame.
+            api_handler (APIHandler): API handler instance.
+            evaluator (Evaluator): Evaluator instance.
+            prepare_item (callable): Function to prepare item data for API.
+        """
+        logging.info(f"Processing batch of size {len(batch)}")
 
-                # Process a single item
-                item_data = prepare_item(row)
-                enrichment_results = api_handler.call_api(item_data)
-                if enrichment_results:
-                    detail, winner = asyncio.run(
-                        self._evaluate_item(item_data, enrichment_results, evaluator)
-                    )
-                    detail_results.extend(detail)
-                    winner_results.extend(winner)
-                else:
-                    logging.warning(f"No enrichment results for item: {item_id}")
+        detail_results = []
+        winner_results = []
 
-            # Persist results after processing each batch
-            if detail_results:
-                self._save_to_db(detail_results, "detail_results")
-            if winner_results:
-                self._save_to_db(winner_results, "winner_results")
+        loop = asyncio.get_event_loop()
+        tasks = []
+
+        for _, row in batch.iterrows():
+            item_data = prepare_item(row)
+
+            # Run the blocking call in a thread pool
+            task = loop.run_in_executor(self.executor,
+                partial(self._process_item, item_data, api_handler, evaluator))
+            tasks.append(task)
+
+        # Await all item processing tasks
+        results = await asyncio.gather(*tasks)
+
+        for detail, winner in results:
+            detail_results.extend(detail)
+            winner_results.extend(winner)
+
+        # Persist results after processing each batch
+        if detail_results:
+            self._save_to_db(detail_results, "detail_results")
+        if winner_results:
+            self._save_to_db(winner_results, "winner_results")
+
+    def _process_item(self, item_data, api_handler, evaluator):
+        """
+        Process a single item.
+
+        Args:
+            item_data (dict): The data of the item to be processed.
+            api_handler (APIHandler): API handler instance.
+            evaluator (Evaluator): Evaluator instance.
+
+        Returns:
+            tuple: A tuple containing detail results and winner results.
+        """
+        item_id = item_data["item_id"]
+        enrichment_results = api_handler.call_api(item_data)
+
+        if enrichment_results:
+            detail, winner = asyncio.run(self._evaluate_item(item_data, enrichment_results, evaluator))
+            return detail, winner
+        else:
+            logging.warning(f"No enrichment results for item: {item_id}")
+            return [], []
 
     async def _evaluate_item(self, item_data, enrichment_results, evaluator):
         """
@@ -127,7 +168,7 @@ class BatchProcessor:
         task_context = []  # To track which task/model each async task corresponds to
 
         # Create async tasks for evaluation
-        tasks = []
+        evaluation_tasks = []
         for task, task_name in TASK_MAPPING.items():
             model_responses = enrichment_results.get(task_name, {})
             if not model_responses:
@@ -157,24 +198,18 @@ class BatchProcessor:
                     detail_results.append(ordered_result)
 
                     # Group result for winner selection
-                    if task not in task_detail_results:
-                        task_detail_results[task] = []
                     task_detail_results[task].append(ordered_result)
                 else:
                     # Create async tasks for evaluation
-                    tasks.append(
-                        evaluator.evaluate_task(
-                            item_data, product_type, task, model_name, enriched_content
-                        )
-                    )
+                    evaluation_task = evaluator.evaluate_task(item_data, product_type, task, model_name, enriched_content)
+                    evaluation_tasks.append(evaluation_task)
                     task_context.append((task, model_name, enriched_content))  # Track the task and model name
 
         # Await and process results
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*evaluation_tasks, return_exceptions=True)
 
         for idx, result in enumerate(results):
             if isinstance(result, dict):
-                # Ensure necessary fields are added
                 task, model_name, enriched_content = task_context[idx]
 
                 # Ensure necessary fields are added
@@ -195,30 +230,27 @@ class BatchProcessor:
                 detail_results.append(ordered_result)
 
                 # Group results by task for winner selection
-                task_name = task
-                if task_name not in task_detail_results:
-                    task_detail_results[task_name] = []
-                task_detail_results[task_name].append(ordered_result)
+                task_detail_results[task].append(ordered_result)
 
-        # Determine winners for tasks with multiple models
-        for task, evaluations in task_detail_results.items():
-            if not evaluations:  # Handle empty evaluations gracefully
-                logging.warning(f"No valid results for task '{task}' in item '{item_data['item_id']}'. Skipping winner selection.")
-                continue
-
-            if len(evaluations) > 1:  # Multiple responses for the task
-                best_result = max(
-                    evaluations,
-                    key=lambda x: (x["quality_score"] or 0, -len(x["reasoning"]))
-                )
-            else:  # Single response for the task
-                best_result = evaluations[0]
-
-            best_result["is_winner"] = True  # Mark as winner
-            winner_results.append(best_result)
+        # # Commented out as we do not need it right now.
+        # # Determine winners for tasks with multiple models
+        # for task, evaluations in task_detail_results.items():
+        #     if not evaluations:  # Handle empty evaluations gracefully
+        #         logging.warning(f"No valid results for task '{task}' in item '{item_data['item_id']}'. Skipping winner selection.")
+        #         continue
+        #
+        #     if len(evaluations) > 1:  # Multiple responses for the task
+        #         best_result = max(
+        #             evaluations,
+        #             key=lambda x: (x["quality_score"] or 0, -len(x["reasoning"]))
+        #         )
+        #     else:  # Single response for the task
+        #         best_result = evaluations[0]
+        #
+        #     best_result["is_winner"] = True  # Mark as winner
+        #     winner_results.append(best_result)
 
         return detail_results, winner_results
-
 
     def _save_to_db(self, results, table_name):
         """
@@ -275,4 +307,3 @@ class BatchProcessor:
 
             conn.commit()
             logging.info(f"{len(results)} rows upserted into {table_name}.")
-

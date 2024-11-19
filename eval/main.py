@@ -16,6 +16,7 @@ from entrypoint.styling_guide_manager import StylingGuideManager
 from handlers.llm_handler import BaseModelHandler
 import argparse
 import logging
+import asyncio
 
 
 def main():
@@ -54,9 +55,11 @@ def main():
         df = input_handler.load_data()
 
         # Process batches
-        batch_processor.process_batches(
-            df, api_handler, evaluator, prepare_item
-        )
+        # batch_processor.process_batches(
+        #     df, api_handler, evaluator, prepare_item
+        # )
+        asyncio.run(batch_processor.process_batches(df, api_handler, evaluator, prepare_item))
+        # asyncio.run(batch_processor.process_batches(df, api_handler, evaluator, prepare_item))
     except Exception as e:
         print (f"Error : {e}")
         print (f"Traceback : {traceback.print_exc()}")
