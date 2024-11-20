@@ -11,7 +11,7 @@ def create_item_enrichment_tab(process_single_sku_fn, save_preference_fn, produc
                 product_type = gr.Dropdown(
                     label="Product Type",
                     choices=product_types,
-                    value=None  # No default selection
+                    value=None
                 )
                 title = gr.Textbox(label="Title", placeholder="Enter Title", lines=1)
                 short_desc = gr.Textbox(label="Short Description", placeholder="Enter Short Description", lines=2)
@@ -21,7 +21,7 @@ def create_item_enrichment_tab(process_single_sku_fn, save_preference_fn, produc
             with gr.Column():
                 gr.Markdown("### Generated Enrichments")
                 model_responses_output = gr.Radio(label="Select your preferred response:")
-                
+
                 gr.Markdown("### Provide Detailed Feedback")
                 with gr.Row():
                     relevance = gr.Slider(label="Relevance", minimum=1, maximum=5, step=1, value=3)
@@ -30,7 +30,7 @@ def create_item_enrichment_tab(process_single_sku_fn, save_preference_fn, produc
                     compliance = gr.Slider(label="Compliance", minimum=1, maximum=5, step=1, value=3)
                     accuracy = gr.Slider(label="Accuracy", minimum=1, maximum=5, step=1, value=3)
                 comments = gr.Textbox(label="Additional Comments", placeholder="Enter any additional feedback here...", lines=2)
-                
+
                 save_btn = gr.Button("Save Preference")
                 feedback_output = gr.Textbox(label="Feedback", interactive=False)
                 model_responses_json = gr.JSON(visible=False)  # Hidden component
@@ -59,61 +59,244 @@ def create_item_enrichment_tab(process_single_sku_fn, save_preference_fn, produc
         )
 
 
-def create_leaderboard_tab(get_leaderboard_fn):
+def create_leaderboard_tab(get_leaderboard_fn, product_types):
     with gr.TabItem("Leaderboard"):
         gr.Markdown("## Leaderboard")
-        task_type_selector = gr.Dropdown(
-            label="Select Task Type",
-            choices=["All", "title_enhancement", "description_enhancement"],
-            value="All"
-        )
-        refresh_button = gr.Button("Refresh Data")
+
+        with gr.Row():
+            task_type_selector = gr.Dropdown(
+                label="Select Task Type",
+                choices=["All", "title_enhancement", "description_enrichment"],
+                value="All"
+            )
+            product_type_selector = gr.Dropdown(
+                label="Product Type",
+                choices=["All"] + product_types,
+                value="All"
+            )
+            evaluator_type_selector = gr.Dropdown(
+                label="Evaluator Type",
+                choices=["All", "LLM", "Human"],
+                value="All"
+            )
+
         leaderboard_output = gr.Dataframe()
 
-        # Define the refresh function
-        def refresh_leaderboard(selected_task_type):
-            updated_leaderboard_data = get_leaderboard_fn()
-            if not updated_leaderboard_data.empty and selected_task_type != "All":
-                updated_leaderboard_data = updated_leaderboard_data[updated_leaderboard_data["task_type"] == selected_task_type]
-            return updated_leaderboard_data
+        def refresh_leaderboard(task, product_type, evaluator_type):
+            task_filter = None if task == "All" else task
+            product_type_filter = None if product_type == "All" else product_type
+            evaluator_type_filter = None if evaluator_type == "All" else evaluator_type
+            return get_leaderboard_fn(task_filter, product_type_filter, evaluator_type_filter)
 
-        # Action for refresh button
-        refresh_button.click(
-            fn=refresh_leaderboard,
-            inputs=[task_type_selector],
-            outputs=leaderboard_output
-        )
+        inputs = [task_type_selector, product_type_selector, evaluator_type_selector]
+        for input_component in inputs:
+            input_component.change(fn=refresh_leaderboard, inputs=inputs, outputs=leaderboard_output)
 
-def create_analytics_tab(generate_leaderboard_plot_fn, get_leaderboard_fn):
+        
+
+def create_analytics_tab(
+    generate_leaderboard_plot_fn,
+    get_leaderboard_fn,
+    generate_winner_model_comparison_plot_fn,
+    get_evaluations_fn,
+    get_aggregated_evaluations_fn,
+    generate_aggregated_plot_fn,
+    product_types
+):
     with gr.TabItem("Analytics"):
         gr.Markdown("## Analytics")
 
-        # Initialize the plot with the initial value
-        initial_leaderboard_data = get_leaderboard_fn()
-        initial_plot = generate_leaderboard_plot_fn(initial_leaderboard_data)
-        if initial_plot is None:
-            initial_plot = go.Figure()
+        # Filters
+        with gr.Row():
+            task_selector = gr.Dropdown(
+                label="Task",
+                choices=["All", "title_enhancement", "description_enrichment"],
+                value="All"
+            )
+            product_type_selector = gr.Dropdown(
+                label="Product Type",
+                choices=["All"] + product_types,
+                value="All"
+            )
+            data_type_selector = gr.Dropdown(
+                label="Data Type",
+                choices=["Individual Evaluations", "Aggregated Evaluations"],
+                value="Individual Evaluations"
+            )
 
-        analytics_plot = gr.Plot(value=initial_plot)  # Set the initial value here
+        visualization_selector = gr.Dropdown(
+            label="Select Visualization",
+            choices=[
+                "Leaderboard",
+                "Winner Model Comparison",
+                "Aggregated Metrics",
+                "Variance Distribution",
+                "Confidence Level Breakdown"
+            ],
+            value="Leaderboard"
+        )
 
-        task_type_selector = gr.Dropdown(
-            label="Select Task Type",
+        analytics_plot = gr.Plot()
+
+        def update_analytics(task, product_type, data_type, visualization):
+            task_filter = None if task == "All" else task
+            product_type_filter = None if product_type == "All" else product_type
+
+            if data_type == "Individual Evaluations":
+                if visualization == "Leaderboard":
+                    leaderboard_df = get_leaderboard_fn(task_filter, product_type_filter)
+                    plot = generate_leaderboard_plot_fn(leaderboard_df)
+                elif visualization == "Winner Model Comparison":
+                    evaluation_df = get_evaluations_fn(task=task_filter, product_type=product_type_filter)
+                    plot = generate_winner_model_comparison_plot_fn(evaluation_df)
+                else:
+                    plot = go.Figure()
+            elif data_type == "Aggregated Evaluations":
+                aggregated_df = get_aggregated_evaluations_fn(task_filter, product_type_filter)
+                if visualization == "Aggregated Metrics":
+                    plot = generate_aggregated_plot_fn(aggregated_df)
+                elif visualization == "Variance Distribution":
+                    plot = generate_variance_distribution_plot(aggregated_df)
+                elif visualization == "Confidence Level Breakdown":
+                    plot = generate_confidence_level_breakdown(aggregated_df)
+                else:
+                    plot = go.Figure()
+            else:
+                plot = go.Figure()
+
+            return plot
+
+        inputs = [task_selector, product_type_selector, data_type_selector, visualization_selector]
+        for input_component in inputs:
+            input_component.change(fn=update_analytics, inputs=inputs, outputs=analytics_plot)
+
+def create_feedback_tab(get_detailed_feedback_fn,product_types):
+    with gr.TabItem("Detailed Feedback"):
+        gr.Markdown("## Feedback Details")
+
+        # Filters
+        task_selector = gr.Dropdown(
+            label="Task",
             choices=["All", "title_enhancement", "description_enhancement"],
             value="All"
         )
-
-        # Update the plot when the task type changes
-        def update_analytics(selected_task_type):
-            updated_leaderboard_data = get_leaderboard_fn()
-            if not updated_leaderboard_data.empty and selected_task_type != "All":
-                updated_leaderboard_data = updated_leaderboard_data[updated_leaderboard_data["task_type"] == selected_task_type]
-            updated_plot = generate_leaderboard_plot_fn(updated_leaderboard_data)
-            if updated_plot is None:
-                updated_plot = go.Figure()
-            return updated_plot
-
-        task_type_selector.change(
-            fn=update_analytics,
-            inputs=[task_type_selector],
-            outputs=analytics_plot
+        item_selector = gr.Textbox(
+            label="Item ID",
+            placeholder="Enter Item ID (optional)"
         )
+        product_type_selector = gr.Dropdown(
+            label="Product Type",
+            choices=product_types,
+            value="All"
+        )
+        model_selector = gr.Textbox(
+            label="Model Name",
+            placeholder="Enter Model Name (optional)"
+        )
+
+        # Feedback table
+        # Feedback table
+        feedback_table = gr.Dataframe(headers=[
+            "Item ID", "Product Type", "Task", "Model Name", "Model Version",
+            "Quality Score", "Reasoning", "Suggestions", "Is Winner"
+        ])
+
+
+        def load_feedback(task, item_id, product_type, model_name):
+            task_filter = None if task == "All" else task
+            product_type_filter = None if product_type == "All" else product_type
+            return get_detailed_feedback_fn(
+                task=task_filter,
+                item_id=item_id if item_id else None,
+                product_type=product_type_filter,
+                model_name=model_name if model_name else None
+            )
+
+        # Trigger on filter changes
+        inputs = [task_selector, item_selector, product_type_selector, model_selector]
+        for input_component in inputs:
+            input_component.change(fn=load_feedback, inputs=inputs, outputs=feedback_table)
+
+def generate_variance_distribution_plot(aggregated_df):
+    import plotly.express as px
+    import numpy as np
+    import pandas as pd
+
+    if aggregated_df.empty:
+        return go.Figure()
+
+    metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+    plot_data = []
+
+    for metric in metrics:
+        variance_col = f'{metric}_variance'
+        temp_df = aggregated_df[['model_name', variance_col]]
+        temp_df = temp_df.rename(columns={variance_col: 'variance'})
+        temp_df['Metric'] = metric.capitalize()
+        plot_data.append(temp_df)
+
+    plot_df = pd.concat(plot_data, ignore_index=True)
+
+    # Remove rows with NaN variance
+    plot_df = plot_df.dropna(subset=['variance'])
+
+    # Create box plot to show variance distribution
+    fig = px.box(
+        plot_df,
+        x='Metric',
+        y='variance',
+        points='all',
+        color='Metric',
+        title='Variance Distribution Across Metrics',
+        labels={'variance': 'Variance', 'Metric': 'Metric'}
+    )
+
+    fig.update_layout(
+        xaxis_title='Metric',
+        yaxis_title='Variance',
+        showlegend=False
+    )
+
+    return fig
+
+def generate_confidence_level_breakdown(aggregated_df):
+    import plotly.express as px
+    import pandas as pd
+
+    if aggregated_df.empty:
+        return go.Figure()
+
+    metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+    plot_data = []
+
+    for metric in metrics:
+        confidence_col = f'{metric}_confidence'
+        temp_df = aggregated_df[[confidence_col]]
+        temp_df = temp_df.rename(columns={confidence_col: 'confidence_level'})
+        temp_df['Metric'] = metric.capitalize()
+        plot_data.append(temp_df)
+
+    plot_df = pd.concat(plot_data, ignore_index=True)
+
+    # Count of confidence levels per metric
+    count_df = plot_df.groupby(['Metric', 'confidence_level']).size().reset_index(name='Count')
+
+    # Create bar plot
+    fig = px.bar(
+        count_df,
+        x='Metric',
+        y='Count',
+        color='confidence_level',
+        barmode='group',
+        title='Confidence Level Breakdown by Metric',
+        labels={'Count': 'Number of Models', 'Metric': 'Metric', 'confidence_level': 'Confidence Level'}
+    )
+
+    fig.update_layout(
+        xaxis_title='Metric',
+        yaxis_title='Number of Models',
+        legend_title='Confidence Level'
+    )
+
+    return fig
+
