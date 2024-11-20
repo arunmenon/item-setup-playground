@@ -11,15 +11,22 @@ class BaseModelHandler:
     def __init__(self, provider: str = None, model: str = "gpt-4", max_tokens: int = None, temperature: float = 0.7, **provider_kwargs):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.provider_name = provider
+
+        # Explicitly add these parameters to provider_kwargs
+        provider_kwargs['model'] = model
+        provider_kwargs['max_tokens'] = max_tokens
+        provider_kwargs['temperature'] = temperature
+
         self.provider = ProviderFactory.create_provider(provider, **provider_kwargs)
         self.model = model
         self.max_tokens = max_tokens
         self.temperature = temperature
 
     async def invoke(self, request: BaseLLMRequest, task: str, retries: int = 3) -> Dict[str, Any]:
-        model = request.parameters.get("model") if request.parameters else self.model
-        max_tokens = request.parameters.get("max_tokens") if request.parameters else self.max_tokens
-        temperature = request.parameters.get("temperature") if request.parameters else self.temperature
+        model = request.parameters.get("model") if request.parameters.get("model") else self.model
+        # max_tokens = request.parameters.get("max_tokens") if request.parameters else self.max_tokens
+        max_tokens = request.parameters.get("max_tokens") if request.parameters.get("max_tokens") else self.max_tokens
+        temperature = request.parameters.get("temperature") if request.parameters.get("temperature") else self.temperature
         prompt = request.prompt
 
         self.logger.debug("Invoking model: %s with prompt: %s", model, prompt)

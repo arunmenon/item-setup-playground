@@ -1,7 +1,29 @@
 {% extends "base_templates/title_enhancement_base.jinja2" %}
+
 {% block family_specific_prefix %}
 <|begin_of_text|><|start_header_id|>system<|end_header_id|>
 {% endblock %}
+
+{% block system_prompt %}
+You are an assistant tasked with enhancing product titles. Use all input information provided below to create a clear, concise, and informative title.
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+**Original Title:**
+{{ original_title }}
+{% if original_short_description %}
+**Short Description:**
+{{ original_short_description }}
+{% endif %}
+{% if original_long_description %}
+**Long Description:**
+{{ original_long_description }}
+{% endif %}
+{% include "includes/instructions.jinja2" %}
+{% endblock %}
+
+{% block output_format %}
+{% include "includes/output_format.jinja2" %}
+<|eot_id|><|end_of_text|><|start_header_id|>assistant<|end_header_id|>
+{% endblock %}
+
 {% block family_specific_suffix %}
-<|eot_id|><|end_of_text|>
 {% endblock %}

@@ -143,7 +143,8 @@ class ItemEnricher:
             max_tokens = task_config.get('max_tokens', 150)
 
             # Invoke the handler with the prompt
-            response = await handler.invoke(request=BaseLLMRequest(prompt=prompt, max_tokens=max_tokens), task=task_name)
+            # response = await handler.invoke(request=BaseLLMRequest(prompt=prompt, max_tokens=max_tokens), task=task_name)
+            response = await handler.invoke(request=BaseLLMRequest(prompt=prompt, parameters={'max_tokens': max_tokens}), task=task_name)
             logging.debug(f"Received response for task '{task_name}' from handler '{handler_name}': {response}")
 
             return task_name, handler_name, {'response': response['response'], 'error': None}
@@ -186,7 +187,8 @@ class ItemEnricher:
         Returns:
             Dict[str, Any]: The parsed response or an error message.
         """
-        logging.debug(f"response to be parsed is {response} ")    
+        logging.debug(f"response to be parsed is {response} ")
+        response_content = ''
         try:
             if isinstance(response, dict) and response.get('error') is not None:
                 # If the handler returned an error, propagate it
@@ -199,7 +201,6 @@ class ItemEnricher:
 
             # Use ParserFactory to get the appropriate parser based on output_format
             parser = ParserFactory.get_parser(output_format)
-           
             parsed_response = parser.parse(response_content)
 
             return {
@@ -208,10 +209,19 @@ class ItemEnricher:
             }
 
         except Exception as e:
-            logging.error(
-                f"Error processing response from handler '{handler_name}' for task '{task}': {str(e)}\nResponse Text: {response}"
-            )
-            return {
-                'handler_name': handler_name,
-                'error': 'Parsing failed'
-            }
+            fixed_response = response_content.replace("```json", "").replace("```", "")
+            try:
+                parser = ParserFactory.get_parser(output_format)
+                parsed_response = parser.parse(fixed_response)
+                return {
+                    'handler_name': handler_name,
+                    'response': parsed_response
+                }
+            except Exception as ex:
+                logging.error(
+                    f"Error processing response from handler '{handler_name}' for task '{task}': {str(e)}\nResponse Text: {response}"
+                )
+                return {
+                    'handler_name': handler_name,
+                    'error': 'Parsing failed'
+                }

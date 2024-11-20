@@ -1,3 +1,13 @@
-Emphasize elegance and versatility in 1-2 sentences.
-Use a graceful tone.
-Example: "Add a touch of elegance with our silk floral scarf, a versatile accessory for any outfit."
+# Sweatshirts & Hoodies Product Short Description Enhancement Guidelines
+Enhance Sweatshirts & Hoodies Product Short Description by following below-mentioned guidelines:
+- Write 1 paragraph in active voice with no bullet points.
+- Minimum 80 words, ideally 100 words.
+- Include Product Name.
+- Use related keywords that would help in Search Engine Optimization.
+- Avoid promotional text, special characters, prohibited words and mention of retailers other than Walmart.
+
+## Example:
+Get on board with the utility trend in Celebrity Pink's Boiler Suit.
+Available in super soft twill or stretch denim, this jumpsuit has a
+relaxed fit with an elastic back waistband so it's fitted in all the
+right places. Best of all, your outfit is complete with just one piece!

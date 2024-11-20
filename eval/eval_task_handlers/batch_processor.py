@@ -2,7 +2,9 @@ import json
 import sqlite3
 from datetime import datetime
 import logging
-import asyncio  # Required for managing async tasks
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from eval.config.constants import TASK_MAPPING
 from collections import defaultdict
 import numpy as np
@@ -18,9 +20,10 @@ class BatchProcessor:
             db_path (str): Path to the SQLite database file.
         """
         self.batch_size = batch_size
-        self.db_path = db_path or "results.db" 
+        self.db_path = db_path or "results.db"
+        self.executor = ThreadPoolExecutor(max_workers=batch_size)
 
-        # Initialize the database and create tables if they don't exist
+        # Initialize the database and create tables if they do not exist
         self._initialize_database()
 
     def _initialize_database(self):
@@ -58,7 +61,7 @@ class BatchProcessor:
 
     def process_batches(self, df, api_handler, evaluators, prepare_item):
         """
-        Process data in batches and save results to the database after each batch.
+        Process the data in batches concurrently.
 
         Args:
             df (pd.DataFrame): Input DataFrame.
@@ -94,6 +97,7 @@ class BatchProcessor:
                 if aggregated_results:
                     self._save_aggregated_results(aggregated_results)    
 
+
     
     async def _evaluate_item(self, item_data, enrichment_results, evaluators):
         evaluation_results = []
@@ -123,7 +127,7 @@ class BatchProcessor:
                     task_context.append((task, model_name, model_data.get('model_version', '1.0'), evaluator_id))
 
         # Await and process results
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*evaluation_tasks, return_exceptions=True)
 
         for idx, result in enumerate(results):
             if isinstance(result, dict):
@@ -154,8 +158,6 @@ class BatchProcessor:
                 logging.error(f"Error in evaluating model response: {result}")
 
         return evaluation_results
-
-
 
 
     def _save_to_db(self, results):
@@ -340,8 +342,3 @@ class BatchProcessor:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, data_to_insert)
             conn.commit()
-    
-
-
-        
-

@@ -1,3 +1,10 @@
+import sys
+import os
+import traceback
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(1, os.path.join(base_dir, "../"))
+
 from eval.eval_task_handlers.input_handler import InputHandler
 from eval.eval_task_handlers.api_handler import APIHandler
 from eval.eval_task_handlers.evaluator import Evaluator
@@ -9,6 +16,7 @@ from entrypoint.styling_guide_manager import StylingGuideManager
 from handlers.llm_handler import BaseModelHandler
 import argparse
 import logging
+import asyncio
 
 
 def main():
@@ -23,6 +31,7 @@ def main():
     styling_guide_manager = StylingGuideManager()
 
     # Initialize LLM handler
+
     provider_config_1 = {
         "name": "openai-gpt-4o-mini",
         "provider": "openai",
@@ -43,10 +52,6 @@ def main():
     api_handler = APIHandler(API_URL)
     evaluator_1 = Evaluator(TASK_MAPPING, template_renderer, styling_guide_manager, handler_1,evaluator_id="gpt4_1")
     evaluator_2 = Evaluator(TASK_MAPPING, template_renderer, styling_guide_manager, handler_2,evaluator_id="gpt4_2")
-
-
-    # Initialize the BatchProcessor
-    batch_processor = BatchProcessor(args.batch_size)
 
     # List of evaluators
     evaluators = [evaluator_1, evaluator_2]

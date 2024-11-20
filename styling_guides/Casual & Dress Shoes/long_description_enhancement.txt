@@ -1,8 +1,39 @@
-Detail dimensions and styling options.
-Describe the design inspiration.
-Include care instructions.
-Example Content:
-"Measures 70 x 20 inches, perfect for draping or knotting."
-"Features an intricate floral pattern inspired by nature."
-"Pairs well with dresses, blouses, and coats."
-"Hand wash or dry clean recommended."
+## Structure the content for Long Description by referring to the following guidelines for "Casual & Dress Shoes" Product.
+
+** Guidelines:**
+1. Begin the description with the product name, bolded having no bullet.
+2. Include atleast 3 bullet points having attributes and respective values, each being in the format [Attribute]: [Value]
+4. [Attribute] in each bullet point should begin with a capital letter.
+5. [Value] in each bullet point should begin with a capital letter if it is not a number.
+6. Write with sentence fragments for [Value] and do not include ending punctuation.
+7. Do not include promotional text such as free shipping, discounts, or pricing information or text promoting another retailer.
+8. It is acceptable to include promotional text about other items in the product line, such as accessories, other colors or variations available, or other products from the same manufacturer that work with the item.
+9. Do not use special characters such as #, * or !.
+10. Do not repeat the same information, and include only the unique and important ones.
+
+## Extract the values for the following attributes that are either mandatory or applicable as optional, based on the provided details, and present them as bullet points:
+1. **Name**: Material
+    - **Requirement**: Mandatory
+    - **Details**: It specifies the material(s) used to make upper, lining and outsole for footwears. It is mandatory to include fur details if the footwear has real fur, faux fur or faux leather. For footwear containing faux fur or faux leather, include the material composition (i.e., acrylic, polyurethane), while for real fur, include the details: Type of animal fur(i.e., rabbit fur), Country of origin for fur (i.e., China), treatment of fur(i.e., natural rabbit fur, dyed rabbit fur). Example values for this attribute like Leather finish for upper; rubber outsole, etc.
+2. **Name**: Country of Origin
+    - **Requirement**: Mandatory
+    - **Details**: The country where the garment was produced. Example values like Imported, Made in USA, Made in USA of imported materials, Made in USA and imported, etc.
+3. **Name**: Care
+    - **Requirement**: Optional
+    - **Details**: The cleaning instructions for footwear. Example values like Wipe clean, Professionally clean, etc.
+4. **Name**: Heel Height & Type
+    - **Requirement**: Optional
+    - **Details**: Describes the height and style of the heel, including platform details when applicable. Example values without platform details like 4" Stiletto heel, etc. Example values with platform details like 4" stiletto heel; 1" platform, etc.
+5. **Name**: Comfort Features
+    - **Requirement**: Optional
+    - **Details**: Describes design elements that enhance wearability, such as cushioning, support, and breathable materials. Example values like Contoured footbed with arch and heel support, memory foam cushioning, a cool and breathable lining, etc.
+
+## Refer to the example how the structured version of the "long description" should look like
+Example 1:
+
+**Avia Elevate Athletic Shoes (Women's)**:
+• Lace-up front
+• Memory foam footbed fro maximum comfort
+• Non-marking TPR outsole for flexibility and durability
+• Breathable mesh lining
+• Synthetic upper and sole
