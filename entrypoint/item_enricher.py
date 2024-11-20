@@ -187,7 +187,8 @@ class ItemEnricher:
         Returns:
             Dict[str, Any]: The parsed response or an error message.
         """
-        logging.debug(f"response to be parsed is {response} ")    
+        logging.debug(f"response to be parsed is {response} ")
+        response_content = ''
         try:
             if isinstance(response, dict) and response.get('error') is not None:
                 # If the handler returned an error, propagate it
@@ -209,10 +210,19 @@ class ItemEnricher:
             }
 
         except Exception as e:
-            logging.error(
-                f"Error processing response from handler '{handler_name}' for task '{task}': {str(e)}\nResponse Text: {response}"
-            )
-            return {
-                'handler_name': handler_name,
-                'error': 'Parsing failed'
-            }
+            fixed_response = response_content.replace("```json", "").replace("```", "")
+            try:
+                parser = ParserFactory.get_parser(output_format)
+                parsed_response = parser.parse(fixed_response)
+                return {
+                    'handler_name': handler_name,
+                    'response': parsed_response
+                }
+            except Exception as ex:
+                logging.error(
+                    f"Error processing response from handler '{handler_name}' for task '{task}': {str(e)}\nResponse Text: {response}"
+                )
+                return {
+                    'handler_name': handler_name,
+                    'error': 'Parsing failed'
+                }

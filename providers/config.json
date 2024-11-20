@@ -1,13 +1,13 @@
 {
   "providers": [
     {
-      "name": "gpt-4o",
+      "name": "gpt-4o-mini",
       "provider": "openai",
-      "model": "gpt-4o",
+      "model": "gpt-4o-mini",
       "family": "default",
       "temperature": 0.2,
-      "version": "2024-02-01",
-      "api_base": "https://wmtllmgateway.prod.walmart.com/wmtllmgateway/v1/openai",
+      "version": "2024-06-01",
+      "api_base": "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/openai",
       "required_fields": [
         "name",
         "provider",
