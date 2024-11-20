@@ -9,7 +9,7 @@ from providers.base_provider import BaseProvider
 class OpenAIProvider(BaseProvider):
     def __init__(self, model='gpt-4o', api_base=None, version=None, temperature=None, max_tokens=None):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.api_key = os.getenv("ELEMENTS_API_KEY")
+        self.api_key = os.getenv("ELEMENTS_API_KEY_GPT_MINI")
         self.model = model
         self.api_base = api_base
         self.api_version = version

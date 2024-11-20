@@ -201,7 +201,6 @@ class ItemEnricher:
 
             # Use ParserFactory to get the appropriate parser based on output_format
             parser = ParserFactory.get_parser(output_format)
-           
             parsed_response = parser.parse(response_content)
 
             return {
