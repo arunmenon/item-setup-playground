@@ -29,6 +29,28 @@ class GeminiProvider(BaseProvider):
             'x-api-key'   : self.api_key,
             'Content-Type': 'application/json'
         }
+        self.safety_settings_gemini = [
+            {
+                "category": 'HARM_CATEGORY_HATE_SPEECH',
+                "threshold": 'BLOCK_NONE'
+            },
+            {
+                "category": 'HARM_CATEGORY_UNSPECIFIED',
+                "threshold": 'BLOCK_NONE'
+            },
+            {
+                "category": 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                "threshold": 'BLOCK_NONE'
+            },
+            {
+                "category": 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                "threshold": 'BLOCK_NONE'
+            },
+            {
+                "category": 'HARM_CATEGORY_HARASSMENT',
+                "threshold": 'BLOCK_NONE'
+            }
+        ]
 
     def configure_gen_settings(self, temperature, max_tokens):
         return {
@@ -56,7 +78,8 @@ class GeminiProvider(BaseProvider):
                             }
                         ]
                     },
-                    "generation_config" : self.configure_gen_settings(temperature, max_tokens)
+                    "generation_config" : self.configure_gen_settings(temperature, max_tokens),
+                    "safetySettings": self.safety_settings_gemini
                 },
                 "temperature"  : temperature,
                 "max_tokens"   : max_tokens
