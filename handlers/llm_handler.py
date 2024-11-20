@@ -11,6 +11,12 @@ class BaseModelHandler:
     def __init__(self, provider: str = None, model: str = "gpt-4", max_tokens: int = None, temperature: float = 0.7, **provider_kwargs):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.provider_name = provider
+
+        # Explicitly add these parameters to provider_kwargs
+        provider_kwargs['model'] = model
+        provider_kwargs['max_tokens'] = max_tokens
+        provider_kwargs['temperature'] = temperature
+
         self.provider = ProviderFactory.create_provider(provider, **provider_kwargs)
         self.model = model
         self.max_tokens = max_tokens

@@ -41,7 +41,22 @@ def main():
     #     "api_base"       : "https://wmtllmgateway.prod.walmart.com/wmtllmgateway/v1/openai",
     #     "required_fields": []
     # }
-
+    # ,
+    # {
+    #     "name"           : "gpt-4o",
+    #     "provider"       : "openai",
+    #     "model"          : "gpt-4o",
+    #     "family"         : "default",
+    #     "temperature"    : 0.2,
+    #     "version"        : "2024-06-01",
+    #     "api_base"       : "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/openai",
+    #     "required_fields": [
+    #         "name",
+    #         "provider",
+    #         "model",
+    #         "temperature"
+    #     ]
+    # },
     provider_config = {
         "name"           : "meta-llama/Llama-3.1-405B-Instruct-FP8",
         "provider"       : "elements_openai",

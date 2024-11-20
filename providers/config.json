@@ -34,7 +34,7 @@
       "name": "claude-3-haiku",
       "provider": "claude",
       "model": "claude-3-haiku",
-      "version": "20240307",
+      "version": "001",
       "api_base": "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/google-genai",
       "family": "default",
       "temperature": 0.2,
