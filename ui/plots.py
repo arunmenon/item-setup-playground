@@ -126,3 +126,124 @@ def generate_winner_model_comparison_plot(evaluation_df):
     )
 
     return fig
+
+def generate_aggregated_plot(aggregated_df):
+    if aggregated_df.empty:
+        return go.Figure()
+
+    # Metrics to plot
+    metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+
+    # Prepare data
+    plot_data = []
+    for metric in metrics:
+        mean_col = f'{metric}_mean'
+        variance_col = f'{metric}_variance'
+        confidence_col = f'{metric}_confidence'
+
+        temp_df = aggregated_df[['model_name', mean_col, variance_col, confidence_col]]
+        temp_df = temp_df.rename(columns={
+            mean_col: 'mean_score',
+            variance_col: 'variance',
+            confidence_col: 'confidence_level'
+        })
+        temp_df['Metric'] = metric.capitalize()
+        plot_data.append(temp_df)
+
+    plot_df = pd.concat(plot_data)
+
+    # Calculate standard deviation for error bars
+    plot_df['std_dev'] = plot_df['variance'].apply(lambda x: np.sqrt(x) if pd.notnull(x) else None)
+
+    # Create bar plot with error bars
+    fig = px.bar(
+        plot_df,
+        x='model_name',
+        y='mean_score',
+        color='confidence_level',
+        error_y='std_dev',
+        barmode='group',
+        facet_col='Metric',
+        title='Aggregated Evaluation Metrics with Confidence Levels',
+        height=600
+    )
+
+    fig.update_layout(
+        xaxis_title='Model Name',
+        yaxis_title='Mean Score',
+        legend_title='Confidence Level'
+    )
+
+    return fig
+
+def generate_variance_distribution_plot(aggregated_df):
+    if aggregated_df.empty:
+        return go.Figure()
+
+    metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+    plot_data = []
+    for metric in metrics:
+        variance_col = f'{metric}_variance'
+        temp_df = aggregated_df[['model_name', variance_col]]
+        temp_df = temp_df.rename(columns={variance_col: 'variance'})
+        temp_df['Metric'] = metric.capitalize()
+        plot_data.append(temp_df)
+
+    plot_df = pd.concat(plot_data)
+
+    # Create box plot to show variance distribution
+    fig = px.box(
+        plot_df,
+        x='Metric',
+        y='variance',
+        points='all',
+        color='Metric',
+        title='Variance Distribution Across Metrics'
+    )
+
+    fig.update_layout(
+        xaxis_title='Metric',
+        yaxis_title='Variance',
+        showlegend=False
+    )
+
+    return fig
+
+def generate_confidence_level_breakdown(aggregated_df):
+    if aggregated_df.empty:
+        return go.Figure()
+
+    metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+    plot_data = []
+    for metric in metrics:
+        confidence_col = f'{metric}_confidence'
+        temp_df = aggregated_df[[confidence_col]]
+        temp_df = temp_df.rename(columns={confidence_col: 'confidence_level'})
+        temp_df['Metric'] = metric.capitalize()
+        plot_data.append(temp_df)
+
+    plot_df = pd.concat(plot_data)
+
+    # Count of confidence levels per metric
+    count_df = plot_df.groupby(['Metric', 'confidence_level']).size().reset_index(name='Count')
+
+    # Create bar plot
+    fig = px.bar(
+        count_df,
+        x='Metric',
+        y='Count',
+        color='confidence_level',
+        barmode='group',
+        title='Confidence Level Breakdown by Metric'
+    )
+
+    fig.update_layout(
+        xaxis_title='Metric',
+        yaxis_title='Number of Models',
+        legend_title='Confidence Level'
+    )
+
+    return fig
+
+
+

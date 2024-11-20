@@ -94,13 +94,21 @@ def create_leaderboard_tab(get_leaderboard_fn, product_types):
 
         
 
-def create_analytics_tab(generate_leaderboard_plot_fn, get_leaderboard_fn, generate_winner_model_comparison_plot_fn,get_evaluations_fn, product_types):
+def create_analytics_tab(
+    generate_leaderboard_plot_fn,
+    get_leaderboard_fn,
+    generate_winner_model_comparison_plot_fn,
+    get_evaluations_fn,
+    get_aggregated_evaluations_fn,
+    generate_aggregated_plot_fn,
+    product_types
+):
     with gr.TabItem("Analytics"):
         gr.Markdown("## Analytics")
 
         # Filters
         with gr.Row():
-            task_type_selector = gr.Dropdown(
+            task_selector = gr.Dropdown(
                 label="Task",
                 choices=["All", "title_enhancement", "description_enrichment"],
                 value="All"
@@ -110,37 +118,55 @@ def create_analytics_tab(generate_leaderboard_plot_fn, get_leaderboard_fn, gener
                 choices=["All"] + product_types,
                 value="All"
             )
-            evaluator_type_selector = gr.Dropdown(
-                label="Evaluator Type",
-                choices=["All", "LLM", "Human"],
-                value="All"
+            data_type_selector = gr.Dropdown(
+                label="Data Type",
+                choices=["Individual Evaluations", "Aggregated Evaluations"],
+                value="Individual Evaluations"
             )
 
         visualization_selector = gr.Dropdown(
             label="Select Visualization",
-            choices=["Leaderboard", "Winner Model Comparison"],
+            choices=[
+                "Leaderboard",
+                "Winner Model Comparison",
+                "Aggregated Metrics",
+                "Variance Distribution",
+                "Confidence Level Breakdown"
+            ],
             value="Leaderboard"
         )
 
         analytics_plot = gr.Plot()
 
-        def update_analytics(task, product_type, evaluator_type, visualization):
+        def update_analytics(task, product_type, data_type, visualization):
             task_filter = None if task == "All" else task
             product_type_filter = None if product_type == "All" else product_type
-            evaluator_type_filter = None if evaluator_type == "All" else evaluator_type
 
-            if visualization == "Leaderboard":
-                leaderboard_df = get_leaderboard_fn(task_filter, product_type_filter, evaluator_type_filter)
-                plot = generate_leaderboard_plot_fn(leaderboard_df)
-            elif visualization == "Winner Model Comparison":
-                evaluation_df = get_evaluations_fn(task=task_filter, product_type=product_type_filter)
-                plot = generate_winner_model_comparison_plot_fn(evaluation_df)
+            if data_type == "Individual Evaluations":
+                if visualization == "Leaderboard":
+                    leaderboard_df = get_leaderboard_fn(task_filter, product_type_filter)
+                    plot = generate_leaderboard_plot_fn(leaderboard_df)
+                elif visualization == "Winner Model Comparison":
+                    evaluation_df = get_evaluations_fn(task=task_filter, product_type=product_type_filter)
+                    plot = generate_winner_model_comparison_plot_fn(evaluation_df)
+                else:
+                    plot = go.Figure()
+            elif data_type == "Aggregated Evaluations":
+                aggregated_df = get_aggregated_evaluations_fn(task_filter, product_type_filter)
+                if visualization == "Aggregated Metrics":
+                    plot = generate_aggregated_plot_fn(aggregated_df)
+                elif visualization == "Variance Distribution":
+                    plot = generate_variance_distribution_plot(aggregated_df)
+                elif visualization == "Confidence Level Breakdown":
+                    plot = generate_confidence_level_breakdown(aggregated_df)
+                else:
+                    plot = go.Figure()
             else:
                 plot = go.Figure()
 
             return plot
 
-        inputs = [task_type_selector, product_type_selector, evaluator_type_selector, visualization_selector]
+        inputs = [task_selector, product_type_selector, data_type_selector, visualization_selector]
         for input_component in inputs:
             input_component.change(fn=update_analytics, inputs=inputs, outputs=analytics_plot)
 
@@ -190,3 +216,87 @@ def create_feedback_tab(get_detailed_feedback_fn,product_types):
         inputs = [task_selector, item_selector, product_type_selector, model_selector]
         for input_component in inputs:
             input_component.change(fn=load_feedback, inputs=inputs, outputs=feedback_table)
+
+def generate_variance_distribution_plot(aggregated_df):
+    import plotly.express as px
+    import numpy as np
+    import pandas as pd
+
+    if aggregated_df.empty:
+        return go.Figure()
+
+    metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+    plot_data = []
+
+    for metric in metrics:
+        variance_col = f'{metric}_variance'
+        temp_df = aggregated_df[['model_name', variance_col]]
+        temp_df = temp_df.rename(columns={variance_col: 'variance'})
+        temp_df['Metric'] = metric.capitalize()
+        plot_data.append(temp_df)
+
+    plot_df = pd.concat(plot_data, ignore_index=True)
+
+    # Remove rows with NaN variance
+    plot_df = plot_df.dropna(subset=['variance'])
+
+    # Create box plot to show variance distribution
+    fig = px.box(
+        plot_df,
+        x='Metric',
+        y='variance',
+        points='all',
+        color='Metric',
+        title='Variance Distribution Across Metrics',
+        labels={'variance': 'Variance', 'Metric': 'Metric'}
+    )
+
+    fig.update_layout(
+        xaxis_title='Metric',
+        yaxis_title='Variance',
+        showlegend=False
+    )
+
+    return fig
+
+def generate_confidence_level_breakdown(aggregated_df):
+    import plotly.express as px
+    import pandas as pd
+
+    if aggregated_df.empty:
+        return go.Figure()
+
+    metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+    plot_data = []
+
+    for metric in metrics:
+        confidence_col = f'{metric}_confidence'
+        temp_df = aggregated_df[[confidence_col]]
+        temp_df = temp_df.rename(columns={confidence_col: 'confidence_level'})
+        temp_df['Metric'] = metric.capitalize()
+        plot_data.append(temp_df)
+
+    plot_df = pd.concat(plot_data, ignore_index=True)
+
+    # Count of confidence levels per metric
+    count_df = plot_df.groupby(['Metric', 'confidence_level']).size().reset_index(name='Count')
+
+    # Create bar plot
+    fig = px.bar(
+        count_df,
+        x='Metric',
+        y='Count',
+        color='confidence_level',
+        barmode='group',
+        title='Confidence Level Breakdown by Metric',
+        labels={'Count': 'Number of Models', 'Metric': 'Metric', 'confidence_level': 'Confidence Level'}
+    )
+
+    fig.update_layout(
+        xaxis_title='Metric',
+        yaxis_title='Number of Models',
+        legend_title='Confidence Level'
+    )
+
+    return fig
+
