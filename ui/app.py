@@ -8,8 +8,9 @@ from ui_components import create_feedback_tab, create_item_enrichment_tab, creat
 import os
 
 # Initialize database handler and create tables
-db_handler = DatabaseHandler()
-db_handler.create_tables()
+# db_handler = DatabaseHandler(db_path="/Users/n0s09lj/Downloads/item-setup-pipeline/source/results_21_nov.db")
+db_handler = DatabaseHandler(db_path="/Users/n0s09lj/Workspace/item-setup-playground/results.db")
+# db_handler.create_tables()
 
 # Load product types from 'product_types.txt'
 product_types = load_product_types_from_file('product_types.txt')
