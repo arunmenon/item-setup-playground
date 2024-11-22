@@ -8,6 +8,7 @@ from functools import partial
 from eval.config.constants import TASK_MAPPING
 from collections import defaultdict
 import numpy as np
+from tqdm.asyncio import tqdm
 
 
 class BatchProcessor:
@@ -97,12 +98,17 @@ class BatchProcessor:
             evaluators (list[Evaluator]): List of evaluator instances.
             prepare_item (callable): Function to prepare item data for API.
         """
-        tasks = [asyncio.create_task(self._process_single_batch(
-            df.iloc[start:start + self.batch_size], api_handler, evaluators, prepare_item))
-            for start in range(0, len(df), self.batch_size)]
-        await asyncio.gather(*tasks)
+        semaphore = asyncio.Semaphore(10)
+        tasks = [
+            asyncio.create_task(self._process_single_batch(
+                df.iloc[start:start + self.batch_size], api_handler, evaluators, prepare_item, semaphore))
+            for start in range(0, len(df), self.batch_size)
+        ]
 
-    async def _process_single_batch(self, batch, api_handler, evaluators, prepare_item):
+        for f in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Processing Batches"):
+            await f
+
+    async def _process_single_batch(self, batch, api_handler, evaluators, prepare_item, semaphore):
         """
         Process data in batches and save results to the database after each batch.
 
@@ -112,27 +118,28 @@ class BatchProcessor:
             evaluators (list[Evaluator]): List of evaluator instances.
             prepare_item (callable): Function to prepare item data for API.
         """
-        logging.info(f"Processing batch of size {len(batch)}")
+        async with semaphore:
+            logging.info(f"Processing batch of size {len(batch)}")
 
-        loop = asyncio.get_event_loop()
-        tasks = []
+            loop = asyncio.get_event_loop()
+            tasks = []
 
-        for _, row in batch.iterrows():
-            item_data = prepare_item(row)
-            task = loop.run_in_executor(self.executor, partial(self._process_item, item_data, api_handler, evaluators))
-            tasks.append(task)
+            for _, row in batch.iterrows():
+                item_data = prepare_item(row)
+                task = loop.run_in_executor(self.executor, partial(self._process_item, item_data, api_handler, evaluators))
+                tasks.append(task)
 
-        # Await all item processing tasks
-        results = await asyncio.gather(*tasks)
+            # Await all item processing tasks
+            results = await asyncio.gather(*tasks)
 
-        evaluation_results = [item for sublist in results for item in sublist if item]
+            evaluation_results = [item for sublist in results for item in sublist if item]
 
-        if evaluation_results:
-            self._save_to_db(evaluation_results)
-            # Aggregate evaluations
-            aggregated_results = self._aggregate_evaluations(evaluation_results)
-            if aggregated_results:
-                self._save_aggregated_results(aggregated_results)
+            if evaluation_results:
+                self._save_to_db(evaluation_results)
+                # Aggregate evaluations
+                aggregated_results = self._aggregate_evaluations(evaluation_results)
+                if aggregated_results:
+                    self._save_aggregated_results(aggregated_results)
 
     def _process_item(self, item_data, api_handler, evaluators):
         """
@@ -177,7 +184,7 @@ class BatchProcessor:
                         ordered_result = {
                             "item_id"            : item_data["item_id"],
                             "item_product_type"  : product_type,
-                            "task"               : task,
+                            "task"               : task_name,
                             "model_name"         : model_name,
                             "model_version"      : model_data.get('model_version', '1.0'),
                             "evaluator_type"     : 'LLM',
@@ -200,19 +207,19 @@ class BatchProcessor:
                         # Create async tasks for evaluation
                         evaluation_task = evaluator.evaluate_task(item_data, product_type, task, model_name, enriched_content, evaluator_id)
                         tasks.append(evaluation_task)
-                        task_context.append((task, model_name, model_data.get('model_version', '1.0'), evaluator_id,
+                        task_context.append((task_name, model_name, model_data.get('model_version', '1.0'), evaluator_id,
                                          enriched_content))
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         for idx, result in enumerate(results):
             if isinstance(result, dict):
-                task, model_name, model_version, evaluator_id, enriched_content = task_context[idx]
+                task_name, model_name, model_version, evaluator_id, enriched_content = task_context[idx]
 
                 evaluation_result = {
                     "item_id"            : item_data["item_id"],
                     "item_product_type"  : product_type,
-                    "task"               : task,
+                    "task"               : task_name,
                     "model_name"         : model_name,
                     "model_version"      : model_version,
                     "evaluator_type"     : 'LLM',
@@ -330,15 +337,26 @@ class BatchProcessor:
 
     def _calculate_aggregated_metrics(self, evaluations):
         metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+        metric_ranges = {
+            'quality_score': 100,
+            'relevance'    : 5,
+            'clarity'      : 5,
+            'compliance'   : 5,
+            'accuracy'     : 5
+        }
+
         aggregated = {}
         for metric in metrics:
             scores = [e.get(metric) for e in evaluations if e.get(metric) is not None]
             if scores:
-                mean_score = np.mean(scores)
-                variance = np.var(scores, ddof=1)  # Sample variance
+                # Normalize scores to 0-1 range
+                normalized_scores = [round(score / metric_ranges[metric], 3) for score in scores]
+                mean_score = np.mean(normalized_scores)
+                variance = np.var(normalized_scores, ddof=1)  # Sample variance
                 confidence = self._determine_confidence_level(variance)
-                aggregated[f'{metric}_mean'] = mean_score
-                aggregated[f'{metric}_variance'] = variance
+                # Store the denormalized mean for understanding
+                aggregated[f'{metric}_mean'] = round(mean_score * metric_ranges[metric], 3)
+                aggregated[f'{metric}_variance'] = round(variance, 2)
                 aggregated[f'{metric}_confidence'] = confidence
             else:
                 aggregated[f'{metric}_mean'] = None
@@ -349,12 +367,40 @@ class BatchProcessor:
     def _determine_confidence_level(self, variance):
         if variance is None:
             return 'Unknown'
-        elif variance <= 0.5:
+        elif variance <= 0.05:
             return 'High'
-        elif variance <= 1.5:
+        elif variance <= 0.1:
             return 'Medium'
         else:
             return 'Low'
+
+    # def _calculate_aggregated_metrics(self, evaluations):
+    #     metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+    #     aggregated = {}
+    #     for metric in metrics:
+    #         scores = [e.get(metric) for e in evaluations if e.get(metric) is not None]
+    #         if scores:
+    #             mean_score = np.mean(scores)
+    #             variance = np.var(scores, ddof=1)  # Sample variance
+    #             confidence = self._determine_confidence_level(variance)
+    #             aggregated[f'{metric}_mean'] = mean_score
+    #             aggregated[f'{metric}_variance'] = variance
+    #             aggregated[f'{metric}_confidence'] = confidence
+    #         else:
+    #             aggregated[f'{metric}_mean'] = None
+    #             aggregated[f'{metric}_variance'] = None
+    #             aggregated[f'{metric}_confidence'] = 'Unknown'
+    #     return aggregated
+    #
+    # def _determine_confidence_level(self, variance):
+    #     if variance is None:
+    #         return 'Unknown'
+    #     elif variance <= 0.5:
+    #         return 'High'
+    #     elif variance <= 1.5:
+    #         return 'Medium'
+    #     else:
+    #         return 'Low'
 
     def _save_aggregated_results(self, aggregated_results):
         with sqlite3.connect(self.db_path) as conn:

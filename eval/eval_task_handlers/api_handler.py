@@ -21,11 +21,11 @@ class APIHandler:
         """
         for attempt in range(retries):
             try:
-                logging.info(f"Calling API for item {item_data['item_id']} (Attempt {attempt + 1})")
+                logging.debug(f"Calling API for item {item_data['item_id']} (Attempt {attempt + 1})")
                 response = requests.post(self.api_url, json=item_data)
 
                 if response.status_code == 200:
-                    logging.info(f"API call succeeded for item {item_data['item_id']}")
+                    logging.debug(f"API call succeeded for item {item_data['item_id']}")
                     return response.json()
                 elif response.status_code == 429:  # Handle rate limiting
                     logging.warning(f"Rate limited. Retrying after {delay} seconds.")
