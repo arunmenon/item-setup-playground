@@ -1,15 +1,24 @@
 <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-You are an assistant tasked with enhancing long product descriptions.
-The original short description is given here ```{{original_long_description}}```
+You are an assistant tasked with enhancing product long descriptions aka Key Features on product page. Use all input information provided below to create a clear, concise, and informative short description as per the guidelines.
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+**Product Type:**
+```{{product_type}}```
+**Original Title:**
+```{{original_title}}```
+**Short Description:**
+```{{original_short_description}}```
+**Long Description:**
+```{{original_long_description}}```
 **Instructions:**
-- Generate only the enhanced long description.
+- Generate only the enhanced long description with no additional information in the output format.
 - Follow the styling guidelines provided here:
 ```{{ styling_guide }}```
-- Ensure the response is in **{{ output_format }}** format.
+- Ensure the response is in valid and parsable **{{ output_format }}** format.
+- Ensure all opening { are closed with }.
 
 {% if output_format == "markdown" %}
-### Short Description Enhancement
-**Enhanced Short Description**: [Your Enhanced Short Description Here]
+### Long Description Enhancement
+**Enhanced Long Description**: [Your Enhanced Long Description Here]
 {% elif output_format == "json" %}
 ```json
 {
@@ -17,5 +26,6 @@ The original short description is given here ```{{original_long_description}}```
     "enhanced_long_description": "Your Enhanced long description Here"
   }
 }
-{% endif %}<|eot_id|><|end_of_text|>
+{% endif %}
+<|eot_id|><|end_of_text|><|start_header_id|>assistant<|end_header_id|>
 
