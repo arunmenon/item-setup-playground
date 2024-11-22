@@ -1,6 +1,7 @@
 # item_enricher.py
 
 import asyncio
+import json
 import logging
 from typing import Dict, Any, List
 from handlers.llm_handler import BaseModelHandler
@@ -189,6 +190,7 @@ class ItemEnricher:
         """
         logging.debug(f"response to be parsed is {response} ")
         response_content = ''
+        fixed_response = ''
         try:
             if isinstance(response, dict) and response.get('error') is not None:
                 # If the handler returned an error, propagate it
@@ -210,7 +212,12 @@ class ItemEnricher:
             }
 
         except Exception as e:
-            fixed_response = response_content.replace("```json", "").replace("```", "")
+            if '{' in response_content:
+                json_start = response_content.index('{')
+                fixed_response = response_content[json_start:]
+            else:
+                fixed_res_dict = {task : response_content}
+                fixed_response = json.dumps(fixed_res_dict)
             try:
                 parser = ParserFactory.get_parser(output_format)
                 parsed_response = parser.parse(fixed_response)
@@ -219,10 +226,19 @@ class ItemEnricher:
                     'response': parsed_response
                 }
             except Exception as ex:
-                logging.error(
-                    f"Error processing response from handler '{handler_name}' for task '{task}': {str(e)}\nResponse Text: {response}"
-                )
-                return {
-                    'handler_name': handler_name,
-                    'error': 'Parsing failed'
-                }
+                fixed_response = fixed_response.replace("```json", "").replace("```", "").replace("\n","")
+                try:
+                    parser = ParserFactory.get_parser(output_format)
+                    parsed_response = parser.parse(fixed_response)
+                    return {
+                        'handler_name': handler_name,
+                        'response': parsed_response
+                    }
+                except Exception as ex:
+                    logging.error(
+                        f"Error processing response from handler '{handler_name}' for task '{task}': {str(e)}\nResponse Text: {response}"
+                    )
+                    return {
+                        'handler_name': handler_name,
+                        'error': 'Parsing failed'
+                    }

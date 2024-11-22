@@ -5,7 +5,7 @@
       "provider": "openai",
       "model": "gpt-4o-mini",
       "family": "default",
-      "temperature": 0.2,
+      "temperature": 0.1,
       "version": "2024-06-01",
       "api_base": "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/openai",
       "required_fields": [
@@ -22,7 +22,7 @@
       "version": "001",
       "api_base": "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/google-genai",
       "family": "default",
-      "temperature": 0.2,
+      "temperature": 0.1,
       "required_fields": [
         "name",
         "provider",
@@ -79,15 +79,15 @@
       "output_format": "json"
     },
     "short_description_enhancement": {
-      "max_tokens": 2000,
+      "max_tokens": 2400,
       "output_format": "json"
     },
     "long_description_enhancement": {
-      "max_tokens": 2000,
+      "max_tokens": 2400,
       "output_format": "json"
     },
     "attribute_extraction": {
-      "max_tokens": 2000,
+      "max_tokens": 3000,
       "output_format": "json"
     },
     "vision_attribute_extraction": {
@@ -97,7 +97,7 @@
   },
   "task_execution": {
     "default_tasks": [
-      "title_enhancement"
+      "title_enhancement","short_description_enhancement","long_description_enhancement"
     ],
     "conditional_tasks": {
       "attribute_extraction": "attributes_list",

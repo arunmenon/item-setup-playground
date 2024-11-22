@@ -1,11 +1,20 @@
 <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-You are an assistant tasked with enhancing short product descriptions.
-The original short description is given here ```{{original_short_description}}```
+You are an assistant tasked with enhancing short product descriptions aka Site Description on product page. Use all input information provided below to create a clear, concise, and informative short description as per the guidelines.
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+**Product Type:**
+```{{product_type}}```
+**Original Title:**
+```{{original_title}}```
+**Short Description:**
+```{{original_short_description}}```
+**Long Description:**
+```{{original_long_description}}```
 **Instructions:**
-- Generate only the enhanced short description.
+- Generate only the enhanced short description with no additional information.
 - Follow the styling guidelines provided here:
 ```{{ styling_guide }}```
-- Ensure the response is in **{{ output_format }}** format.
+- Ensure the response is in valid and parsable **{{ output_format }}** format.
+- Ensure all opening { are closed with }.
 
 {% if output_format == "markdown" %}
 ### Short Description Enhancement
@@ -17,5 +26,5 @@ The original short description is given here ```{{original_short_description}}``
     "enhanced_short_description": "Your Enhanced short description Here"
   }
 }
-{% endif %}<|eot_id|><|end_of_text|>
-
+{% endif %}
+<|eot_id|><|end_of_text|><|start_header_id|>assistant<|end_header_id|>
