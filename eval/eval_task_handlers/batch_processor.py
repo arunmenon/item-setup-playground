@@ -119,7 +119,7 @@ class BatchProcessor:
             prepare_item (callable): Function to prepare item data for API.
         """
         async with semaphore:
-            logging.info(f"Processing batch of size {len(batch)}")
+            logging.debug(f"Processing batch of size {len(batch)}")
 
             loop = asyncio.get_event_loop()
             tasks = []
