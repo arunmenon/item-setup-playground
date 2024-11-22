@@ -9,15 +9,25 @@ from providers.base_provider import BaseProvider
 class OpenAIProvider(BaseProvider):
     def __init__(self, model='gpt-4o', api_base=None, version=None, temperature=None, max_tokens=None):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.api_key = os.getenv("ELEMENTS_API_KEY")
+
+        # Dynamically set the API key based on the model name
+        if "mini" in model.lower():
+            self.api_key = os.getenv("ELEMENTS_API_KEY_GPT_MINI")
+        else:
+            # self.api_key = os.getenv("ELEMENTS_API_KEY")
+            self.api_key = os.getenv("ELEMENTS_API_KEY_GPT_MINI")
+
+        # Check if API key is available
+        if not self.api_key:
+            raise ValueError("API key is missing from environment variables.")
+
         self.model = model
         self.api_base = api_base
         self.api_version = version
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-        if not self.api_key:
-            raise ValueError("ELEMENTS_API_KEY is missing from environment variables.")
+        # Setup CA bundle path for SSL verification
         ca_bundle_path = os.getenv("WMT_CA_PATH")
         cert_file_name = "ca-bundle.crt"
         self.resolved_file_path = os.path.join(ca_bundle_path, cert_file_name)
@@ -28,20 +38,37 @@ class OpenAIProvider(BaseProvider):
         }
 
     def create_chat_completion(self, model: str, messages: list, temperature: float, max_tokens: int):
-        payload = {
-            "model"            : model,
-            "task"             : "chat/completions",
-            "api-version"      : self.api_version,
-            "model-params"     : {
-                "messages": messages
-            },
-            "temperature"      : temperature,
-            "max_tokens"       : max_tokens,
-            "top_p"            : 0.95,
-            "frequency_penalty": 0,
-            "presence_penalty" : 0,
-            "stop"             : None
-        }
+        # Define the payload structure based on the model name
+        if "mini" in model.lower():
+            payload = {
+                "model"            : model,
+                "task"             : "chat/completions",
+                "api-version"      : self.api_version,
+                "model-params"     : {
+                    "messages": messages
+                },
+                "temperature"      : temperature,
+                "max_tokens"       : max_tokens,
+                "top_p"            : 0.95,
+                "frequency_penalty": 0,
+                "presence_penalty" : 0,
+                "stop"             : None
+            }
+        else:
+            payload = {
+                "model"            : model,
+                "task"             : "chat/completions",
+                "api-version"      : self.api_version,
+                "model-params": {
+                    "messages": messages
+                },
+                "temperature"      : temperature,
+                "max_tokens"       : max_tokens,
+                "top_p"            : 0.95,
+                "frequency_penalty": 0,
+                "presence_penalty" : 0,
+                "stop"             : None
+            }
 
         try:
             response = requests.post(

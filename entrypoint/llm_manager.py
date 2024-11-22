@@ -17,7 +17,6 @@ class LLMManager:
             print(f"name from provider {name}")
             #provider_name = provider_config_copy.pop('provider')
             family_name = provider_config_copy['family']
-            provider_config_copy.pop('required_fields', None)
             self.handlers[name] = BaseModelHandler(**provider_config_copy)
             self.family_names[name]=family_name
         self.tasks = config.get('tasks', {})    

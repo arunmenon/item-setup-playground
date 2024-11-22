@@ -31,6 +31,21 @@
       ]
     },
     {
+      "name": "claude-3-haiku",
+      "provider": "claude",
+      "model": "claude-3-haiku",
+      "version": "20240307",
+      "api_base": "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/google-genai",
+      "family": "default",
+      "temperature": 0.2,
+      "required_fields": [
+        "name",
+        "provider",
+        "model",
+        "temperature"
+      ]
+    },
+    {
       "name": "llama3-8b-orca-1024-w8a8",
       "provider": "elements_openai",
       "model": "llama3-8b-orca-1024-w8a8",

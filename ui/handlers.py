@@ -100,12 +100,12 @@ def process_single_sku(gtin, title, short_description, long_description, product
         model_response_keys = ["enhanced_title", "enhanced_short_description", "enhanced_long_description", "attribute_enrichment"]
         # Extract and format responses for display
         formatted_responses = []
-        for mod_res_counter in range(len(model_responses)):
-            formatted_response = [
-                f"{model_name}: {details.get('response', {}).get(model_response_keys[mod_res_counter], 'NA')}"    # key name changes process to process
-                for model_name, details in model_responses[mod_res_counter].items()
-            ]
-            formatted_responses.append(formatted_response)
+
+        for model_name, details in model_responses.items():
+            model_version = details.get('model_version', '1.0')
+            response_text = details.get('response', {}).get('enhanced_title', 'NA')
+            formatted_responses.append(f"{model_name} v{model_version}: {response_text}")
+        
 
         # Return formatted responses and model responses dict
         response = []
@@ -142,25 +142,32 @@ def save_preference(selected_response, model_responses_json, gtin, product_type,
     except Exception as e:
         return "Error: Failed to process model responses."
 
-    # Extract model name from the selected response
+    # Extract model name and version from the selected response
     try:
-        model_name = selected_response.split(":")[0].strip()
+        selected_model_info = selected_response.split(":")[0].strip()
+        if " v" in selected_model_info:
+            model_name, model_version = selected_model_info.split(" v")
+        else:
+            model_name = selected_model_info
+            model_version = "1.0"
     except Exception as e:
-        return "Error: Failed to extract model name from the selected response."
+        return "Error: Failed to extract model name and version from the selected response."
 
-    # Save preference and feedback in the database
-    db_handler.save_preference(
-        gtin,
-        product_type,
-        task_type,
-        model_responses,
-        selected_response,
-        model_name,
-        relevance,
-        clarity,
-        compliance,
-        accuracy,
-        comments
+
+    # Save human evaluation
+    db_handler.save_evaluation(
+        item_id=gtin,
+        product_type=product_type,
+        task=task_type,
+        model_name=model_name,
+        model_version=model_version,
+        evaluator_type='Human',
+        relevance=relevance,
+        clarity=clarity,
+        compliance=compliance,
+        accuracy=accuracy,
+        comments=comments,
+        is_winner=True  # The selected response is the winner
     )
 
     # Update leaderboard
