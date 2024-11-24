@@ -26,6 +26,14 @@ class BatchProcessor:
 
         # Initialize the database and create tables if they do not exist
         self._initialize_database()
+        self.metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+        self.metric_ranges = {
+            'quality_score': 100,
+            'relevance'    : 5,
+            'clarity'      : 5,
+            'compliance'   : 5,
+            'accuracy'     : 5
+        }
 
     def _initialize_database(self):
         """
@@ -98,7 +106,7 @@ class BatchProcessor:
             evaluators (list[Evaluator]): List of evaluator instances.
             prepare_item (callable): Function to prepare item data for API.
         """
-        semaphore = asyncio.Semaphore(10)
+        semaphore = asyncio.Semaphore(1)
         tasks = [
             asyncio.create_task(self._process_single_batch(
                 df.iloc[start:start + self.batch_size], api_handler, evaluators, prepare_item, semaphore))
@@ -311,52 +319,74 @@ class BatchProcessor:
             logging.info(f"{len(results)} rows upserted into evaluation_results.")
 
     def _aggregate_evaluations(self, evaluation_results):
-        # Group evaluations by item_id, task, model_name, model_version
+        # Group evaluations by item_id, product_type, and task
         grouped_evaluations = defaultdict(list)
         for eval_result in evaluation_results:
-            key = (eval_result['item_id'], eval_result['task'], eval_result['model_name'], eval_result['model_version'])
+            key = (eval_result['item_id'], eval_result['item_product_type'], eval_result['task'])
             grouped_evaluations[key].append(eval_result)
 
         aggregated_results = []
+
         for key, evals in grouped_evaluations.items():
-            item_id, task, model_name, model_version = key
-            aggregated_metrics = self._calculate_aggregated_metrics(evals)
+            item_id, product_type, task = key
+            all_scores = defaultdict(list)
+
+            # Collect scores for variance calculation
+            for eval in evals:
+                for metric in self.metrics:
+                    if eval.get(metric) is not None:
+                        all_scores[metric].append(eval.get(metric))
+
+            # Calculate overall variance for each metric
+            overall_variance = {}
+            for metric, scores in all_scores.items():
+                if scores:
+                    normalized_scores = [score / self.metric_ranges[metric] for score in scores]
+                    overall_variance[metric] = np.var(normalized_scores, ddof=1) if len(normalized_scores) > 1 else 0.0
+                else:
+                    overall_variance[metric] = None
+
+            # Aggregate metrics for each model within the group
+            model_aggregated_metrics = []
+            unique_models = {(eval['model_name'], eval['model_version']) for eval in evals}
+
+            for model_name, model_version in unique_models:
+                model_evals = [e for e in evals if e['model_name']==model_name and e['model_version']==model_version]
+                model_metrics = self._calculate_aggregated_metrics(model_evals, overall_variance)
+
+                model_aggregated_metrics.append({
+                    'model_name'   : model_name,
+                    'model_version': model_version,
+                    **model_metrics
+                })
 
             # Prepare aggregated result
-            aggregated_result = {
-                'item_id'          : item_id,
-                'item_product_type': evals[0]['item_product_type'],
-                'task'             : task,
-                'model_name'       : model_name,
-                'model_version'    : model_version,
-                **aggregated_metrics
-            }
-            aggregated_results.append(aggregated_result)
+            for model_metrics in model_aggregated_metrics:
+                aggregated_result = {
+                    'item_id'           : item_id,
+                    'item_product_type' : product_type,
+                    'task'              : task,
+                    **model_metrics
+                }
+                aggregated_results.append(aggregated_result)
 
         return aggregated_results
 
-    def _calculate_aggregated_metrics(self, evaluations):
-        metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
-        metric_ranges = {
-            'quality_score': 100,
-            'relevance'    : 5,
-            'clarity'      : 5,
-            'compliance'   : 5,
-            'accuracy'     : 5
-        }
-
+    def _calculate_aggregated_metrics(self, evaluations, overall_variance):
         aggregated = {}
-        for metric in metrics:
+        for metric in self.metrics:
             scores = [e.get(metric) for e in evaluations if e.get(metric) is not None]
             if scores:
                 # Normalize scores to 0-1 range
-                normalized_scores = [round(score / metric_ranges[metric], 3) for score in scores]
+                normalized_scores = [round(score / self.metric_ranges[metric], 3) for score in scores]
+
                 mean_score = np.mean(normalized_scores)
-                variance = np.var(normalized_scores, ddof=1)  # Sample variance
-                confidence = self._determine_confidence_level(variance)
-                # Store the denormalized mean for understanding
-                aggregated[f'{metric}_mean'] = round(mean_score * metric_ranges[metric], 3)
-                aggregated[f'{metric}_variance'] = round(variance, 2)
+                # variance = np.var(normalized_scores, ddof=1) if len(normalized_scores) > 1 else 0.0
+
+                confidence = self._determine_confidence_level(overall_variance[metric])
+                aggregated[f'{metric}'] = evaluations[0][f"{metric}"]
+                aggregated[f'{metric}_mean'] = round(mean_score, 2)
+                aggregated[f'{metric}_variance'] = round(overall_variance[metric], 2)
                 aggregated[f'{metric}_confidence'] = confidence
             else:
                 aggregated[f'{metric}_mean'] = None
@@ -373,6 +403,7 @@ class BatchProcessor:
             return 'Medium'
         else:
             return 'Low'
+
 
     # def _calculate_aggregated_metrics(self, evaluations):
     #     metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']

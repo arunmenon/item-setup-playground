@@ -32,12 +32,12 @@ def main():
 
     # Initialize LLM handler
     provider_config_1 = {
-        "name"           : "gpt-4o-mini",
+        "name"           : "gpt-4o",
         "provider"       : "openai",
-        "model"          : "gpt-4o-mini",
+        "model"          : "gpt-4o",
         "family"         : "default",
         "temperature"    : 0.2,
-        "version"        : "2024-06-01",
+        "version"        : "2024-02-01",
         "api_base"       : "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/openai",
         "required_fields": []
     }

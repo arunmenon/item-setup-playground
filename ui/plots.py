@@ -177,34 +177,44 @@ def generate_aggregated_plot(aggregated_df):
 
     return fig
 
+
 def generate_variance_distribution_plot(aggregated_df):
     if aggregated_df.empty:
-        return go.Figure()
+        return None
 
     metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
     plot_data = []
+
     for metric in metrics:
         variance_col = f'{metric}_variance'
-        temp_df = aggregated_df[['model_name', variance_col]]
+        temp_df = aggregated_df[['model_name', variance_col]].copy()
         temp_df = temp_df.rename(columns={variance_col: 'variance'})
         temp_df['Metric'] = metric.capitalize()
         plot_data.append(temp_df)
 
-    plot_df = pd.concat(plot_data)
+    plot_df = pd.concat(plot_data, ignore_index=True)
+
+    # Remove rows with NaN or zero variance
+    plot_df = plot_df[plot_df['variance']!=0]
+    plot_df = plot_df.dropna(subset=['variance'])
+
+    if plot_df.empty:
+        return None
 
     # Create box plot to show variance distribution
     fig = px.box(
         plot_df,
-        x='Metric',
-        y='variance',
-        points='all',
-        color='Metric',
-        title='Variance Distribution Across Metrics'
+        x="Metric",
+        y="variance",
+        points="all",
+        color="Metric",
+        title="Variance Distribution Across Metrics",
+        labels={"variance": "Variance", "Metric": "Metric"}
     )
 
     fig.update_layout(
-        xaxis_title='Metric',
-        yaxis_title='Variance',
+        xaxis_title="Metric",
+        yaxis_title="Variance",
         showlegend=False
     )
 

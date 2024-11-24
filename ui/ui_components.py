@@ -382,6 +382,7 @@ def generate_variance_distribution_plot(aggregated_df):
 
     return fig
 
+
 def generate_confidence_level_breakdown(aggregated_df):
     import plotly.express as px
     import pandas as pd
@@ -392,6 +393,7 @@ def generate_confidence_level_breakdown(aggregated_df):
     metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
     plot_data = []
 
+    # Extract confidence levels for each metric
     for metric in metrics:
         confidence_col = f'{metric}_confidence'
         temp_df = aggregated_df[[confidence_col]]
@@ -401,8 +403,16 @@ def generate_confidence_level_breakdown(aggregated_df):
 
     plot_df = pd.concat(plot_data, ignore_index=True)
 
-    # Count of confidence levels per metric
+    # Count of predictions per confidence level and metric
     count_df = plot_df.groupby(['Metric', 'confidence_level']).size().reset_index(name='Count')
+
+    # Calculate totals per metric and merge with count_df
+    total_counts = plot_df.groupby('Metric').size().reset_index(name='Total')
+    count_df = count_df.merge(total_counts, on='Metric')
+
+    # Calculate percentage and format it
+    count_df['Percentage'] = (count_df['Count'] / count_df['Total']) * 100
+    count_df['Percentage'] = count_df['Percentage'].map(lambda x: f'{x:.2f}%')
 
     # Create bar plot
     fig = px.bar(
@@ -410,14 +420,15 @@ def generate_confidence_level_breakdown(aggregated_df):
         x='Metric',
         y='Count',
         color='confidence_level',
+        text='Percentage',
         barmode='group',
-        title='Confidence Level Breakdown by Metric',
-        labels={'Count': 'Number of Models', 'Metric': 'Metric', 'confidence_level': 'Confidence Level'}
+        title='Percentage of Predictions by Confidence Level and Metric',
+        labels={'Count': 'Percentage of Predictions', 'Metric': 'Metric', 'confidence_level': 'Confidence Level'}
     )
 
     fig.update_layout(
         xaxis_title='Metric',
-        yaxis_title='Number of Models',
+        yaxis_title='Percentage of Predictions',
         legend_title='Confidence Level'
     )
 
