@@ -116,14 +116,15 @@ class DatabaseHandler:
     def get_leaderboard(self, task=None, product_type=None, evaluator_type=None):
         query = '''
             SELECT
+                model_name,
                 model_version,
                 evaluator_type,
                 COUNT(CASE WHEN is_winner = TRUE THEN 1 END) AS preference_count,
-                AVG(quality_score) AS avg_quality_score,
-                AVG(relevance) AS avg_relevance,
-                AVG(clarity) AS avg_clarity,
-                AVG(compliance) AS avg_compliance,
-                AVG(accuracy) AS avg_accuracy
+                ROUND(AVG(quality_score), 2) AS avg_quality_score,
+                ROUND(AVG(relevance), 2) AS avg_relevance,
+                ROUND(AVG(clarity), 2) AS avg_clarity,
+                ROUND(AVG(compliance), 2) AS avg_compliance,
+                ROUND(AVG(accuracy), 2) AS avg_accuracy
             FROM evaluation_results
             WHERE 1=1
         '''
@@ -140,7 +141,7 @@ class DatabaseHandler:
             params.append(evaluator_type)
 
         query += '''
-            GROUP BY model_version, evaluator_type
+            GROUP BY model_name, model_version, evaluator_type
             ORDER BY preference_count DESC
         '''
 

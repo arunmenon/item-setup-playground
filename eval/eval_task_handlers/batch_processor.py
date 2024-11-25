@@ -51,6 +51,7 @@ class BatchProcessor:
                     model_name TEXT,
                     model_version TEXT,
                     evaluator_type TEXT,         -- 'LLM' or 'Human'
+                    evaluator_id TEXT,
                     quality_score INTEGER,       -- For LLM evaluations (0-100)
                     relevance INTEGER,           
                     clarity INTEGER,             
@@ -63,7 +64,7 @@ class BatchProcessor:
                     enriched_content TEXT,
                     prompt_version TEXT,
                     eval_prompt_version TEXT,
-                    PRIMARY KEY (item_id, task, model_name, model_version, evaluator_type)
+                    PRIMARY KEY (item_id, task, model_name, model_version, evaluator_type, evaluator_id)
                 )
             """)
 
@@ -196,6 +197,7 @@ class BatchProcessor:
                             "model_name"         : model_name,
                             "model_version"      : model_data.get('model_version', '1.0'),
                             "evaluator_type"     : 'LLM',
+                            "evaluator_id"       : evaluator_id,
                             "quality_score"      : 0,
                             "relevance"          : 0,
                             "clarity"            : 0,
@@ -274,6 +276,7 @@ class BatchProcessor:
                     result["model_name"],
                     result["model_version"],
                     result["evaluator_type"],
+                    result["evaluator_id"],
                     result.get("quality_score"),
                     result.get("relevance"),
                     result.get("clarity"),
@@ -294,12 +297,12 @@ class BatchProcessor:
             cursor.executemany("""
                 INSERT INTO evaluation_results (
                     item_id, item_product_type, task, model_name, model_version,
-                    evaluator_type, quality_score, relevance, clarity, compliance, accuracy,
+                    evaluator_type, evaluator_id, quality_score, relevance, clarity, compliance, accuracy,
                     reasoning, suggestions, is_winner, comments,
                     enriched_content, prompt_version, eval_prompt_version
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(item_id, task, model_name, model_version, evaluator_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(item_id, task, model_name, model_version, evaluator_type, evaluator_id)
                 DO UPDATE SET
                     quality_score=excluded.quality_score,
                     relevance=excluded.relevance,
