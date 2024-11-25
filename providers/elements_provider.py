@@ -22,6 +22,10 @@ class ElementsProvider(BaseProvider):
         'meta-llama/Llama-3.1-405B-Instruct-FP8': {
             'url'        : 'https://llama-3-dot-1-405b-fp8-stage.element.glb.us.walmart.net/llama-3-dot-1-405b-fp8/v1/completions',
             'api_key_env': "ELEMENTS_API_KEY_META_LLAMA3_405B",
+        },
+        'neuralmagic/SmolLM-1.7B-Instruct-quantized.w8a16': {
+            'url'        : 'https://smollm-1-7b-instruct-q-stage.element.glb.us.walmart.net/smollm-1-7b-instruct-q/v1/completions',
+            'api_key_env': "ELEMENTS_API_KEY_META_SMOLLM_1d7B",
         }
     }
 

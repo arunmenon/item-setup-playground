@@ -86,11 +86,39 @@
         "model",
         "temperature"
       ]
+    },
+    {
+      "name": "meta-llama/Llama-3.1-405B-Instruct-FP8",
+      "provider": "elements_openai",
+      "model": "meta-llama/Llama-3.1-405B-Instruct-FP8",
+      "family": "llama",
+      "temperature": 0.1,
+      "api_base": "https://llama-3-dot-1-405b-fp8-stage.element.glb.us.walmart.net/llama-3-dot-1-405b-fp8/v1/completions",
+      "required_fields": [
+        "name",
+        "provider",
+        "model",
+        "temperature"
+      ]
+    },
+    {
+      "name": "neuralmagic/SmolLM-1.7B-Instruct-quantized.w8a16",
+      "provider": "elements_openai",
+      "model": "neuralmagic/SmolLM-1.7B-Instruct-quantized.w8a16",
+      "family": "llama",
+      "temperature": 0.1,
+      "api_base": "https://smollm-1-7b-instruct-q-stage.element.glb.us.walmart.net/smollm-1-7b-instruct-q/v1/completions",
+      "required_fields": [
+        "name",
+        "provider",
+        "model",
+        "temperature"
+      ]
     }
   ],
   "tasks": {
     "title_enhancement": {
-      "max_tokens": 2400,
+      "max_tokens": 600,
       "output_format": "json"
     },
     "short_description_enhancement": {
