@@ -26,6 +26,14 @@ class BatchProcessor:
 
         # Initialize the database and create tables if they do not exist
         self._initialize_database()
+        self.metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
+        self.metric_ranges = {
+            'quality_score': 100,
+            'relevance'    : 5,
+            'clarity'      : 5,
+            'compliance'   : 5,
+            'accuracy'     : 5
+        }
 
     def _initialize_database(self):
         """
@@ -43,6 +51,7 @@ class BatchProcessor:
                     model_name TEXT,
                     model_version TEXT,
                     evaluator_type TEXT,         -- 'LLM' or 'Human'
+                    evaluator_id TEXT,
                     quality_score INTEGER,       -- For LLM evaluations (0-100)
                     relevance INTEGER,           
                     clarity INTEGER,             
@@ -55,7 +64,7 @@ class BatchProcessor:
                     enriched_content TEXT,
                     prompt_version TEXT,
                     eval_prompt_version TEXT,
-                    PRIMARY KEY (item_id, task, model_name, model_version, evaluator_type)
+                    PRIMARY KEY (item_id, task, model_name, model_version, evaluator_type, evaluator_id)
                 )
             """)
 
@@ -98,17 +107,17 @@ class BatchProcessor:
             evaluators (list[Evaluator]): List of evaluator instances.
             prepare_item (callable): Function to prepare item data for API.
         """
-        semaphore = asyncio.Semaphore(10)
+        # semaphore = asyncio.Semaphore(1)
         tasks = [
             asyncio.create_task(self._process_single_batch(
-                df.iloc[start:start + self.batch_size], api_handler, evaluators, prepare_item, semaphore))
+                df.iloc[start:start + self.batch_size], api_handler, evaluators, prepare_item))
             for start in range(0, len(df), self.batch_size)
         ]
 
         for f in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Processing Batches"):
             await f
 
-    async def _process_single_batch(self, batch, api_handler, evaluators, prepare_item, semaphore):
+    async def _process_single_batch(self, batch, api_handler, evaluators, prepare_item):
         """
         Process data in batches and save results to the database after each batch.
 
@@ -118,28 +127,28 @@ class BatchProcessor:
             evaluators (list[Evaluator]): List of evaluator instances.
             prepare_item (callable): Function to prepare item data for API.
         """
-        async with semaphore:
-            logging.debug(f"Processing batch of size {len(batch)}")
+        # async with semaphore:
+        logging.debug(f"Processing batch of size {len(batch)}")
 
-            loop = asyncio.get_event_loop()
-            tasks = []
+        loop = asyncio.get_event_loop()
+        tasks = []
 
-            for _, row in batch.iterrows():
-                item_data = prepare_item(row)
-                task = loop.run_in_executor(self.executor, partial(self._process_item, item_data, api_handler, evaluators))
-                tasks.append(task)
+        for _, row in batch.iterrows():
+            item_data = prepare_item(row)
+            task = loop.run_in_executor(self.executor, partial(self._process_item, item_data, api_handler, evaluators))
+            tasks.append(task)
 
-            # Await all item processing tasks
-            results = await asyncio.gather(*tasks)
+        # Await all item processing tasks
+        results = await asyncio.gather(*tasks)
 
-            evaluation_results = [item for sublist in results for item in sublist if item]
+        evaluation_results = [item for sublist in results for item in sublist if item]
 
-            if evaluation_results:
-                self._save_to_db(evaluation_results)
-                # Aggregate evaluations
-                aggregated_results = self._aggregate_evaluations(evaluation_results)
-                if aggregated_results:
-                    self._save_aggregated_results(aggregated_results)
+        if evaluation_results:
+            self._save_to_db(evaluation_results)
+            # Aggregate evaluations
+            aggregated_results = self._aggregate_evaluations(evaluation_results)
+            if aggregated_results:
+                self._save_aggregated_results(aggregated_results)
 
     def _process_item(self, item_data, api_handler, evaluators):
         """
@@ -188,6 +197,7 @@ class BatchProcessor:
                             "model_name"         : model_name,
                             "model_version"      : model_data.get('model_version', '1.0'),
                             "evaluator_type"     : 'LLM',
+                            "evaluator_id"       : evaluator_id,
                             "quality_score"      : 0,
                             "relevance"          : 0,
                             "clarity"            : 0,
@@ -266,6 +276,7 @@ class BatchProcessor:
                     result["model_name"],
                     result["model_version"],
                     result["evaluator_type"],
+                    result["evaluator_id"],
                     result.get("quality_score"),
                     result.get("relevance"),
                     result.get("clarity"),
@@ -286,12 +297,12 @@ class BatchProcessor:
             cursor.executemany("""
                 INSERT INTO evaluation_results (
                     item_id, item_product_type, task, model_name, model_version,
-                    evaluator_type, quality_score, relevance, clarity, compliance, accuracy,
+                    evaluator_type, evaluator_id, quality_score, relevance, clarity, compliance, accuracy,
                     reasoning, suggestions, is_winner, comments,
                     enriched_content, prompt_version, eval_prompt_version
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(item_id, task, model_name, model_version, evaluator_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(item_id, task, model_name, model_version, evaluator_type, evaluator_id)
                 DO UPDATE SET
                     quality_score=excluded.quality_score,
                     relevance=excluded.relevance,
@@ -337,25 +348,17 @@ class BatchProcessor:
 
     def _calculate_aggregated_metrics(self, evaluations):
         metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
-        metric_ranges = {
-            'quality_score': 100,
-            'relevance'    : 5,
-            'clarity'      : 5,
-            'compliance'   : 5,
-            'accuracy'     : 5
-        }
-
         aggregated = {}
         for metric in metrics:
             scores = [e.get(metric) for e in evaluations if e.get(metric) is not None]
             if scores:
-                # Normalize scores to 0-1 range
-                normalized_scores = [round(score / metric_ranges[metric], 3) for score in scores]
+                normalized_scores = [round(score / self.metric_ranges[metric], 3) for score in scores]
                 mean_score = np.mean(normalized_scores)
                 variance = np.var(normalized_scores, ddof=1)  # Sample variance
+
                 confidence = self._determine_confidence_level(variance)
-                # Store the denormalized mean for understanding
-                aggregated[f'{metric}_mean'] = round(mean_score * metric_ranges[metric], 3)
+                # aggregated[f'{metric}'] = evaluations[0][f"{metric}"]
+                aggregated[f'{metric}_mean'] = round(mean_score, 2)
                 aggregated[f'{metric}_variance'] = round(variance, 2)
                 aggregated[f'{metric}_confidence'] = confidence
             else:
@@ -373,6 +376,7 @@ class BatchProcessor:
             return 'Medium'
         else:
             return 'Low'
+
 
     # def _calculate_aggregated_metrics(self, evaluations):
     #     metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']

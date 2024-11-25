@@ -82,5 +82,5 @@ class OpenAIProvider(BaseProvider):
             content = response_data['choices'][0]['message']['content']
             return {"choices": [{"message": {"content": content}}]}
         except requests.exceptions.RequestException as e:
-            self.logger.error("Error creating OpenAI chat completion: %s", str(e))
+            self.logger.error("Error creating OpenAI chat completion (%s): %s",str(model), str(e))
             raise
