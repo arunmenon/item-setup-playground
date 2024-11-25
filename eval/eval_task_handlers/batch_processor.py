@@ -95,9 +95,21 @@ class BatchProcessor:
                 )
             """)
 
+            # Create enriched_results table
+            cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS enriched_results (
+                        item_id TEXT,
+                        item_product_type TEXT,
+                        task TEXT,  
+                        model_name TEXT,
+                        model_version TEXT,
+                        enriched_content TEXT,
+                        PRIMARY KEY (item_id, task, model_name, model_version)
+                    )
+                """)
             conn.commit()
 
-    async def process_batches(self, df, api_handler, evaluators, prepare_item):
+    async def process_batches(self, df, api_handler, evaluators, prepare_item, include_evaluation=True):
         """
         Process the data in batches concurrently.
 
@@ -110,14 +122,14 @@ class BatchProcessor:
         # semaphore = asyncio.Semaphore(1)
         tasks = [
             asyncio.create_task(self._process_single_batch(
-                df.iloc[start:start + self.batch_size], api_handler, evaluators, prepare_item))
+                df.iloc[start:start + self.batch_size], api_handler, evaluators, prepare_item, include_evaluation))
             for start in range(0, len(df), self.batch_size)
         ]
 
         for f in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Processing Batches"):
             await f
 
-    async def _process_single_batch(self, batch, api_handler, evaluators, prepare_item):
+    async def _process_single_batch(self, batch, api_handler, evaluators, prepare_item, include_evaluation):
         """
         Process data in batches and save results to the database after each batch.
 
@@ -135,7 +147,7 @@ class BatchProcessor:
 
         for _, row in batch.iterrows():
             item_data = prepare_item(row)
-            task = loop.run_in_executor(self.executor, partial(self._process_item, item_data, api_handler, evaluators))
+            task = loop.run_in_executor(self.executor, partial(self._process_item, item_data, api_handler, evaluators, include_evaluation))
             tasks.append(task)
 
         # Await all item processing tasks
@@ -144,14 +156,21 @@ class BatchProcessor:
         evaluation_results = [item for sublist in results for item in sublist if item]
 
         if evaluation_results:
-            self._save_to_db(evaluation_results)
-            # Aggregate evaluations Toogle this to enable aggregation
-            # aggregated_results = self._aggregate_evaluations(evaluation_results)
-            aggregated_results = None
-            if aggregated_results:
-                self._save_aggregated_results(aggregated_results)
+            if include_evaluation:
+                self._save_to_db(evaluation_results)
+                # Uncomment to enable aggregation
+                # aggregated_results = self._aggregate_evaluations(evaluation_results)
+                aggregated_results = None
+                if aggregated_results:
+                    self._save_aggregated_results(aggregated_results)
+            else:
+                self._save_enriched_results(evaluation_results)
 
-    def _process_item(self, item_data, api_handler, evaluators):
+        # Log errors for tasks that raised exceptions
+        for result in results:
+            if isinstance(result, Exception):
+                logging.error(f"Error in task: {result}")
+    def _process_item(self, item_data, api_handler, evaluators, include_evaluation):
         """
         Process a single item.
 
@@ -164,13 +183,49 @@ class BatchProcessor:
             list: A list containing evaluation results.
         """
         item_id = item_data["item_id"]
-        enrichment_results = api_handler.call_api(item_data)
+        try:
+            enrichment_results = api_handler.call_api(item_data)
 
-        if enrichment_results:
-            evaluations = asyncio.run(self._evaluate_item(item_data, enrichment_results, evaluators))
-            return evaluations
-        else:
-            logging.warning(f"No enrichment results for item: {item_id}")
+            if enrichment_results:
+                if include_evaluation:
+                    evaluations = asyncio.run(self._evaluate_item(item_data, enrichment_results, evaluators))
+                    return evaluations
+                else:
+                    enrichment_data = []
+
+                    for task, task_name in TASK_MAPPING.items():
+                        model_responses = enrichment_results.get(task_name, {})
+                        if not model_responses:
+                            continue
+
+                        for model_name, model_data in model_responses.items():
+                            enriched_content = model_data.get("response", {}).get(f"enhanced_{task}")
+                            if enriched_content:
+                                enrichment_data.append({
+                                    "item_id"          : item_id,
+                                    "item_product_type": item_data["item_product_type"],
+                                    "task"             : task_name,
+                                    "model_name"       : model_name,
+                                    "model_version"    : model_data.get('model_version', '1.0'),
+                                    "enriched_content" : enriched_content
+                                })
+                            else:
+                                enrichment_data.append({
+                                    "item_id"          : item_id,
+                                    "item_product_type": item_data["item_product_type"],
+                                    "task"             : task_name,
+                                    "model_name"       : model_name,
+                                    "model_version"    : model_data.get('model_version', '1.0'),
+                                    "enriched_content" : None
+                                })
+
+                    return enrichment_data
+            else:
+                logging.warning(f"No enrichment results for item: {item_id}")
+                return []
+
+        except Exception as e:
+            logging.error(f"Error processing item {item_id}: {str(e)}")
             return []
 
     async def _evaluate_item(self, item_data, enrichment_results, evaluators):
@@ -448,3 +503,44 @@ class BatchProcessor:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, data_to_insert)
             conn.commit()
+
+    def _save_enriched_results(self, results):
+        """
+        Save enrichment results to the enriched_results table in the SQLite database with an upsert operation.
+
+        Args:
+            results (list[dict]): Results to save.
+        """
+        if not results:
+            logging.info(f"No enrichment results to save.")
+            return
+
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+
+            # Prepare the data for insertion
+            data_to_insert = [
+                (
+                    result["item_id"],
+                    result["item_product_type"],
+                    result["task"],
+                    result["model_name"],
+                    result["model_version"],
+                    result["enriched_content"]
+                )
+                for result in results
+            ]
+
+            # Insert or replace into the enriched_results table
+            cursor.executemany("""
+                INSERT INTO enriched_results (
+                    item_id, item_product_type, task, model_name, model_version, enriched_content
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(item_id, task, model_name, model_version)
+                DO UPDATE SET
+                    enriched_content=excluded.enriched_content
+            """, data_to_insert)
+
+            conn.commit()
+            logging.info(f"{len(results)} rows upserted into enriched_results.")

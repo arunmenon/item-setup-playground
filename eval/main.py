@@ -72,7 +72,7 @@ def main():
 
     # Process batches
     asyncio.run(batch_processor.process_batches(
-        df, api_handler, evaluators, prepare_item
+        df, api_handler, evaluators, prepare_item, include_evaluation=False
     ))
 
     logging.info("Batch processing completed.")
