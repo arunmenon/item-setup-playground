@@ -526,7 +526,8 @@ class BatchProcessor:
                     result["task"],
                     result["model_name"],
                     result["model_version"],
-                    result["enriched_content"]
+                    json.dumps(result["enriched_content"]) if isinstance(result["enriched_content"], list) else result[
+                        "enriched_content"]
                 )
                 for result in results
             ]
