@@ -322,86 +322,42 @@ class BatchProcessor:
             logging.info(f"{len(results)} rows upserted into evaluation_results.")
 
     def _aggregate_evaluations(self, evaluation_results):
-        # Group evaluations by item_id, product_type, and task
+        # Group evaluations by item_id, task, model_name, model_version
         grouped_evaluations = defaultdict(list)
         for eval_result in evaluation_results:
-            key = (eval_result['item_id'], eval_result['item_product_type'], eval_result['task'])
+            key = (eval_result['item_id'], eval_result['task'], eval_result['model_name'], eval_result['model_version'])
             grouped_evaluations[key].append(eval_result)
 
         aggregated_results = []
-
         for key, evals in grouped_evaluations.items():
-            item_id, product_type, task = key
-            all_scores = defaultdict(list)
-
-            # Collect scores for variance calculation
-            for eval in evals:
-                for metric in self.metrics:
-                    if eval.get(metric) is not None:
-                        all_scores[metric].append(eval.get(metric))
-
-            # Calculate overall variance for each metric
-            overall_variance = {}
-            for metric, scores in all_scores.items():
-                if scores:
-                    normalized_scores = [score / self.metric_ranges[metric] for score in scores]
-                    overall_variance[metric] = np.var(normalized_scores, ddof=1) if len(normalized_scores) > 1 else 0.0
-                else:
-                    overall_variance[metric] = None
-
-            # Aggregate metrics for each model within the group
-            model_aggregated_metrics = []
-            unique_models = {(eval['model_name'], eval['model_version']) for eval in evals}
-
-            for model_name, model_version in unique_models:
-                model_evals = [e for e in evals if e['model_name']==model_name and e['model_version']==model_version]
-                model_metrics = self._calculate_aggregated_metrics(model_evals, overall_variance)
-
-                model_aggregated_metrics.append({
-                    'model_name'   : model_name,
-                    'model_version': model_version,
-                    **model_metrics
-                })
+            item_id, task, model_name, model_version = key
+            aggregated_metrics = self._calculate_aggregated_metrics(evals)
 
             # Prepare aggregated result
-            for model_metrics in model_aggregated_metrics:
-                aggregated_result = {
-                    'item_id'           : item_id,
-                    'item_product_type' : product_type,
-                    'task'              : task,
-                    **model_metrics
-                }
-                aggregated_results.append(aggregated_result)
+            aggregated_result = {
+                'item_id'          : item_id,
+                'item_product_type': evals[0]['item_product_type'],
+                'task'             : task,
+                'model_name'       : model_name,
+                'model_version'    : model_version,
+                **aggregated_metrics
+            }
+            aggregated_results.append(aggregated_result)
 
         return aggregated_results
 
-    def _calculate_aggregated_metrics(self, evaluations, overall_variance):
+    def _calculate_aggregated_metrics(self, evaluations):
+        metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
         aggregated = {}
-        for metric in self.metrics:
+        for metric in metrics:
             scores = [e.get(metric) for e in evaluations if e.get(metric) is not None]
             if scores:
-                # # Normalize scores to 0-1 range
-                # normalized_scores = [round(score / self.metric_ranges[metric], 3) for score in scores]
-                #
-                # mean_score = np.mean(normalized_scores)
-                # # variance = np.var(normalized_scores, ddof=1) if len(normalized_scores) > 1 else 0.0
-                #
-                # confidence = self._determine_confidence_level(overall_variance[metric])
-                # aggregated[f'{metric}'] = evaluations[0][f"{metric}"]
-                # aggregated[f'{metric}_mean'] = round(mean_score, 2)
-                # aggregated[f'{metric}_variance'] = round(overall_variance[metric], 2)
-                # aggregated[f'{metric}_confidence'] = confidence
-                # Normalize scores to 0-1 range
                 normalized_scores = [round(score / self.metric_ranges[metric], 3) for score in scores]
-
                 mean_score = np.mean(normalized_scores)
-                # Calculate the deviation of each score from the mean
-                deviations = [(score - mean_score) ** 2 for score in normalized_scores]
-                # Calculate variance for the deviation based on the overall variance as a reference
-                variance = np.mean(deviations) / overall_variance[metric] if overall_variance[metric] else 0.0
+                variance = np.var(normalized_scores, ddof=1)  # Sample variance
 
                 confidence = self._determine_confidence_level(variance)
-                aggregated[f'{metric}'] = evaluations[0][f"{metric}"]
+                # aggregated[f'{metric}'] = evaluations[0][f"{metric}"]
                 aggregated[f'{metric}_mean'] = round(mean_score, 2)
                 aggregated[f'{metric}_variance'] = round(variance, 2)
                 aggregated[f'{metric}_confidence'] = confidence
