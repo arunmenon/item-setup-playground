@@ -145,8 +145,9 @@ class BatchProcessor:
 
         if evaluation_results:
             self._save_to_db(evaluation_results)
-            # Aggregate evaluations
-            aggregated_results = self._aggregate_evaluations(evaluation_results)
+            # Aggregate evaluations Toogle this to enable aggregation
+            # aggregated_results = self._aggregate_evaluations(evaluation_results)
+            aggregated_results = None
             if aggregated_results:
                 self._save_aggregated_results(aggregated_results)
 
