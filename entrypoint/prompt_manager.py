@@ -1,62 +1,31 @@
 # entrypoint/prompt_manager.py
 
-import os
 import logging
 from typing import List, Dict, Any, Optional
-from common.utils import load_config, validate_config
-from .styling_guide_manager import StylingGuideManager
-from .template_renderer import TemplateRenderer
-from .task_manager import TaskManager
+from sqlalchemy.orm import Session
+from entrypoint.styling_guide_manager import StylingGuideManager
+from entrypoint.template_renderer import TemplateRenderer
+from entrypoint.task_manager import TaskManager
 
 class PromptManager:
-    _instance = None
+    def __init__(self, db_session: Session):
+        self.db_session = db_session
+        # Initialize Helper Classes
+        self.styling_guide_manager = StylingGuideManager(db_session)
+        self.template_renderer = TemplateRenderer(db_session)
+        self.task_manager = TaskManager(db_session)
 
-    def __new__(cls, 
-                config_path: Optional[str] = None, 
-                styling_guides_dir: str = 'styling_guides', 
-                prompts_dir: str = 'prompts',
-                config: Optional[Dict[str, Any]] = None):
-        if cls._instance is None:
-            cls._instance = super(PromptManager, cls).__new__(cls)
-        return cls._instance
-
-    def __init__(self, 
-                 config_path: Optional[str] = None, 
-                 styling_guides_dir: str = 'styling_guides',
-                 prompts_dir: str = 'prompts',
-                 config:Optional[Dict]= None):
-        if not hasattr(self, 'initialized'):
-            # Load and validate the configuration
-             # Load and validate the configuration
-            if config is not None:
-                self.config = config
-                logging.info("Configuration loaded from provided 'config' parameter.")
-            elif config_path is not None:
-                self.config = load_config(config_path)
-                logging.info(f"Configuration loaded from '{config_path}'.")
-            
-            self.tasks_config: Dict[str, Dict[str, Any]] = self.config.get('tasks', {})
-            self.task_execution: Dict[str, Any] = self.config.get('task_execution', {})
-            self.prompts_dir = prompts_dir
-
-            # Initialize Helper Classes
-            self.styling_guide_manager = StylingGuideManager(styling_guides_dir)
-            self.template_renderer = TemplateRenderer(prompts_dir=prompts_dir)
-            self.task_manager = TaskManager(self.tasks_config, self.task_execution)
-
-            self.initialized = True  # Prevent re-initialization
-
-    def generate_prompts(self, item: Dict[str, Any], family_name: str) -> List[Dict[str, Any]]:
+    def generate_prompts(self, item: Dict[str, Any], family_name: Optional[str]) -> List[Dict[str, Any]]:
         """
-    Generates prompts for each task based on the item details and styling guide.
-    Each prompt includes the desired output format.
+        Generates prompts for each task based on the item details and styling guide.
+        Each prompt includes the desired output format.
 
-    Args:
-        item (Dict[str, Any]): The input data containing item details.
-        family_name (str): The model family name used for template selection.
+        Args:
+            item (Dict[str, Any]): The input data containing item details.
+            family_name (Optional[str]): The model family name used for template selection.
 
-    Returns:
-        List[Dict[str, Any]]: A list of dictionaries containing task details and generated prompts.
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries containing task details and generated prompts.
         """
         product_type = item.get('product_type', '').lower()
         logging.info(f"Generating prompts for product type: '{product_type}'")
@@ -91,8 +60,6 @@ class PromptManager:
                 logging.warning(f"Task '{task}' is not defined in the tasks configuration. Skipping.")
                 continue
 
-            template_name = f"{task}_prompt.jinja2"
-
             # Get task configuration
             output_format = self.task_manager.get_task_output_format(task)
 
@@ -113,9 +80,14 @@ class PromptManager:
             if family_name:
                 context_with_format['family'] = family_name
 
+            # Construct template name
+            if family_name:
+                template_name = f"{family_name}_{task}"
+            else:
+                template_name = f"{task}_base"
+
             # Render the prompt using TemplateRenderer
             try:
-                # Pass only 'template_name' and 'context_with_format'
                 prompt = self.template_renderer.render_template(template_name, context_with_format)
                 logging.debug(f"Rendered prompt for task '{task}': {prompt[:50]}...")
             except Exception as e:
@@ -167,7 +139,6 @@ class PromptManager:
             'product_type': product_type,
             'image_url': item.get('image_url', ''),
             'attributes_list': item.get('attributes_list', []),
-            'output_format': 'json'
             # Add additional placeholders as needed
         }
 
