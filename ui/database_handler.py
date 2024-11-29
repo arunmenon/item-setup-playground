@@ -5,108 +5,189 @@ import pandas as pd
 class DatabaseHandler:
     def __init__(self, db_path="model_responses.db"):
         self.db_path = db_path
-        self.create_tables_if_not_exists()
 
-    def create_tables_if_not_exists(self):
+    def create_tables(self):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        # Create responses table with model_name column
+        # Create evaluation_results table
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS responses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                item_gtin TEXT,
-                product_type TEXT,
-                task_type TEXT,
-                model_responses TEXT,
-                winner_response TEXT,
+            CREATE TABLE IF NOT EXISTS evaluation_results (
+                item_id TEXT,
+                item_product_type TEXT,
+                task TEXT,
                 model_name TEXT,
+                model_version TEXT,
+                evaluator_type TEXT,
+                evaluator_id TEXT,
+                quality_score INTEGER,
                 relevance INTEGER,
                 clarity INTEGER,
                 compliance INTEGER,
                 accuracy INTEGER,
-                comments TEXT
+                reasoning TEXT,
+                suggestions TEXT,
+                is_winner BOOLEAN,
+                comments TEXT,
+                PRIMARY KEY (item_id, task, model_name, model_version, evaluator_type, evaluator_id)
             )
         ''')
 
-        # Check if 'model_name' column exists; add if not
-        cursor.execute("PRAGMA table_info(responses)")
-        columns = [column[1] for column in cursor.fetchall()]
-        if 'model_name' not in columns:
-            cursor.execute("ALTER TABLE responses ADD COLUMN model_name TEXT")
-            print("Added 'model_name' column to 'responses' table.")
-
-        # Leaderboard table remains the same
+        # Create aggregated_evaluations table
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS leaderboard (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                task_type TEXT,
-                product_type TEXT,
+            CREATE TABLE IF NOT EXISTS aggregated_evaluations (
+                item_id TEXT,
+                item_product_type TEXT,
+                task TEXT,
                 model_name TEXT,
-                preference_count INTEGER DEFAULT 0
+                model_version TEXT,
+                quality_score_mean REAL,
+                quality_score_variance REAL,
+                quality_score_confidence TEXT,
+                relevance_mean REAL,
+                relevance_variance REAL,
+                relevance_confidence TEXT,
+                clarity_mean REAL,
+                clarity_variance REAL,
+                clarity_confidence TEXT,
+                compliance_mean REAL,
+                compliance_variance REAL,
+                compliance_confidence TEXT,
+                accuracy_mean REAL,
+                accuracy_variance REAL,
+                accuracy_confidence TEXT,
+                PRIMARY KEY (item_id, task, model_name, model_version)
             )
         ''')
 
         conn.commit()
         conn.close()
 
-    def save_preference(self, item_gtin, product_type, task_type, model_responses, winner_response,
-                        model_name, relevance, clarity, compliance, accuracy, comments):
+
+    def save_evaluation(self, item_id, product_type, task, model_name, model_version,
+                        evaluator_type, quality_score=None, relevance=None, clarity=None,
+                        compliance=None, accuracy=None, reasoning=None, suggestions=None,
+                        is_winner=False, comments=None):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO responses (
-                item_gtin, product_type, task_type, model_responses, winner_response,
-                model_name, relevance, clarity, compliance, accuracy, comments
+            INSERT OR REPLACE INTO evaluation_results (
+                item_id, item_product_type, task, model_name, model_version,
+                evaluator_type, quality_score, relevance, clarity, compliance, accuracy,
+                reasoning, suggestions, is_winner, comments
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (item_gtin, product_type, task_type, json.dumps(model_responses), winner_response,
-              model_name, relevance, clarity, compliance, accuracy, comments))
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            item_id, product_type, task, model_name, model_version, evaluator_type,
+            quality_score, relevance, clarity, compliance, accuracy,
+            reasoning, suggestions, is_winner, comments
+        ))
         conn.commit()
         conn.close()
 
-    def increment_model_preference(self, task_type, product_type, model_name):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT preference_count FROM leaderboard
-            WHERE task_type = ? AND product_type = ? AND model_name = ?
-        ''', (task_type, product_type, model_name))
-        result = cursor.fetchone()
+    def get_evaluations(self, evaluator_type=None, task=None, item_id=None,
+                        product_type=None, model_name=None):
+        query = '''
+            SELECT * FROM evaluation_results WHERE 1=1
+        '''
+        params = []
 
-        if result:
-            cursor.execute('''
-                UPDATE leaderboard
-                SET preference_count = preference_count + 1
-                WHERE task_type = ? AND product_type = ? AND model_name = ?
-            ''', (task_type, product_type, model_name))
-        else:
-            cursor.execute('''
-                INSERT INTO leaderboard (task_type, product_type, model_name, preference_count)
-                VALUES (?, ?, ?, 1)
-            ''', (task_type, product_type, model_name))
+        if evaluator_type:
+            query += ' AND evaluator_type = ?'
+            params.append(evaluator_type)
+        if task:
+            query += ' AND task = ?'
+            params.append(task)
+        if item_id:
+            query += ' AND item_id = ?'
+            params.append(item_id)
+        if product_type:
+            query += ' AND item_product_type = ?'
+            params.append(product_type)
+        if model_name:
+            query += ' AND model_name = ?'
+            params.append(model_name)
 
-        conn.commit()
-        conn.close()
+        with sqlite3.connect(self.db_path) as conn:
+            evaluations_df = pd.read_sql_query(query, conn, params=params)
 
-    def get_leaderboard(self):
-        conn = sqlite3.connect(self.db_path)
-        leaderboard_df = pd.read_sql_query('''
+        return evaluations_df
+
+    def get_leaderboard(self, task=None, product_type=None, evaluator_type=None):
+        query = '''
             SELECT
-                l.task_type,
-                l.product_type,
-                l.model_name,
-                l.preference_count,
-                AVG(r.relevance) as avg_relevance,
-                AVG(r.clarity) as avg_clarity,
-                AVG(r.compliance) as avg_compliance,
-                AVG(r.accuracy) as avg_accuracy
-            FROM leaderboard l
-            LEFT JOIN responses r
-            ON l.model_name = r.model_name AND l.task_type = r.task_type AND l.product_type = r.product_type
-            GROUP BY l.task_type, l.product_type, l.model_name
-            ORDER BY l.preference_count DESC
-        ''', conn)
-        conn.close()
+                model_name,
+                model_version,
+                evaluator_type,
+                COUNT(CASE WHEN is_winner = TRUE THEN 1 END) AS preference_count,
+                ROUND(AVG(quality_score), 2) AS avg_quality_score,
+                ROUND(AVG(relevance), 2) AS avg_relevance,
+                ROUND(AVG(clarity), 2) AS avg_clarity,
+                ROUND(AVG(compliance), 2) AS avg_compliance,
+                ROUND(AVG(accuracy), 2) AS avg_accuracy
+            FROM evaluation_results
+            WHERE 1=1
+        '''
+        params = []
+
+        if task:
+            query += ' AND task = ?'
+            params.append(task)
+        if product_type:
+            query += ' AND item_product_type = ?'
+            params.append(product_type)
+        if evaluator_type:
+            query += ' AND evaluator_type = ?'
+            params.append(evaluator_type)
+
+        query += '''
+            GROUP BY model_name, model_version, evaluator_type
+            ORDER BY preference_count DESC
+        '''
+
+        with sqlite3.connect(self.db_path) as conn:
+            leaderboard_df = pd.read_sql_query(query, conn, params=params)
+
         return leaderboard_df
+    
+    def get_aggregated_evaluations(self, task=None, product_type=None, model_name=None):
+        query = '''
+            SELECT
+                task,
+                item_product_type AS product_type,
+                model_name,
+                model_version,
+                quality_score_mean,
+                quality_score_variance,
+                quality_score_confidence,
+                relevance_mean,
+                relevance_variance,
+                relevance_confidence,
+                clarity_mean,
+                clarity_variance,
+                clarity_confidence,
+                compliance_mean,
+                compliance_variance,
+                compliance_confidence,
+                accuracy_mean,
+                accuracy_variance,
+                accuracy_confidence
+            FROM aggregated_evaluations
+            WHERE 1=1
+        '''
+        params = []
+
+        if task:
+            query += ' AND task = ?'
+            params.append(task)
+        if product_type:
+            query += ' AND item_product_type = ?'
+            params.append(product_type)
+        if model_name:
+            query += ' AND model_name = ?'
+            params.append(model_name)
+
+        with sqlite3.connect(self.db_path) as conn:
+            aggregated_df = pd.read_sql_query(query, conn, params=params)
+
+        return aggregated_df

@@ -26,11 +26,11 @@ class JsonResponseParser(ResponseParser):
             if json_content:
                 json_str = json_content.group(1).strip()  # Strip leading/trailing whitespace/newlines
                 # json_str = json.loads(f'"{json_str}"').strip()  # Wrap the string in quotes to ensure it's valid JSON
-                logging.info(f"Extracted JSON from code block: {json_str}")
+                logging.debug(f"Extracted JSON from code block: {json_str}")
             else:
                 # Fallback: Use the entire response as JSON, ensuring it's stripped of unnecessary newlines
                 json_str = response.strip()
-                logging.info("No code block found. Attempting to parse full response.")
+                logging.debug("No code block found. Attempting to parse full response.")
 
             # Validate JSON starts properly if not caught by regex
             if not json_str.startswith(('{', '[')):

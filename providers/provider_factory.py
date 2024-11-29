@@ -1,3 +1,4 @@
+from providers.claude_provider import ClaudeProvider
 from providers.local_provider import LocalProvider
 from providers.elements_provider import ElementsProvider
 from providers.openai_provider import OpenAIProvider
@@ -30,6 +31,10 @@ class ProviderFactory:
             clean_kwargs = ProviderFactory.filter_kwargs(GeminiProvider, kwargs)
             # model = kwargs.get('model', 'gemini-1.5-flash')
             return GeminiProvider(**clean_kwargs)
+        elif provider_name=="claude":
+            ProviderFactory.logger.info(f"Creating Claude provider")
+            clean_kwargs = ProviderFactory.filter_kwargs(ClaudeProvider, kwargs)
+            return ClaudeProvider(**clean_kwargs)
         elif provider_name=="elements_openai":
             ProviderFactory.logger.info(f"Creating elements_openai provider")
             clean_kwargs = ProviderFactory.filter_kwargs(ElementsProvider, kwargs)
