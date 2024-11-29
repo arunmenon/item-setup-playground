@@ -22,9 +22,9 @@ from fastapi.exceptions import RequestValidationError
 # Set up logging
 setup_logging()
 
-from dotenv import load_dotenv
-
-load_dotenv()
+# from dotenv import load_dotenv
+#
+# load_dotenv()
 
 # Define FastAPI app with metadata
 app = FastAPI(
