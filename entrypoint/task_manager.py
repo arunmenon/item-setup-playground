@@ -2,8 +2,10 @@
 
 from typing import Dict, Any, List
 from sqlalchemy.orm import Session
-from models.models import TaskConfig, TaskExecutionConfig
+from models.models import GenerationTask, EvaluationTask, TaskExecutionConfig
 import logging
+
+# entrypoint/task_manager.py
 
 class TaskManager:
     def __init__(self, db_session: Session):
@@ -14,9 +16,21 @@ class TaskManager:
         self.load_task_execution_config()
 
     def load_tasks(self):
-        tasks = self.db_session.query(TaskConfig).all()
-        for task in tasks:
-            self.tasks_config[task.task_name] = {
+        # Load GenerationTasks
+        generation_tasks = self.db_session.query(GenerationTask).all()
+        for task in generation_tasks:
+            self.tasks_config[(task.task_name, 'generation')] = {
+                'task_type': 'generation',
+                'description': task.description,
+                'max_tokens': task.max_tokens,
+                'output_format': task.output_format
+            }
+        # Load EvaluationTasks
+        evaluation_tasks = self.db_session.query(EvaluationTask).all()
+        for task in evaluation_tasks:
+            self.tasks_config[(task.task_name, 'evaluation')] = {
+                'task_type': 'evaluation',
+                'description': task.description,
                 'max_tokens': task.max_tokens,
                 'output_format': task.output_format
             }
@@ -34,14 +48,15 @@ class TaskManager:
             logging.error("No task execution configuration found in the database.")
             raise ValueError("No task execution configuration found in the database.")
 
-    def get_default_tasks(self) -> List[str]:
-        return self.task_execution.get('default_tasks', [])
+    def get_default_tasks(self, task_type: str) -> List[str]:
+        return self.task_execution.get('default_tasks', {}).get(task_type, [])
 
-    def get_conditional_tasks(self) -> Dict[str, str]:
-        return self.task_execution.get('conditional_tasks', {})
+    def get_conditional_tasks(self, task_type: str) -> Dict[str, str]:
+        return self.task_execution.get('conditional_tasks', {}).get(task_type, {})
 
-    def is_task_defined(self, task_name: str) -> bool:
-        return task_name in self.tasks_config
+    def is_task_defined(self, task_name: str, task_type: str) -> bool:
+        return (task_name, task_type) in self.tasks_config
 
-    def get_task_output_format(self, task_name: str) -> str:
-        return self.tasks_config.get(task_name, {}).get('output_format', 'json')
+    def get_task_config(self, task_name: str, task_type: str) -> Dict[str, Any]:
+        return self.tasks_config.get((task_name, task_type), {})
+

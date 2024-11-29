@@ -1,12 +1,18 @@
 import gradio as gr
 import pandas as pd
-from ui.admin_database_handler import AdminDatabaseHandler
-from ui.admin_ui_components import create_prompt_template_management_tab, create_provider_configuration_tab, create_styling_guide_manager_tab, create_task_management_tab
-from ui.database_handler import DatabaseHandler
+from ui.db.admin_database_handler import AdminDatabaseHandler
+from ui.admin_tabs.styling_guide_manager_tab import create_styling_guide_manager_tab
+from ui.admin_tabs.provider_manager_tab import create_provider_configuration_tab
+from ui.admin_tabs.task_management_tab import create_task_management_tab
+from ui.admin_tabs.template_manager_tab import create_prompt_template_management_tab
+from ui.tabs.analytics_tab import create_analytics_tab
+from ui.tabs.leaderboard_tab import create_leaderboard_tab
+from ui.tabs.item_enrichment_tab import create_item_enrichment_tab
+from ui.db.database_handler import DatabaseHandler
 from utils import load_product_types_from_file
 from handlers import process_single_sku, save_preference
 from plots import generate_aggregated_plot, generate_leaderboard_plot, generate_winner_model_comparison_plot
-from ui_components import create_feedback_tab, create_item_enrichment_tab, create_leaderboard_tab, create_analytics_tab
+from ui.tabs.feedback_tab import create_feedback_tab
 import os
 
 # Initialize database handler and create tables

@@ -22,43 +22,33 @@ class ItemEnricher:
         self.prompt_manager = prompt_manager
 
     async def enrich_item(self, request: LLMRequest):
-        """
-        Enriches an item based on the provided request and model.
-
-        Args:
-            request (LLMRequest): The incoming request containing item details.
-            model (str): The model to use for enrichment.
-
-        Returns:
-            Dict[str, Any]: A dictionary containing enriched data for each task.
-        """
-        # Extract request data into a dictionary
         item = self.prepare_item(request)
-        logging.info(f"Received request for product type: '{item['product_type']}'")
+        task_type = request.task_type.lower()
+        if task_type not in ['generation', 'evaluation']:
+            raise ValueError("Invalid task_type. Must be 'generation' or 'evaluation'.")
+
+        logging.info(f"Processing {task_type} tasks for product type: '{item['product_type']}'")
+
         # Collect unique family names
         family_names = set(self.llm_manager.family_names.values())
-        logging.info(f"family names '{family_names}'")
 
         # Generate prompts per family
         prompts_per_family = {}
         for family_name in family_names:
-            prompts = self.prompt_manager.generate_prompts(item, family_name=family_name)
+            prompts = self.prompt_manager.generate_prompts(item, family_name=family_name, task_type=task_type)
             prompts_per_family[family_name] = prompts
             logging.debug(f"Generated prompts for family '{family_name}': {prompts}")
 
         # Associate prompts with handlers
         prompts_tasks = []
         for handler_name, handler in self.llm_manager.handlers.items():
-            # Get the family_name associated with the handler
             family_name = self.llm_manager.get_family_name(handler_name)
-            prompts = prompts_per_family[family_name]
+            prompts = prompts_per_family.get(family_name, [])
             for prompt_task in prompts:
                 prompt_task_copy = prompt_task.copy()
                 prompt_task_copy['provider_name'] = handler_name
                 prompts_tasks.append(prompt_task_copy)
-        
-        
-        logging.debug(f"prompt_tasks {prompts_tasks}")    
+
         # Create a mapping from task_name to output_format for parser selection
         task_to_format = {pt['task']: pt['output_format'] for pt in prompts_tasks}
 

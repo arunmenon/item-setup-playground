@@ -42,3 +42,22 @@ class TemplateRenderer:
         except Exception as e:
             logging.error(f"Error rendering template '{template_name}': {e}")
             raise
+
+    def render_template_from_string(self, template_content: str, context: dict) -> str:
+        """
+        Renders a template from a template content string.
+
+        Args:
+            template_content (str): The template content as a string.
+            context (dict): The context dictionary for rendering.
+
+        Returns:
+            str: The rendered template.
+        """
+        try:
+            template = self.env.from_string(template_content)
+            rendered_content = template.render(**context)
+            return rendered_content
+        except Exception as e:
+            logging.error(f"Error rendering template from string: {e}")
+            raise

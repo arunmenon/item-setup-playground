@@ -5,9 +5,8 @@ import logging
 from typing import Dict, List, Any
 from models.llm_request_models import BaseLLMRequest
 from handlers.llm_handler import BaseModelHandler
-from models.models import ProviderConfig, TaskConfig
+from models.models import ProviderConfig, GenerationTask, EvaluationTask
 from sqlalchemy.orm import Session
-
 
 class LLMManager:
     def __init__(self, db_session: Session):
@@ -36,20 +35,31 @@ class LLMManager:
             self.family_names[name] = family_name
             logging.debug(f"Initialized handler '{name}' for family '{family_name}'.")
 
-
     def load_tasks(self):
-        tasks = self.db_session.query(TaskConfig).all()
-        for task in tasks:
-            self.tasks[task.task_name] = {
+        # Load GenerationTasks
+        generation_tasks = self.db_session.query(GenerationTask).all()
+        for task in generation_tasks:
+            self.tasks[(task.task_name, 'generation')] = {
+                'task_type': 'generation',
                 'max_tokens': task.max_tokens,
                 'output_format': task.output_format
             }
-
-
+        # Load EvaluationTasks
+        evaluation_tasks = self.db_session.query(EvaluationTask).all()
+        for task in evaluation_tasks:
+            self.tasks[(task.task_name, 'evaluation')] = {
+                'task_type': 'evaluation',
+                'max_tokens': task.max_tokens,
+                'output_format': task.output_format
+            }
+            
+    def get_task_config(self, task_name: str, task_type: str) -> Dict[str, Any]:
+        return self.tasks.get((task_name, task_type), {})
+    
     def get_family_name(self, handler_name):
         return self.family_names.get(handler_name, 'default')
-    
-    async def invoke_handler(self, handler_name: str, handler: BaseModelHandler, prompt: str, task: str,max_tokens: int) -> Dict[str, Any]:
+
+    async def invoke_handler(self, handler_name: str, handler: BaseModelHandler, prompt: str, task: str) -> Dict[str, Any]:
         """
         Invokes a handler with the given prompt and task.
 
@@ -58,13 +68,16 @@ class LLMManager:
             handler (BaseModelHandler): The handler instance.
             prompt (str): The prompt to send.
             task (str): The task name.
-            max_tokens (int): The maximum number of tokens for the response.
 
         Returns:
             Dict[str, Any]: The result of the handler invocation.
         """
         try:
-            response = await handler.invoke(request=BaseLLMRequest(prompt=prompt,max_tokens=max_tokens), task=task)
+            # Get max_tokens from task config
+            task_config = self.tasks.get(task, {})
+            max_tokens = task_config.get('max_tokens', handler.max_tokens)
+
+            response = await handler.invoke(request=BaseLLMRequest(prompt=prompt, max_tokens=max_tokens), task=task)
             logging.debug(f"Received response for task '{task}' from handler '{handler_name}': {response}")
 
             return {

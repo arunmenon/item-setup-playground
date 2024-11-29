@@ -1,5 +1,55 @@
 -- config/schema.sql
 
+-- Model Families Table
+CREATE TABLE model_families (
+    model_family_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
+);
+
+-- Generation Tasks Table
+CREATE TABLE generation_tasks (
+    task_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_name TEXT NOT NULL,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Evaluation Tasks Table
+CREATE TABLE evaluation_tasks (
+    task_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_name TEXT NOT NULL,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Generation Prompt Templates Table
+CREATE TABLE generation_prompt_templates (
+    template_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL,
+    model_family_id INTEGER NOT NULL,
+    template_text TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES generation_tasks(task_id) ON DELETE CASCADE,
+    FOREIGN KEY (model_family_id) REFERENCES model_families(model_family_id)
+);
+
+-- Evaluation Prompt Templates Table
+CREATE TABLE evaluation_prompt_templates (
+    template_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL,
+    model_family_id INTEGER NOT NULL,
+    template_text TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES evaluation_tasks(task_id) ON DELETE CASCADE,
+    FOREIGN KEY (model_family_id) REFERENCES model_families(model_family_id)
+);
+
 -- Providers Table
 CREATE TABLE IF NOT EXISTS providers (
     provider_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -12,40 +62,6 @@ CREATE TABLE IF NOT EXISTS providers (
     is_active BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Templates Table
-CREATE TABLE IF NOT EXISTS templates (
-    template_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    template_name TEXT NOT NULL,
-    template_type TEXT NOT NULL CHECK (template_type IN ('base', 'model')),
-    parent_template_id INTEGER NULL REFERENCES templates(template_id),
-    model_family TEXT NULL,
-    task_name TEXT NOT NULL,
-    content TEXT NOT NULL,
-    version INTEGER DEFAULT 1,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(template_name, version)
-);
-
--- Placeholders Table
-CREATE TABLE IF NOT EXISTS placeholders (
-    placeholder_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    description TEXT NULL,
-    data_type TEXT NOT NULL,
-    default_value TEXT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- TemplatePlaceholders Association Table
-CREATE TABLE IF NOT EXISTS template_placeholders (
-    template_id INTEGER NOT NULL REFERENCES templates(template_id),
-    placeholder_id INTEGER NOT NULL REFERENCES placeholders(placeholder_id),
-    PRIMARY KEY (template_id, placeholder_id)
 );
 
 -- StylingGuides Table
@@ -61,16 +77,6 @@ CREATE TABLE IF NOT EXISTS styling_guides (
     UNIQUE(product_type, task_name, version)
 );
 
--- Tasks Table
-CREATE TABLE IF NOT EXISTS tasks (
-    task_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_name TEXT NOT NULL UNIQUE,
-    max_tokens INTEGER NOT NULL,
-    output_format TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
 -- TaskExecutionConfig Table
 CREATE TABLE IF NOT EXISTS task_execution_config (
     config_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,7 +87,9 @@ CREATE TABLE IF NOT EXISTS task_execution_config (
 );
 
 
--- Indexes (Optional)
-CREATE INDEX IF NOT EXISTS idx_templates_task_name ON templates(task_name);
-CREATE INDEX IF NOT EXISTS idx_templates_model_family ON templates(model_family);
+-- Indexes
+CREATE INDEX idx_generation_prompt_templates_task_id ON generation_prompt_templates(task_id);
+CREATE INDEX idx_generation_prompt_templates_model_family_id ON generation_prompt_templates(model_family_id);
+CREATE INDEX idx_evaluation_prompt_templates_task_id ON evaluation_prompt_templates(task_id);
+CREATE INDEX idx_evaluation_prompt_templates_model_family_id ON evaluation_prompt_templates(model_family_id);
 CREATE INDEX IF NOT EXISTS idx_styling_guides_product_task ON styling_guides(product_type, task_name);

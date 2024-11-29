@@ -24,6 +24,48 @@ class JSONEncodedDict(TypeDecorator):
             return {}
         return json.loads(value)
     
+class ModelFamily(Base):
+    __tablename__ = 'model_families'
+    model_family_id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    generation_prompt_templates = relationship('GenerationPromptTemplate', back_populates='model_family')
+    evaluation_prompt_templates = relationship('EvaluationPromptTemplate', back_populates='model_family')
+
+class GenerationTask(Base):
+    __tablename__ = 'generation_tasks'
+    task_id = Column(Integer, primary_key=True)
+    task_name = Column(String, nullable=False)
+    description = Column(Text)
+    prompt_templates = relationship('GenerationPromptTemplate', back_populates='generation_task', cascade='all, delete-orphan')
+    
+class EvaluationTask(Base):
+    __tablename__ = 'evaluation_tasks'
+    task_id = Column(Integer, primary_key=True)
+    task_name = Column(String, nullable=False)
+    description = Column(Text)
+    prompt_templates = relationship('EvaluationPromptTemplate', back_populates='evaluation_task', cascade='all, delete-orphan')
+
+class GenerationPromptTemplate(Base):
+    __tablename__ = 'generation_prompt_templates'
+    template_id = Column(Integer, primary_key=True)
+    task_id = Column(Integer, ForeignKey('generation_tasks.task_id'), nullable=False)
+    model_family_id = Column(Integer, ForeignKey('model_families.model_family_id'), nullable=False)
+    template_text = Column(Text, nullable=False)
+    version = Column(Integer, nullable=False)
+    generation_task = relationship('GenerationTask', back_populates='prompt_templates')
+    model_family = relationship('ModelFamily', back_populates='generation_prompt_templates')
+
+class EvaluationPromptTemplate(Base):
+    __tablename__ = 'evaluation_prompt_templates'
+    template_id = Column(Integer, primary_key=True)
+    task_id = Column(Integer, ForeignKey('evaluation_tasks.task_id'), nullable=False)
+    model_family_id = Column(Integer, ForeignKey('model_families.model_family_id'), nullable=False)
+    template_text = Column(Text, nullable=False)
+    version = Column(Integer, nullable=False)
+    evaluation_task = relationship('EvaluationTask', back_populates='prompt_templates')
+    model_family = relationship('ModelFamily', back_populates='evaluation_prompt_templates')
+
+    
 class ProviderConfig(Base):
     __tablename__ = 'providers'
 
@@ -55,15 +97,6 @@ class StylingGuide(Base):
         UniqueConstraint('product_type', 'task_name', 'version', name='_product_task_version_uc'),
     )
 
-class TaskConfig(Base):
-    __tablename__ = 'tasks'
-
-    task_id = Column(Integer, primary_key=True)
-    task_name = Column(String, unique=True, nullable=False)
-    max_tokens = Column(Integer, nullable=False)
-    output_format = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
 
 class TaskExecutionConfig(Base):
     __tablename__ = 'task_execution_config'
@@ -73,46 +106,4 @@ class TaskExecutionConfig(Base):
     conditional_tasks = Column(JSONEncodedDict, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
-        
 
-class Template(Base):
-    __tablename__ = 'templates'
-
-    template_id = Column(Integer, primary_key=True)
-    template_name = Column(String, nullable=False)
-    template_type = Column(String, nullable=False)  # 'base' or 'model'
-    parent_template_id = Column(Integer, ForeignKey('templates.template_id'), nullable=True)
-    model_family = Column(String, nullable=True)
-    task_name = Column(String, nullable=False)
-    content = Column(Text, nullable=False)
-    version = Column(Integer, default=1)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
-
-    parent_template = relationship("Template", remote_side=[template_id], backref="child_templates")
-
-    placeholders = relationship("Placeholder", secondary='template_placeholders', back_populates="templates")
-
-    __table_args__ = (
-        UniqueConstraint('template_name', 'version', name='_template_name_version_uc'),
-        CheckConstraint("template_type IN ('base', 'model')", name='check_template_type')
-    )
-
-class Placeholder(Base):
-    __tablename__ = 'placeholders'
-
-    placeholder_id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    description = Column(String, nullable=True)
-    data_type = Column(String, nullable=False)
-    default_value = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
-
-    templates = relationship("Template", secondary='template_placeholders', back_populates="placeholders")
-
-template_placeholders = Table('template_placeholders', Base.metadata,
-    Column('template_id', Integer, ForeignKey('templates.template_id'), primary_key=True),
-    Column('placeholder_id', Integer, ForeignKey('placeholders.placeholder_id'), primary_key=True)
-)

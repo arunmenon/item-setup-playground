@@ -25,6 +25,7 @@ class LLMRequest(BaseModel):
     short_description: str
     long_description: str
     item_product_type: str
+    task_type: Optional[str] = 'generation'  # Default to 'generation'
     image_url : Optional[str] = None 
     attributes_list : Optional[List[str]] = None
     #max_tokens: Optional[int] = 150  
