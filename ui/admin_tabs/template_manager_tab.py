@@ -1,6 +1,9 @@
-from models.models import EvaluationPromptTemplate, EvaluationTask, GenerationPromptTemplate, GenerationTask, ModelFamily
+from models.models import (
+    EvaluationPromptTemplate, EvaluationTask,
+    GenerationPromptTemplate, GenerationTask,
+    ModelFamily
+)
 import gradio as gr
-
 
 def create_prompt_template_management_tab(admin_db_handler):
     with gr.TabItem("Prompt Template Management"):
@@ -9,185 +12,247 @@ def create_prompt_template_management_tab(admin_db_handler):
         # Task Type Selection
         task_type_selector = gr.Radio(
             choices=['Generation', 'Evaluation'],
-            label='Select Task Type',
+            label='Select Task Type:',
             value='Generation'
         )
 
-        # Fetch existing tasks based on task type
+        # Fetch existing tasks and model families
         def get_task_options(task_type):
-            if task_type == 'Generation':
-                tasks = admin_db_handler.get_generation_tasks()
-            else:
-                tasks = admin_db_handler.get_evaluation_tasks()
+            tasks = admin_db_handler.get_generation_tasks() if task_type == 'Generation' else admin_db_handler.get_evaluation_tasks()
             return [t.task_name for t in tasks]
 
-        task_options = get_task_options('Generation')
+        def get_model_family_options():
+            model_families = admin_db_handler.get_model_families()
+            return [mf.name for mf in model_families]
+
+        # Components
         selected_task = gr.Dropdown(
-            label="Select Task",
-            choices=task_options,
-            value=None
+            label="Task:",
+            choices=get_task_options('Generation'),
+            value=None,
+            interactive=True
         )
 
-        # Fetch existing templates for the selected task
-        def get_template_options(task_name, task_type):
-            if task_type == 'Generation':
-                task = admin_db_handler.db_session.query(GenerationTask).filter_by(task_name=task_name).first()
-                templates = admin_db_handler.get_generation_prompt_templates(task_id=task.task_id)
-            else:
-                task = admin_db_handler.db_session.query(EvaluationTask).filter_by(task_name=task_name).first()
-                templates = admin_db_handler.get_evaluation_prompt_templates(task_id=task.task_id)
-            return [f"{admin_db_handler.db_session.query(ModelFamily).get(t.model_family_id).name} (v{t.version})" for t in templates]
-
-        selected_template = gr.Dropdown(
-            label="Select Template",
-            choices=[],
-            value=None
+        selected_model_family = gr.Dropdown(
+            label="Model Family:",
+            choices=get_model_family_options(),
+            value=None,
+            interactive=True
         )
 
-        action_selector = gr.Dropdown(
-            label="Action",
-            choices=["View", "Edit", "Create New", "Delete"],
-            value="View"
+        version = gr.Slider(
+            label="Version:",
+            value=1,
+            minimum=1,
+            step=1,
+            interactive=True
         )
 
-        # Template fields
-        template_id = gr.Textbox(label="Template ID", visible=False)
-        model_family_name = gr.Textbox(label="Model Family")
-        template_text = gr.Textbox(label="Template Text", lines=10)
-        version = gr.Number(label="Version", value=1)
-        # Add other fields as needed
+        # Define template_id here
+        template_id = gr.Textbox(
+            label="Template ID:",
+            value="",
+            visible=False,
+            interactive=False
+        )
 
-        save_button = gr.Button("Save Changes")
-        create_button = gr.Button("Create Template")
-        delete_button = gr.Button("Delete Template")
+        template_text = gr.Textbox(
+            label="Template Text:",
+            lines=15,
+            placeholder="Enter the prompt template here...",
+            interactive=True
+        )
 
-        feedback = gr.Textbox(label="Feedback", interactive=False)
+        # Action Buttons
+        with gr.Row():
+            save_button = gr.Button("Save", variant="primary")
+            create_button = gr.Button("Create New", variant="secondary")
+            delete_button = gr.Button("Delete", variant="stop", visible=False)
+
+        feedback = gr.Markdown("")
 
         # Update task options when task type changes
         def update_task_options(task_type):
             options = get_task_options(task_type)
-            return gr.update(choices=options, value=None), gr.update(choices=[], value=None)
+            return (
+                gr.update(choices=options, value=None),  # selected_task
+                gr.update(value=None),                   # selected_model_family
+                gr.update(visible=False),                # delete_button
+                "",                                      # template_text
+                "",                                      # template_id
+                1,                                       # version
+                ""                                       # feedback
+            )
 
         task_type_selector.change(
             fn=update_task_options,
             inputs=[task_type_selector],
-            outputs=[selected_task, selected_template]
+            outputs=[selected_task, selected_model_family, delete_button, template_text, template_id, version, feedback]
         )
 
-        # Update template options when task changes
-        def update_template_options(task_name, task_type):
-            options = get_template_options(task_name, task_type)
-            return gr.update(choices=options, value=None)
+        # Reset fields when task changes
+        def reset_fields_task_change():
+            return (
+                gr.update(value=None),           # selected_model_family
+                gr.update(visible=False),        # delete_button
+                "",                              # template_text
+                "",                              # template_id
+                1,                               # version
+                ""                               # feedback
+            )
 
         selected_task.change(
-            fn=update_template_options,
-            inputs=[selected_task, task_type_selector],
-            outputs=selected_template
+            fn=reset_fields_task_change,
+            inputs=[],
+            outputs=[selected_model_family, delete_button, template_text, template_id, version, feedback]
         )
 
-        # Load template details when template is selected
-        def load_template(template_option, task_name, task_type):
-            if not template_option or template_option == "":
-                return [gr.update(value="")] * 4  # Return empty fields
+        # Reset fields when model family changes
+        def reset_fields_model_family_change():
+            return (
+                gr.update(visible=False),        # delete_button
+                "",                              # template_text
+                "",                              # template_id
+                1,                               # version
+                ""                               # feedback
+            )
 
-            model_family_name, version_str = template_option.split(' (v')
-            version = int(version_str[:-1])  # Remove closing parenthesis
-            if task_type == 'Generation':
-                task = admin_db_handler.db_session.query(GenerationTask).filter_by(task_name=task_name).first()
-                model_family = admin_db_handler.db_session.query(ModelFamily).filter_by(name=model_family_name).first()
-                template = admin_db_handler.db_session.query(GenerationPromptTemplate).filter(
-                    GenerationPromptTemplate.task_id == task.task_id,
-                    GenerationPromptTemplate.model_family_id == model_family.model_family_id,
-                    GenerationPromptTemplate.version == version
-                ).first()
-            else:
-                task = admin_db_handler.db_session.query(EvaluationTask).filter_by(task_name=task_name).first()
-                model_family = admin_db_handler.db_session.query(ModelFamily).filter_by(name=model_family_name).first()
-                template = admin_db_handler.db_session.query(EvaluationPromptTemplate).filter(
-                    EvaluationPromptTemplate.task_id == task.task_id,
-                    EvaluationPromptTemplate.model_family_id == model_family.model_family_id,
-                    EvaluationPromptTemplate.version == version
-                ).first()
+        selected_model_family.change(
+            fn=reset_fields_model_family_change,
+            inputs=[],
+            outputs=[delete_button, template_text, template_id, version, feedback]
+        )
+
+        # Load template when any of the selections change
+        def load_template(task_name, task_type, model_family_name, version_val):
+            if not task_name or not model_family_name:
+                return "", "", gr.update(visible=False), "Please select both Task and Model Family."
+
+            # Fetch the template
+            task_model = GenerationTask if task_type == 'Generation' else EvaluationTask
+            template_model = GenerationPromptTemplate if task_type == 'Generation' else EvaluationPromptTemplate
+
+            task = admin_db_handler.db_session.query(task_model).filter_by(task_name=task_name).first()
+            model_family = admin_db_handler.db_session.query(ModelFamily).filter_by(name=model_family_name).first()
+
+            template = admin_db_handler.db_session.query(template_model).filter_by(
+                task_id=task.task_id,
+                model_family_id=model_family.model_family_id,
+                version=int(version_val)
+            ).first()
 
             if template:
-                return [
-                    gr.update(value=str(template.template_id)),
-                    gr.update(value=model_family_name),
-                    gr.update(value=template.template_text),
-                    gr.update(value=template.version)
-                ]
+                return template.template_text, str(template.template_id), gr.update(visible=True), ""
             else:
-                return [gr.update(value="")] * 4  # Return empty fields
+                return "", "", gr.update(visible=False), "No template found. You can create a new one."
 
-        selected_template.change(
-            fn=load_template,
-            inputs=[selected_template, selected_task, task_type_selector],
-            outputs=[template_id, model_family_name, template_text, version]
+        def load_template_wrapper(task_name, task_type, model_family_name, version_val):
+            return load_template(task_name, task_type, model_family_name, version_val)
+
+        selected_task.change(
+            fn=load_template_wrapper,
+            inputs=[selected_task, task_type_selector, selected_model_family, version],
+            outputs=[template_text, template_id, delete_button, feedback]
+        )
+        selected_model_family.change(
+            fn=load_template_wrapper,
+            inputs=[selected_task, task_type_selector, selected_model_family, version],
+            outputs=[template_text, template_id, delete_button, feedback]
+        )
+        version.change(
+            fn=load_template_wrapper,
+            inputs=[selected_task, task_type_selector, selected_model_family, version],
+            outputs=[template_text, template_id, delete_button, feedback]
         )
 
-        # Save changes
-        def save_template(template_id_val, model_family_name_val, template_text_val, version_val, task_name, task_type):
+        # Save template
+        def save_template(template_text_val, task_name, task_type, model_family_name, version_val, template_id_val):
+            if not template_text_val.strip():
+                return "Template Text cannot be empty.", gr.update(), gr.update()
+
             try:
-                updated_data = {
-                    "model_family": model_family_name_val,
+                task_model = GenerationTask if task_type == 'Generation' else EvaluationTask
+                template_model = GenerationPromptTemplate if task_type == 'Generation' else EvaluationPromptTemplate
+
+                task = admin_db_handler.db_session.query(task_model).filter_by(task_name=task_name).first()
+                model_family = admin_db_handler.db_session.query(ModelFamily).filter_by(name=model_family_name).first()
+
+                if not task or not model_family:
+                    return "Invalid Task or Model Family selected.", gr.update(), gr.update()
+
+                # Prepare template data
+                template_data = {
+                    "task_id": task.task_id,
+                    "model_family_id": model_family.model_family_id,
                     "template_text": template_text_val,
                     "version": int(version_val)
                 }
-                if task_type == 'Generation':
-                    task = admin_db_handler.db_session.query(GenerationTask).filter_by(task_name=task_name).first()
-                    updated_data['task_id'] = task.task_id
-                    if template_id_val and template_id_val != "":
-                        # Update existing template
-                        admin_db_handler.update_generation_prompt_template(int(template_id_val), updated_data)
-                        msg = "Generation Prompt Template updated successfully."
-                    else:
-                        # Create new template
-                        admin_db_handler.create_generation_prompt_template(updated_data)
-                        msg = "Generation Prompt Template created successfully."
-                else:
-                    task = admin_db_handler.db_session.query(EvaluationTask).filter_by(task_name=task_name).first()
-                    updated_data['task_id'] = task.task_id
-                    if template_id_val and template_id_val != "":
-                        # Update existing template
-                        admin_db_handler.update_evaluation_prompt_template(int(template_id_val), updated_data)
-                        msg = "Evaluation Prompt Template updated successfully."
-                    else:
-                        # Create new template
-                        admin_db_handler.create_evaluation_prompt_template(updated_data)
-                        msg = "Evaluation Prompt Template created successfully."
 
-                # Update template options after save
-                options = get_template_options(task_name, task_type)
-                return msg, gr.update(choices=options)
+                if template_id_val:
+                    # Update existing template
+                    existing_template = admin_db_handler.db_session.query(template_model).get(int(template_id_val))
+                    if existing_template:
+                        for key, value in template_data.items():
+                            setattr(existing_template, key, value)
+                        admin_db_handler.db_session.commit()
+                        msg = "Template updated successfully."
+                    else:
+                        return "Template not found.", gr.update(), gr.update()
+                else:
+                    # Create new template
+                    new_template = template_model(**template_data)
+                    admin_db_handler.db_session.add(new_template)
+                    admin_db_handler.db_session.commit()
+                    msg = "Template created successfully."
+                    # Update the template_id with the new template's ID
+                    template_id_val = str(new_template.template_id)
+
+                return msg, gr.update(value=template_id_val), gr.update(visible=True)
             except Exception as e:
-                return f"Error: {str(e)}", gr.update()
+                return f"Error: {str(e)}", gr.update(), gr.update()
 
         save_button.click(
             fn=save_template,
-            inputs=[template_id, model_family_name, template_text, version, selected_task, task_type_selector],
-            outputs=[feedback, selected_template]
+            inputs=[template_text, selected_task, task_type_selector, selected_model_family, version, template_id],
+            outputs=[feedback, template_id, delete_button]
         )
 
         # Delete template
-        def delete_template_action(template_id_val, task_name, task_type):
+        def delete_template_action(task_name, task_type, model_family_name, version_val, template_id_val):
             try:
-                if template_id_val and template_id_val != "":
-                    if task_type == 'Generation':
-                        admin_db_handler.delete_generation_prompt_template(int(template_id_val))
-                        msg = "Generation Prompt Template deleted successfully."
-                    else:
-                        admin_db_handler.delete_evaluation_prompt_template(int(template_id_val))
-                        msg = "Evaluation Prompt Template deleted successfully."
-                    # Update template options after delete
-                    options = get_template_options(task_name, task_type)
-                    return msg, gr.update(choices=options)
+                if not template_id_val:
+                    return "No template selected.", "", "", 1, gr.update(visible=False)
+                task_model = GenerationTask if task_type == 'Generation' else EvaluationTask
+                template_model = GenerationPromptTemplate if task_type == 'Generation' else EvaluationPromptTemplate
+
+                task = admin_db_handler.db_session.query(task_model).filter_by(task_name=task_name).first()
+                model_family = admin_db_handler.db_session.query(ModelFamily).filter_by(name=model_family_name).first()
+
+                template = admin_db_handler.db_session.query(template_model).get(int(template_id_val))
+
+                if template:
+                    admin_db_handler.db_session.delete(template)
+                    admin_db_handler.db_session.commit()
+                    # Clear fields
+                    return "Template deleted successfully.", "", "", 1, gr.update(visible=False)
                 else:
-                    return "No template selected.", gr.update()
+                    return "Template not found.", "", "", 1, gr.update(visible=False)
+
             except Exception as e:
-                return f"Error: {str(e)}", gr.update()
+                return f"Error: {str(e)}", "", "", 1, gr.update(visible=False)
 
         delete_button.click(
             fn=delete_template_action,
-            inputs=[template_id, selected_task, task_type_selector],
-            outputs=[feedback, selected_template]
+            inputs=[selected_task, task_type_selector, selected_model_family, version, template_id],
+            outputs=[feedback, template_text, template_id, version, delete_button]
+        )
+
+        # Create new template
+        def create_new_template():
+            return "", "", 1, gr.update(visible=False), "Ready to create a new template."
+
+        create_button.click(
+            fn=create_new_template,
+            inputs=[],
+            outputs=[template_text, template_id, version, delete_button, feedback]
         )

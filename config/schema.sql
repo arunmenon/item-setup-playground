@@ -1,31 +1,49 @@
 -- config/schema.sql
 
 -- Model Families Table
-CREATE TABLE model_families (
+CREATE TABLE IF NOT EXISTS model_families (
     model_family_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
 );
 
 -- Generation Tasks Table
-CREATE TABLE generation_tasks (
+CREATE TABLE IF NOT EXISTS generation_tasks (
     task_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_name TEXT NOT NULL,
+    task_name TEXT NOT NULL UNIQUE,
     description TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Evaluation Tasks Table
-CREATE TABLE evaluation_tasks (
+CREATE TABLE IF NOT EXISTS evaluation_tasks (
     task_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_name TEXT NOT NULL,
+    task_name TEXT NOT NULL UNIQUE,
     description TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Association table between generation_tasks and evaluation_tasks
+CREATE TABLE IF NOT EXISTS generation_task_evaluation_tasks (
+    generation_task_id INTEGER NOT NULL,
+    evaluation_task_id INTEGER NOT NULL,
+    PRIMARY KEY (generation_task_id, evaluation_task_id),
+    FOREIGN KEY (generation_task_id) REFERENCES generation_tasks(task_id) ON DELETE CASCADE,
+    FOREIGN KEY (evaluation_task_id) REFERENCES evaluation_tasks(task_id) ON DELETE CASCADE
+);
+
+-- Association table between generation_tasks and providers
+CREATE TABLE IF NOT EXISTS generation_task_providers (
+    generation_task_id INTEGER NOT NULL,
+    provider_id INTEGER NOT NULL,
+    PRIMARY KEY (generation_task_id, provider_id),
+    FOREIGN KEY (generation_task_id) REFERENCES generation_tasks(task_id) ON DELETE CASCADE,
+    FOREIGN KEY (provider_id) REFERENCES providers(provider_id) ON DELETE CASCADE
+);
+
 -- Generation Prompt Templates Table
-CREATE TABLE generation_prompt_templates (
+CREATE TABLE IF NOT EXISTS generation_prompt_templates (
     template_id INTEGER PRIMARY KEY AUTOINCREMENT,
     task_id INTEGER NOT NULL,
     model_family_id INTEGER NOT NULL,
@@ -38,7 +56,7 @@ CREATE TABLE generation_prompt_templates (
 );
 
 -- Evaluation Prompt Templates Table
-CREATE TABLE evaluation_prompt_templates (
+CREATE TABLE IF NOT EXISTS evaluation_prompt_templates (
     template_id INTEGER PRIMARY KEY AUTOINCREMENT,
     task_id INTEGER NOT NULL,
     model_family_id INTEGER NOT NULL,
@@ -64,7 +82,7 @@ CREATE TABLE IF NOT EXISTS providers (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- StylingGuides Table
+-- Styling Guides Table
 CREATE TABLE IF NOT EXISTS styling_guides (
     styling_guide_id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_type TEXT NOT NULL,
@@ -77,7 +95,7 @@ CREATE TABLE IF NOT EXISTS styling_guides (
     UNIQUE(product_type, task_name, version)
 );
 
--- TaskExecutionConfig Table
+-- Task Execution Config Table
 CREATE TABLE IF NOT EXISTS task_execution_config (
     config_id INTEGER PRIMARY KEY AUTOINCREMENT,
     default_tasks TEXT NOT NULL, -- Stored as JSON array
@@ -86,10 +104,18 @@ CREATE TABLE IF NOT EXISTS task_execution_config (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Indexes for Prompt Templates
+CREATE INDEX IF NOT EXISTS idx_generation_prompt_templates_task_id ON generation_prompt_templates(task_id);
+CREATE INDEX IF NOT EXISTS idx_generation_prompt_templates_model_family_id ON generation_prompt_templates(model_family_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_prompt_templates_task_id ON evaluation_prompt_templates(task_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_prompt_templates_model_family_id ON evaluation_prompt_templates(model_family_id);
 
--- Indexes
-CREATE INDEX idx_generation_prompt_templates_task_id ON generation_prompt_templates(task_id);
-CREATE INDEX idx_generation_prompt_templates_model_family_id ON generation_prompt_templates(model_family_id);
-CREATE INDEX idx_evaluation_prompt_templates_task_id ON evaluation_prompt_templates(task_id);
-CREATE INDEX idx_evaluation_prompt_templates_model_family_id ON evaluation_prompt_templates(model_family_id);
+-- Indexes for Styling Guides
 CREATE INDEX IF NOT EXISTS idx_styling_guides_product_task ON styling_guides(product_type, task_name);
+
+-- Indexes for Association Tables
+CREATE INDEX IF NOT EXISTS idx_gen_task_eval_tasks_gen_task_id ON generation_task_evaluation_tasks(generation_task_id);
+CREATE INDEX IF NOT EXISTS idx_gen_task_eval_tasks_eval_task_id ON generation_task_evaluation_tasks(evaluation_task_id);
+
+CREATE INDEX IF NOT EXISTS idx_gen_task_providers_gen_task_id ON generation_task_providers(generation_task_id);
+CREATE INDEX IF NOT EXISTS idx_gen_task_providers_provider_id ON generation_task_providers(provider_id);

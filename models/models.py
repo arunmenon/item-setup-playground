@@ -1,7 +1,7 @@
 # models/models.py
 
 from sqlalchemy import (
-    Column, Integer,Float, String, Text, Boolean, DateTime, ForeignKey, UniqueConstraint, CheckConstraint, Table
+    Column, Integer, Float, String, Text, Boolean, DateTime, ForeignKey, UniqueConstraint, Table
 )
 from sqlalchemy.orm import relationship
 import json
@@ -31,19 +31,39 @@ class ModelFamily(Base):
     generation_prompt_templates = relationship('GenerationPromptTemplate', back_populates='model_family')
     evaluation_prompt_templates = relationship('EvaluationPromptTemplate', back_populates='model_family')
 
+# Association Tables
+generation_task_evaluation_tasks = Table('generation_task_evaluation_tasks', Base.metadata,
+    Column('generation_task_id', Integer, ForeignKey('generation_tasks.task_id'), primary_key=True),
+    Column('evaluation_task_id', Integer, ForeignKey('evaluation_tasks.task_id'), primary_key=True)
+)
+
+generation_task_providers = Table('generation_task_providers', Base.metadata,
+    Column('generation_task_id', Integer, ForeignKey('generation_tasks.task_id'), primary_key=True),
+    Column('provider_id', Integer, ForeignKey('providers.provider_id'), primary_key=True)
+)
+
 class GenerationTask(Base):
     __tablename__ = 'generation_tasks'
     task_id = Column(Integer, primary_key=True)
-    task_name = Column(String, nullable=False)
+    task_name = Column(String, unique=True, nullable=False)
     description = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
     prompt_templates = relationship('GenerationPromptTemplate', back_populates='generation_task', cascade='all, delete-orphan')
-    
+    evaluation_tasks = relationship('EvaluationTask', secondary=generation_task_evaluation_tasks, back_populates='generation_tasks')
+    providers = relationship('ProviderConfig', secondary=generation_task_providers, back_populates='generation_tasks')
+
 class EvaluationTask(Base):
     __tablename__ = 'evaluation_tasks'
     task_id = Column(Integer, primary_key=True)
-    task_name = Column(String, nullable=False)
+    task_name = Column(String, unique=True, nullable=False)
     description = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
     prompt_templates = relationship('EvaluationPromptTemplate', back_populates='evaluation_task', cascade='all, delete-orphan')
+    generation_tasks = relationship('GenerationTask', secondary=generation_task_evaluation_tasks, back_populates='evaluation_tasks')
 
 class GenerationPromptTemplate(Base):
     __tablename__ = 'generation_prompt_templates'
@@ -52,6 +72,9 @@ class GenerationPromptTemplate(Base):
     model_family_id = Column(Integer, ForeignKey('model_families.model_family_id'), nullable=False)
     template_text = Column(Text, nullable=False)
     version = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
     generation_task = relationship('GenerationTask', back_populates='prompt_templates')
     model_family = relationship('ModelFamily', back_populates='generation_prompt_templates')
 
@@ -62,10 +85,12 @@ class EvaluationPromptTemplate(Base):
     model_family_id = Column(Integer, ForeignKey('model_families.model_family_id'), nullable=False)
     template_text = Column(Text, nullable=False)
     version = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
     evaluation_task = relationship('EvaluationTask', back_populates='prompt_templates')
     model_family = relationship('ModelFamily', back_populates='evaluation_prompt_templates')
 
-    
 class ProviderConfig(Base):
     __tablename__ = 'providers'
 
@@ -80,6 +105,7 @@ class ProviderConfig(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
+    generation_tasks = relationship('GenerationTask', secondary=generation_task_providers, back_populates='providers')
 
 class StylingGuide(Base):
     __tablename__ = 'styling_guides'
@@ -97,7 +123,6 @@ class StylingGuide(Base):
         UniqueConstraint('product_type', 'task_name', 'version', name='_product_task_version_uc'),
     )
 
-
 class TaskExecutionConfig(Base):
     __tablename__ = 'task_execution_config'
 
@@ -106,4 +131,3 @@ class TaskExecutionConfig(Base):
     conditional_tasks = Column(JSONEncodedDict, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
-

@@ -3,7 +3,7 @@ import json
 import pandas as pd
 
 class DatabaseHandler:
-    def __init__(self, db_path="model_responses.db"):
+    def __init__(self, db_path="external_database.db"):
         self.db_path = db_path
 
     def create_tables(self):

@@ -19,8 +19,10 @@ engine = create_engine('sqlite:///your_database.db')  # Update with your databas
 SessionLocal = sessionmaker(bind=engine)
 
 class AdminDatabaseHandler:
-    def __init__(self):
-        self.db_session = SessionLocal()
+    def __init__(self,db_path="external_database.db"):
+        self.engine = create_engine(f'sqlite:///{db_path}')
+        self.SessionLocal = sessionmaker(bind=self.engine)
+        self.db_session = self.SessionLocal()
 
     # -----------------------
     # Model Family CRUD Operations
