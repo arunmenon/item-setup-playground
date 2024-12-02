@@ -72,6 +72,8 @@ class GenerationPromptTemplate(Base):
     model_family_id = Column(Integer, ForeignKey('model_families.model_family_id'), nullable=False)
     template_text = Column(Text, nullable=False)
     version = Column(Integer, nullable=False)
+    placeholders = Column(JSONEncodedDict, nullable=True)  # Add this line
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
@@ -85,6 +87,8 @@ class EvaluationPromptTemplate(Base):
     model_family_id = Column(Integer, ForeignKey('model_families.model_family_id'), nullable=False)
     template_text = Column(Text, nullable=False)
     version = Column(Integer, nullable=False)
+    placeholders = Column(JSONEncodedDict, nullable=True)  # Add this line
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 

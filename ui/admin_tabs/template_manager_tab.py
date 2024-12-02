@@ -1,3 +1,4 @@
+import re
 from models.models import (
     EvaluationPromptTemplate, EvaluationTask,
     GenerationPromptTemplate, GenerationTask,
@@ -40,13 +41,7 @@ def create_prompt_template_management_tab(admin_db_handler):
             interactive=True
         )
 
-        version = gr.Slider(
-            label="Version:",
-            value=1,
-            minimum=1,
-            step=1,
-            interactive=True
-        )
+        
 
         # Define template_id here
         template_id = gr.Textbox(
@@ -62,6 +57,21 @@ def create_prompt_template_management_tab(admin_db_handler):
             placeholder="Enter the prompt template here...",
             interactive=True
         )
+        version = gr.Slider(
+            label="Version:",
+            value=1,
+            minimum=1,
+            step=1,
+            interactive=True
+        )
+        # Display extracted placeholders
+        placeholders_display = gr.Textbox(
+            label="Extracted Placeholders:",
+            lines=3,
+            interactive=False,
+            placeholder="Placeholders will be displayed here after you enter the template text."
+        )
+
 
         # Action Buttons
         with gr.Row():
@@ -71,7 +81,22 @@ def create_prompt_template_management_tab(admin_db_handler):
 
         feedback = gr.Markdown("")
 
-        # Update task options when task type changes
+        # Function to extract placeholders
+        def extract_placeholders(template_text):
+            # Improved regex to match placeholders
+            placeholders = re.findall(r"{([a-zA-Z0-9_]+)}", template_text)
+            placeholders = list(set(placeholders))  # Remove duplicates
+            placeholders_str = ', '.join(placeholders)
+            return placeholders_str
+        
+        # Update placeholders display when template text changes
+        template_text.change(
+            fn=extract_placeholders,
+            inputs=[template_text],
+            outputs=[placeholders_display]
+        )
+        
+        # Update task options when task type changes   
         def update_task_options(task_type):
             options = get_task_options(task_type)
             return (
@@ -180,12 +205,17 @@ def create_prompt_template_management_tab(admin_db_handler):
                 if not task or not model_family:
                     return "Invalid Task or Model Family selected.", gr.update(), gr.update()
 
+                # Extract placeholders
+                placeholders = re.findall(r"{(.*?)}", template_text_val)
+                placeholders = list(set(placeholders))  # Remove duplicates
+
                 # Prepare template data
                 template_data = {
                     "task_id": task.task_id,
                     "model_family_id": model_family.model_family_id,
                     "template_text": template_text_val,
-                    "version": int(version_val)
+                    "version": int(version_val),
+                    "placeholders": placeholders  # Store placeholders
                 }
 
                 if template_id_val:

@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS generation_prompt_templates (
     model_family_id INTEGER NOT NULL,
     template_text TEXT NOT NULL,
     version INTEGER NOT NULL,
+    placeholders TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (task_id) REFERENCES generation_tasks(task_id) ON DELETE CASCADE,
@@ -62,8 +63,10 @@ CREATE TABLE IF NOT EXISTS evaluation_prompt_templates (
     model_family_id INTEGER NOT NULL,
     template_text TEXT NOT NULL,
     version INTEGER NOT NULL,
+    placeholders TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
     FOREIGN KEY (task_id) REFERENCES evaluation_tasks(task_id) ON DELETE CASCADE,
     FOREIGN KEY (model_family_id) REFERENCES model_families(model_family_id)
 );
