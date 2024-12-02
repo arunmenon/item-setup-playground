@@ -100,20 +100,6 @@
         "model",
         "temperature"
       ]
-    },
-    {
-      "name": "neuralmagic/SmolLM-1.7B-Instruct-quantized.w8a16",
-      "provider": "elements_openai",
-      "model": "neuralmagic/SmolLM-1.7B-Instruct-quantized.w8a16",
-      "family": "llama",
-      "temperature": 0.1,
-      "api_base": "https://smollm-1-7b-instruct-q-stage.element.glb.us.walmart.net/smollm-1-7b-instruct-q/v1/completions",
-      "required_fields": [
-        "name",
-        "provider",
-        "model",
-        "temperature"
-      ]
     }
   ],
   "tasks": {
@@ -140,7 +126,7 @@
   },
   "task_execution": {
     "default_tasks": [
-      "title_enhancement","short_description_enhancement","long_description_enhancement"
+      "short_description_enhancement"
     ],
     "conditional_tasks": {
       "attribute_extraction": "attributes_list",

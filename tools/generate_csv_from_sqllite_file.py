@@ -22,7 +22,8 @@ def export_tables_to_csv(db_path, output_dir):
         table_name = table_name[0]
         df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
         csv_path = os.path.join(output_dir, f"{table_name}.csv")
-        df.to_csv(csv_path, index=False)
+        # df.to_csv(csv_path, index=False)
+        df.to_parquet(csv_path, index=False)
         print(f"Table {table_name} exported to {csv_path}")
 
     # Close the database connection
