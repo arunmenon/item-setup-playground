@@ -1,232 +1,43 @@
 import json
-import sqlite3
-from datetime import datetime
 import logging
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
-from eval.config.constants import TASK_MAPPING
 from collections import defaultdict
 import numpy as np
-from tqdm.asyncio import tqdm
 
 
 class BatchProcessor:
-    def __init__(self, batch_size, db_path=None):
-        """
-        Initialize the BatchProcessor.
-
-        Args:
-            batch_size (int): Number of records to process in each batch.
-            db_path (str): Path to the SQLite database file.
-        """
+    def __init__(self, batch_size, db_handler):
         self.batch_size = batch_size
-        self.db_path = db_path or "results.db"
-        self.executor = ThreadPoolExecutor(max_workers=batch_size)
+        self.db_handler = db_handler
+        self.db_handler.create_tables()
 
-        # Initialize the database and create tables if they do not exist
-        self._initialize_database()
-        self.metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
-        self.metric_ranges = {
-            'quality_score': 100,
-            'relevance'    : 5,
-            'clarity'      : 5,
-            'compliance'   : 5,
-            'accuracy'     : 5
-        }
+    def process_batches(self, df, api_handler, evaluators, prepare_item):
+        for start in range(0, len(df), self.batch_size):
+            batch = df.iloc[start:start + self.batch_size]
+            logging.info(f"Processing batch {start // self.batch_size + 1}")
 
-    def _initialize_database(self):
-        """
-        Create necessary tables in the SQLite database if they do not exist.
-        """
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
+            evaluation_results = []
 
-            # Update table schema to include missing columns
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS evaluation_results (
-                    item_id TEXT,
-                    item_product_type TEXT,
-                    task TEXT,
-                    model_name TEXT,
-                    model_version TEXT,
-                    evaluator_type TEXT,         -- 'LLM' or 'Human'
-                    evaluator_id TEXT,
-                    quality_score INTEGER,       -- For LLM evaluations (0-100)
-                    relevance INTEGER,           
-                    clarity INTEGER,             
-                    compliance INTEGER,          
-                    accuracy INTEGER,            
-                    reasoning TEXT,
-                    suggestions TEXT,
-                    is_winner BOOLEAN,
-                    comments TEXT,               -- Additional comments from human evaluators
-                    enriched_content TEXT,
-                    prompt_version TEXT,
-                    eval_prompt_version TEXT,
-                    PRIMARY KEY (item_id, task, model_name, model_version, evaluator_type, evaluator_id)
-                )
-            """)
+            for _, row in batch.iterrows():
+                item_id = row['catlg_item_id']
 
-            # Create aggregated_results table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS aggregated_evaluations (
-                    item_id TEXT,
-                    item_product_type TEXT,
-                    task TEXT,
-                    model_name TEXT,
-                    model_version TEXT,
-                    quality_score_mean REAL,
-                    quality_score_variance REAL,
-                    quality_score_confidence TEXT,
-                    relevance_mean REAL,
-                    relevance_variance REAL,
-                    relevance_confidence TEXT,
-                    clarity_mean REAL,
-                    clarity_variance REAL,
-                    clarity_confidence TEXT,
-                    compliance_mean REAL,
-                    compliance_variance REAL,
-                    compliance_confidence TEXT,
-                    accuracy_mean REAL,
-                    accuracy_variance REAL,
-                    accuracy_confidence TEXT,
-                    PRIMARY KEY (item_id, task, model_name, model_version)
-                )
-            """)
-
-            # Create enriched_results table
-            cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS enriched_results (
-                        item_id TEXT,
-                        item_product_type TEXT,
-                        task TEXT,  
-                        model_name TEXT,
-                        model_version TEXT,
-                        enriched_content TEXT,
-                        PRIMARY KEY (item_id, task, model_name, model_version)
+                # Process a single item
+                item_data = prepare_item(row)
+                enrichment_results = api_handler.call_api(item_data)
+                if enrichment_results:
+                    evaluations = asyncio.run(
+                        self._evaluate_item(item_data, enrichment_results, evaluators)
                     )
-                """)
-            conn.commit()
-
-    async def process_batches(self, df, api_handler, evaluators, prepare_item, include_evaluation=True):
-        """
-        Process the data in batches concurrently.
-
-        Args:
-            df (pd.DataFrame): Input DataFrame.
-            api_handler (APIHandler): API handler instance.
-            evaluators (list[Evaluator]): List of evaluator instances.
-            prepare_item (callable): Function to prepare item data for API.
-        """
-        # semaphore = asyncio.Semaphore(1)
-        tasks = [
-            asyncio.create_task(self._process_single_batch(
-                df.iloc[start:start + self.batch_size], api_handler, evaluators, prepare_item, include_evaluation))
-            for start in range(0, len(df), self.batch_size)
-        ]
-
-        for f in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Processing Batches"):
-            await f
-
-    async def _process_single_batch(self, batch, api_handler, evaluators, prepare_item, include_evaluation):
-        """
-        Process data in batches and save results to the database after each batch.
-
-        Args:
-            batch (pd.DataFrame): Input batch DataFrame.
-            api_handler (APIHandler): API handler instance.
-            evaluators (list[Evaluator]): List of evaluator instances.
-            prepare_item (callable): Function to prepare item data for API.
-        """
-        # async with semaphore:
-        logging.debug(f"Processing batch of size {len(batch)}")
-
-        loop = asyncio.get_event_loop()
-        tasks = []
-
-        for _, row in batch.iterrows():
-            item_data = prepare_item(row)
-            task = loop.run_in_executor(self.executor, partial(self._process_item, item_data, api_handler, evaluators, include_evaluation))
-            tasks.append(task)
-
-        # Await all item processing tasks
-        results = await asyncio.gather(*tasks)
-
-        evaluation_results = [item for sublist in results for item in sublist if item]
-
-        if evaluation_results:
-            if include_evaluation:
-                self._save_to_db(evaluation_results)
-                # Uncomment to enable aggregation
-                # aggregated_results = self._aggregate_evaluations(evaluation_results)
-                aggregated_results = None
-                if aggregated_results:
-                    self._save_aggregated_results(aggregated_results)
-            else:
-                self._save_enriched_results(evaluation_results)
-
-        # Log errors for tasks that raised exceptions
-        for result in results:
-            if isinstance(result, Exception):
-                logging.error(f"Error in task: {result}")
-    def _process_item(self, item_data, api_handler, evaluators, include_evaluation):
-        """
-        Process a single item.
-
-        Args:
-            item_data (dict): The data of the item to be processed.
-            api_handler (APIHandler): API handler instance.
-            evaluators (list[Evaluator]): List of evaluator instances.
-
-        Returns:
-            list: A list containing evaluation results.
-        """
-        item_id = item_data["item_id"]
-        try:
-            enrichment_results = api_handler.call_api(item_data)
-
-            if enrichment_results:
-                if include_evaluation:
-                    evaluations = asyncio.run(self._evaluate_item(item_data, enrichment_results, evaluators))
-                    return evaluations
+                    evaluation_results.extend(evaluations)
                 else:
-                    enrichment_data = []
+                    logging.warning(f"No enrichment results for item: {item_id}")
 
-                    for task, task_name in TASK_MAPPING.items():
-                        model_responses = enrichment_results.get(task_name, {})
-                        if not model_responses:
-                            continue
-
-                        for model_name, model_data in model_responses.items():
-                            enriched_content = model_data.get("response", {}).get(f"enhanced_{task}")
-                            if enriched_content:
-                                enrichment_data.append({
-                                    "item_id"          : item_id,
-                                    "item_product_type": item_data["item_product_type"],
-                                    "task"             : task_name,
-                                    "model_name"       : model_name,
-                                    "model_version"    : model_data.get('model_version', '1.0'),
-                                    "enriched_content" : enriched_content
-                                })
-                            else:
-                                enrichment_data.append({
-                                    "item_id"          : item_id,
-                                    "item_product_type": item_data["item_product_type"],
-                                    "task"             : task_name,
-                                    "model_name"       : model_name,
-                                    "model_version"    : model_data.get('model_version', '1.0'),
-                                    "enriched_content" : None
-                                })
-
-                    return enrichment_data
-            else:
-                logging.warning(f"No enrichment results for item: {item_id}")
-                return []
-
-        except Exception as e:
-            logging.error(f"Error processing item {item_id}: {str(e)}")
-            return []
+            if evaluation_results:
+                self._save_to_db(evaluation_results)
+                # Optionally, aggregate evaluations
+                aggregated_results = self._aggregate_evaluations(evaluation_results)
+                if aggregated_results:
+                    self.db_handler.save_aggregated_evaluations(aggregated_results)
 
     async def _evaluate_item(self, item_data, enrichment_results, evaluators):
         evaluation_results = []
@@ -236,311 +47,96 @@ class BatchProcessor:
         task_context = []
 
         for evaluator in evaluators:
-            evaluator_id = evaluator.id  # Get evaluator_id
-            for task, task_name in TASK_MAPPING.items():
-                model_responses = enrichment_results.get(task_name, {})
+            evaluator_id = evaluator.id
+            for generation_task_name, model_responses in enrichment_results.items():
                 if not model_responses:
                     continue
 
                 for model_name, model_data in model_responses.items():
-                    enriched_content = model_data.get("response", {}).get(f"enhanced_{task}")
+                    enriched_content = model_data.get("response", {}).get("content")
                     if not enriched_content:
-                        # Directly construct the result with '-NA-' values
-                        ordered_result = {
-                            "item_id"            : item_data["item_id"],
-                            "item_product_type"  : product_type,
-                            "task"               : task_name,
-                            "model_name"         : model_name,
-                            "model_version"      : model_data.get('model_version', '1.0'),
-                            "evaluator_type"     : 'LLM',
-                            "evaluator_id"       : evaluator_id,
-                            "quality_score"      : 0,
-                            "relevance"          : 0,
-                            "clarity"            : 0,
-                            "compliance"         : 0,
-                            "accuracy"           : 0,
-                            "reasoning"          : "-NA-",
-                            "suggestions"        : "-NA-",
-                            "is_winner"          : False,
-                            "comments"           : None,
-                            "enriched_content"   : "-NA-",
-                            "prompt_version"     : "1",
-                            "eval_prompt_version": "1"
-                        }
-                        evaluation_results.append(ordered_result)
+                        continue
 
-                    else:
-                        # Create async tasks for evaluation
-                        evaluation_task = evaluator.evaluate_task(item_data, product_type, task, model_name, enriched_content, evaluator_id)
-                        tasks.append(evaluation_task)
-                        task_context.append((task_name, model_name, model_data.get('model_version', '1.0'), evaluator_id,
-                                         enriched_content))
+                    # Create async tasks for evaluation
+                    tasks.append(
+                        evaluator.evaluate_task(
+                            item_data, product_type, generation_task_name, model_name, enriched_content, evaluator_id=evaluator_id
+                        )
+                    )
+                    task_context.append((
+                    generation_task_name, model_name, model_data.get('model_version', '1.0'), evaluator_id))
 
+        # Await and process results
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for idx, result in enumerate(results):
-            if isinstance(result, dict):
-                task_name, model_name, model_version, evaluator_id, enriched_content = task_context[idx]
-
-                evaluation_result = {
-                    "item_id"            : item_data["item_id"],
-                    "item_product_type"  : product_type,
-                    "task"               : task_name,
-                    "model_name"         : model_name,
-                    "model_version"      : model_version,
-                    "evaluator_type"     : 'LLM',
-                    "evaluator_id"       : evaluator_id,
-                    "quality_score"      : result.get("quality_score"),
-                    "relevance"          : result.get("relevance"),
-                    "clarity"            : result.get("clarity"),
-                    "compliance"         : result.get("compliance"),
-                    "accuracy"           : result.get("accuracy"),
-                    "reasoning"          : json.dumps(result.get("reasoning", {})),
-                    "suggestions"        : json.dumps(result.get("suggestions", "None")),
-                    "is_winner"          : False,
-                    "comments"           : None,
-                    "enriched_content"   : enriched_content,
-                    "prompt_version"     : "1",
-                    "eval_prompt_version": "1"
-                }
-                evaluation_results.append(evaluation_result)
+        for idx, result_list in enumerate(results):
+            if isinstance(result_list, list):
+                for eval_result in result_list:
+                    evaluation_results.append(eval_result)
             else:
-                logging.error(f"Error in evaluating model response: {result}")
+                logging.error(f"Error in evaluating model response: {results[idx]}")
 
         return evaluation_results
 
     def _save_to_db(self, results):
-        """
-        Save results to the evaluation_results table in the SQLite database with an upsert operation.
-
-        Args:
-            results (list[dict]): Results to save.
-        """
         if not results:
-            logging.info(f"No results to save.")
+            logging.info("No results to save.")
             return
 
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-
-            # Prepare the data for insertion
-            data_to_insert = [
-                (
-                    result["item_id"],
-                    result["item_product_type"],
-                    result["task"],
-                    result["model_name"],
-                    result["model_version"],
-                    result["evaluator_type"],
-                    result["evaluator_id"],
-                    result.get("quality_score"),
-                    result.get("relevance"),
-                    result.get("clarity"),
-                    result.get("compliance"),
-                    result.get("accuracy"),
-                    result.get("reasoning"),
-                    result.get("suggestions"),
-                    result.get("is_winner", False),
-                    result.get("comments"),
-                    result.get("enriched_content"),
-                    result.get("prompt_version"),
-                    result.get("eval_prompt_version")
-                )
-                for result in results
-            ]
-
-            # Insert or replace into the evaluation_results table
-            cursor.executemany("""
-                INSERT INTO evaluation_results (
-                    item_id, item_product_type, task, model_name, model_version,
-                    evaluator_type, evaluator_id, quality_score, relevance, clarity, compliance, accuracy,
-                    reasoning, suggestions, is_winner, comments,
-                    enriched_content, prompt_version, eval_prompt_version
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(item_id, task, model_name, model_version, evaluator_type, evaluator_id)
-                DO UPDATE SET
-                    quality_score=excluded.quality_score,
-                    relevance=excluded.relevance,
-                    clarity=excluded.clarity,
-                    compliance=excluded.compliance,
-                    accuracy=excluded.accuracy,
-                    reasoning=excluded.reasoning,
-                    suggestions=excluded.suggestions,
-                    is_winner=excluded.is_winner,
-                    comments=excluded.comments,
-                    enriched_content=excluded.enriched_content,
-                    prompt_version=excluded.prompt_version,
-                    eval_prompt_version=excluded.eval_prompt_version
-            """, data_to_insert)
-
-            conn.commit()
-            logging.info(f"{len(results)} rows upserted into evaluation_results.")
+        for result in results:
+            self.db_handler.save_evaluation(result)
 
     def _aggregate_evaluations(self, evaluation_results):
-        # Group evaluations by item_id, task, model_name, model_version
+        # Group evaluations by relevant keys
         grouped_evaluations = defaultdict(list)
         for eval_result in evaluation_results:
-            key = (eval_result['item_id'], eval_result['task'], eval_result['model_name'], eval_result['model_version'])
-            grouped_evaluations[key].append(eval_result)
+            key = (
+                eval_result['item_id'],
+                eval_result['item_product_type'],
+                eval_result['generation_task'],
+                eval_result['evaluation_task'],
+                eval_result['model_name'],
+                eval_result['model_version'],
+                eval_result['evaluator_type'],
+                eval_result['evaluator_id']
+            )
+            grouped_evaluations[key].append(eval_result['evaluation_data'])
 
         aggregated_results = []
-        for key, evals in grouped_evaluations.items():
-            item_id, task, model_name, model_version = key
-            aggregated_metrics = self._calculate_aggregated_metrics(evals)
+        for key, eval_data_list in grouped_evaluations.items():
+            metrics = defaultdict(list)
+            for eval_data in eval_data_list:
+                for metric_name, metric_value in eval_data.items():
+                    if isinstance(metric_value, (int, float)):
+                        metrics[metric_name].append(metric_value)
 
-            # Prepare aggregated result
-            aggregated_result = {
-                'item_id'          : item_id,
-                'item_product_type': evals[0]['item_product_type'],
-                'task'             : task,
-                'model_name'       : model_name,
-                'model_version'    : model_version,
-                **aggregated_metrics
-            }
-            aggregated_results.append(aggregated_result)
+            for metric_name, values in metrics.items():
+                if values:
+                    mean = np.mean(values)
+                    variance = np.var(values, ddof=1)
+                    confidence = self._determine_confidence_level(variance)
+                    aggregated_result = {
+                        'item_id'          : key[0],
+                        'item_product_type': key[1],
+                        'generation_task'  : key[2],
+                        'evaluation_task'  : key[3],
+                        'model_name'       : key[4],
+                        'model_version'    : key[5],
+                        'evaluator_type'   : key[6],
+                        'evaluator_id'     : key[7],
+                        'metric_name'      : metric_name,
+                        'metric_mean'      : mean,
+                        'metric_variance'  : variance,
+                        'metric_confidence': confidence
+                    }
+                    aggregated_results.append(aggregated_result)
 
         return aggregated_results
 
-    def _calculate_aggregated_metrics(self, evaluations):
-        metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
-        aggregated = {}
-        for metric in metrics:
-            scores = [e.get(metric) for e in evaluations if e.get(metric) is not None]
-            if scores:
-                normalized_scores = [round(score / self.metric_ranges[metric], 3) for score in scores]
-                mean_score = np.mean(normalized_scores)
-                variance = np.var(normalized_scores, ddof=1)  # Sample variance
-
-                confidence = self._determine_confidence_level(variance)
-                # aggregated[f'{metric}'] = evaluations[0][f"{metric}"]
-                aggregated[f'{metric}_mean'] = round(mean_score, 2)
-                aggregated[f'{metric}_variance'] = round(variance, 2)
-                aggregated[f'{metric}_confidence'] = confidence
-            else:
-                aggregated[f'{metric}_mean'] = None
-                aggregated[f'{metric}_variance'] = None
-                aggregated[f'{metric}_confidence'] = 'Unknown'
-        return aggregated
-
     def _determine_confidence_level(self, variance):
-        if variance is None:
-            return 'Unknown'
-        elif variance <= 0.05:
+        if variance <= 0.5:
             return 'High'
-        elif variance <= 0.1:
+        elif variance <= 1.5:
             return 'Medium'
         else:
             return 'Low'
-
-
-    # def _calculate_aggregated_metrics(self, evaluations):
-    #     metrics = ['quality_score', 'relevance', 'clarity', 'compliance', 'accuracy']
-    #     aggregated = {}
-    #     for metric in metrics:
-    #         scores = [e.get(metric) for e in evaluations if e.get(metric) is not None]
-    #         if scores:
-    #             mean_score = np.mean(scores)
-    #             variance = np.var(scores, ddof=1)  # Sample variance
-    #             confidence = self._determine_confidence_level(variance)
-    #             aggregated[f'{metric}_mean'] = mean_score
-    #             aggregated[f'{metric}_variance'] = variance
-    #             aggregated[f'{metric}_confidence'] = confidence
-    #         else:
-    #             aggregated[f'{metric}_mean'] = None
-    #             aggregated[f'{metric}_variance'] = None
-    #             aggregated[f'{metric}_confidence'] = 'Unknown'
-    #     return aggregated
-    #
-    # def _determine_confidence_level(self, variance):
-    #     if variance is None:
-    #         return 'Unknown'
-    #     elif variance <= 0.5:
-    #         return 'High'
-    #     elif variance <= 1.5:
-    #         return 'Medium'
-    #     else:
-    #         return 'Low'
-
-    def _save_aggregated_results(self, aggregated_results):
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            # Prepare data for insertion
-            data_to_insert = [
-                (
-                    result['item_id'],
-                    result['item_product_type'],
-                    result['task'],
-                    result['model_name'],
-                    result['model_version'],
-                    result.get('quality_score_mean'),
-                    result.get('quality_score_variance'),
-                    result.get('quality_score_confidence'),
-                    result.get('relevance_mean'),
-                    result.get('relevance_variance'),
-                    result.get('relevance_confidence'),
-                    result.get('clarity_mean'),
-                    result.get('clarity_variance'),
-                    result.get('clarity_confidence'),
-                    result.get('compliance_mean'),
-                    result.get('compliance_variance'),
-                    result.get('compliance_confidence'),
-                    result.get('accuracy_mean'),
-                    result.get('accuracy_variance'),
-                    result.get('accuracy_confidence'),
-                )
-                for result in aggregated_results
-            ]
-            cursor.executemany("""
-                INSERT OR REPLACE INTO aggregated_evaluations (
-                    item_id, item_product_type, task, model_name, model_version,
-                    quality_score_mean, quality_score_variance, quality_score_confidence,
-                    relevance_mean, relevance_variance, relevance_confidence,
-                    clarity_mean, clarity_variance, clarity_confidence,
-                    compliance_mean, compliance_variance, compliance_confidence,
-                    accuracy_mean, accuracy_variance, accuracy_confidence
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, data_to_insert)
-            conn.commit()
-
-    def _save_enriched_results(self, results):
-        """
-        Save enrichment results to the enriched_results table in the SQLite database with an upsert operation.
-
-        Args:
-            results (list[dict]): Results to save.
-        """
-        if not results:
-            logging.info(f"No enrichment results to save.")
-            return
-
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-
-            # Prepare the data for insertion
-            data_to_insert = [
-                (
-                    result["item_id"],
-                    result["item_product_type"],
-                    result["task"],
-                    result["model_name"],
-                    result["model_version"],
-                    json.dumps(result["enriched_content"]) if isinstance(result["enriched_content"], (dict, list)) else result["enriched_content"]
-                )
-                for result in results
-            ]
-
-            # Insert or replace into the enriched_results table
-            cursor.executemany("""
-                INSERT INTO enriched_results (
-                    item_id, item_product_type, task, model_name, model_version, enriched_content
-                )
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(item_id, task, model_name, model_version)
-                DO UPDATE SET
-                    enriched_content=excluded.enriched_content
-            """, data_to_insert)
-
-            conn.commit()
-            logging.info(f"{len(results)} rows upserted into enriched_results.")

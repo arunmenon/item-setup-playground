@@ -1,6 +1,7 @@
 # main.py
 import sys
 import os
+import traceback
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(1, os.path.join(base_dir, "../"))
@@ -9,15 +10,17 @@ sys.path.insert(1, os.path.join(base_dir, "../"))
 import logging
 from fastapi import FastAPI, HTTPException
 import uvicorn
-from common.utils import setup_logging, load_config, get_env_variable, validate_config
+from common.utils import setup_logging, get_env_variable
 from models.llm_request_models import LLMRequest
 from entrypoint.llm_manager import LLMManager
-from entrypoint.item_enricher import ItemEnricher  # Import the ItemEnricher class
-from entrypoint.prompt_manager import PromptManager  
+from entrypoint.item_enricher import ItemEnricher
+from entrypoint.prompt_manager import PromptManager
 from exceptions.custom_exceptions import StylingGuideNotFoundException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from models.database import SessionLocal
+from sqlalchemy.orm import Session
 
 # Set up logging
 setup_logging()
@@ -28,7 +31,7 @@ setup_logging()
 
 # Define FastAPI app with metadata
 app = FastAPI(
-    title="Gen AI Item  Enrichment API",
+    title="Gen AI Item Enrichment API",
     description="An API for enriching items using various Language Models (LLMs) to extract or transform metadata.",
     version="1.0.0"
 )
@@ -51,27 +54,13 @@ async def validation_exception_handler(request, exc: RequestValidationError):
         content={"detail": exc.errors(), "body": exc.body},
     )
 
-# Load provider configurations
-config_path = os.path.join('providers', 'config.json')
-config = load_config(config_path=config_path)
+# Initialize the database session
+db_session = SessionLocal()
 
-# Validate the configuration
-try:
-    validate_config(config)
-except ValueError as ve:
-    logging.error(f"Configuration validation failed: {ve}")
-    raise
-
-# Load all styling guides at start-up using PromptManager
-logging.info("Loading all styling guides at application start-up")
-prompt_manager = PromptManager(styling_guides_dir='styling_guides',config=config)
-logging.info(f"Loaded styling guides for product types: {list(prompt_manager.styling_guide_manager.styling_guide_cache.keys())}")
-
-# Instantiate LLMManager with the loaded configuration
-logging.debug("Instantiating LLMManager with the loaded configuration")
-llm_manager = LLMManager(config=config)
-
-# Create an instance of ItemEnricher
+# Initialize managers with the database session
+logging.info("Initializing PromptManager, LLMManager, and ItemEnricher with database session")
+prompt_manager = PromptManager(db_session=db_session)
+llm_manager = LLMManager(db_session=db_session)
 item_enricher = ItemEnricher(llm_manager=llm_manager, prompt_manager=prompt_manager)
 
 # Define the /enrich-item endpoint
@@ -79,7 +68,6 @@ item_enricher = ItemEnricher(llm_manager=llm_manager, prompt_manager=prompt_mana
 async def enrich_item_endpoint(request: LLMRequest):
     try:
         # Validate required request fields
-
         validate_request_fields(request)
 
         # Enrich the item using the ItemEnricher class
@@ -93,6 +81,7 @@ async def enrich_item_endpoint(request: LLMRequest):
         raise he
     except Exception as e:
         logging.error(f"Error during item enrichment: {str(e)}")
+        print(traceback.print_exc())
         raise HTTPException(status_code=500, detail="Internal server error")
 
 def validate_request_fields(request: LLMRequest):
@@ -109,4 +98,4 @@ def validate_request_fields(request: LLMRequest):
 if __name__ == "__main__":
     port = int(get_env_variable("PORT") or 5000)
     logging.info(f"Starting server on port {port}")
-    uvicorn.run(app, host="0.0.0.0",log_level="debug" ,port=port)
+    uvicorn.run(app, host="0.0.0.0", log_level="debug", port=port)

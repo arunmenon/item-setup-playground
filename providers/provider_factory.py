@@ -36,7 +36,7 @@ class ProviderFactory:
             clean_kwargs = ProviderFactory.filter_kwargs(ClaudeProvider, kwargs)
             return ClaudeProvider(**clean_kwargs)
         elif provider_name=="elements_openai":
-            ProviderFactory.logger.info(f"Creating elements_openai provider")
+            # ProviderFactory.logger.info(f"Creating elements_openai provider")
             clean_kwargs = ProviderFactory.filter_kwargs(ElementsProvider, kwargs)
             model = kwargs.get('model', 'Unknown')
             ProviderFactory.logger.info(f"Creating {model} provider")

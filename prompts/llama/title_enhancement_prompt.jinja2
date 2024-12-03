@@ -1,10 +1,4 @@
-{% extends "base_templates/title_enhancement_base.jinja2" %}
-
-{% block family_specific_prefix %}
 <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-{% endblock %}
-
-{% block system_prompt %}
 You are an assistant tasked with enhancing product titles. Use all input information provided below to create a clear, concise, and informative title.
 <|eot_id|><|start_header_id|>user<|end_header_id|>
 **Original Title:**
@@ -17,13 +11,19 @@ You are an assistant tasked with enhancing product titles. Use all input informa
 **Long Description:**
 {{ original_long_description }}
 {% endif %}
-{% include "includes/instructions.jinja2" %}
-{% endblock %}
+**Instructions:**
+- Follow the styling guidelines provided here:
+{{ styling_guide }}
+- You must only generate the response in {{ output_format }} format. Do not include any additional text, explanations, or comments outside the specified format.
+- If unable to fully apply the guidelines, provide your best effort within the required format and keep all content strictly in the JSON format.
 
-{% block output_format %}
-{% include "includes/output_format.jinja2" %}
+{% if output_format == "markdown" %}
+### Title Enhancement**Enhanced Title**: [Your Enhanced Title Here]
+{% elif output_format == "json" %}
+```json
+{
+    "enhanced_title": "Your Enhanced Title Here"
+}```
+{% endif %}
+
 <|eot_id|><|end_of_text|><|start_header_id|>assistant<|end_header_id|>
-{% endblock %}
-
-{% block family_specific_suffix %}
-{% endblock %}

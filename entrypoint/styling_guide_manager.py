@@ -1,51 +1,37 @@
 # entrypoint/styling_guide_manager.py
 
-import os
 import logging
-import glob
-import difflib
 from typing import Dict, Any
+from sqlalchemy.orm import Session
+from models.models import StylingGuide
+import difflib
 
 class StylingGuideManager:
-    _instance = None
-
-    def __new__(cls, styling_guides_dir: str = 'styling_guides'):
-        if cls._instance is None:
-            cls._instance = super(StylingGuideManager, cls).__new__(cls)
-        return cls._instance
-
-    def __init__(self, styling_guides_dir: str = 'styling_guides'):
-        if not hasattr(self, 'initialized'):
-            self.styling_guides_dir = styling_guides_dir
-            # Nested dictionary: {product_type: {task: guide_content}}
-            self.styling_guide_cache: Dict[str, Dict[str, str]] = {}
-            self.load_all_styling_guides()
-            self.initialized = True  # Prevent re-initialization
+    def __init__(self, db_session: Session):
+        self.db_session = db_session
+        self.styling_guide_cache: Dict[str, Dict[str, str]] = {}
+        self.load_all_styling_guides()
 
     def load_all_styling_guides(self) -> None:
         """
-        Loads all styling guides from the specified directory into the cache.
+        Loads all styling guides from the database into the cache.
         """
-        pattern = os.path.join(self.styling_guides_dir, '**', '*.txt')
-        for filepath in glob.iglob(pattern, recursive=True):
-            # Assume the styling guide is stored in a folder named after the product type
-            product_type = os.path.basename(os.path.dirname(filepath)).strip(' "\'').lower()
-            task_name = os.path.splitext(os.path.basename(filepath))[0].strip().lower()
-            logging.info(f"Loading styling guide for product type: '{product_type}', task: '{task_name}' from '{filepath}'")
-
-            with open(filepath, 'r', encoding='utf-8') as file:
-                content = file.read().strip()
-                if content:
-                    if product_type not in self.styling_guide_cache:
-                        self.styling_guide_cache[product_type] = {}
-                    self.styling_guide_cache[product_type][task_name] = content
-                    logging.debug(f"Loaded styling guide for '{product_type}' - '{task_name}'.")
-                else:
-                    logging.warning(f"Styling guide for '{product_type}' - '{task_name}' is empty. Skipping.")
+        styling_guides = self.db_session.query(StylingGuide).filter_by(is_active=True).all()
+        for sg in styling_guides:
+            product_type = sg.product_type.strip().lower()
+            task_name = sg.task_name.strip().lower()
+            content = sg.content.strip()
+            if content:
+                if product_type not in self.styling_guide_cache:
+                    self.styling_guide_cache[product_type] = {}
+                self.styling_guide_cache[product_type][task_name] = content
+                logging.debug(f"Loaded styling guide for '{product_type}' - '{task_name}'.")
+            else:
+                logging.warning(f"Styling guide for '{product_type}' - '{task_name}' is empty. Skipping.")
 
         if not self.styling_guide_cache:
-            logging.error(f"No styling guides loaded from '{self.styling_guides_dir}'.")
-            raise ValueError(f"No styling guides loaded from '{self.styling_guides_dir}'.")
+            logging.error(f"No styling guides loaded from the database.")
+            raise ValueError(f"No styling guides loaded from the database.")
 
         logging.info(f"Loaded styling guides for product types: {list(self.styling_guide_cache.keys())}")
 

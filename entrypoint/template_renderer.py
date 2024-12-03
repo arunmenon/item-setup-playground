@@ -1,116 +1,94 @@
-# entrypoint/template_renderer.py
-
-import os
 import logging
-from jinja2 import Environment, FileSystemLoader, select_autoescape, ChoiceLoader
-from typing import Dict, Any
+from typing import Optional, Dict, Any
+from sqlalchemy.orm import Session
+from models.models import (
+    GenerationPromptTemplate,
+    EvaluationPromptTemplate,
+    GenerationTask,
+    EvaluationTask,
+    ModelFamily
+)
+from jinja2 import Template, Environment, meta, exceptions
 
 class TemplateRenderer:
-    _instance = None
+    def __init__(self, db_session: Session):
+        self.db_session = db_session
+        self.jinja_env = Environment()
 
-    def __new__(cls, prompts_dir: str = 'prompts'):
-        if cls._instance is None:
-            cls._instance = super(TemplateRenderer, cls).__new__(cls)
-        return cls._instance
-
-    def __init__(self, prompts_dir: str = 'prompts'):
-        if not hasattr(self, 'initialized'):
-            self.prompts_dir = prompts_dir
-            self.env = self._initialize_environment()
-            self.initialized = True  # Prevent re-initialization
-
-    # entrypoint/template_renderer.py
-
-    def _initialize_environment(self) -> Environment:
+    def get_template(
+            self,
+            task_name: str,
+            task_type: str,
+            model_family_name: Optional[str] = None
+    ) -> Optional[str]:
         """
-        Initializes the Jinja2 environment with appropriate template loaders.
-
+        Fetches the latest template content for a given task, type, and model family.
+        Args:
+            task_name (str): The name of the task.
+            task_type (str): The type of the task ('generation' or 'evaluation').
+            model_family_name (Optional[str]): The model family name.
         Returns:
-            Environment: Configured Jinja2 environment.
+            Optional[str]: The template content if found, None otherwise.
         """
-        loaders = []
+        try:
+            if model_family_name:
+                model_family = self.db_session.query(ModelFamily).filter_by(name=model_family_name).first()
+                if not model_family:
+                    logging.error(f"Model family '{model_family_name}' not found.")
+                    return None
+                model_family_id = model_family.model_family_id
+            else:
+                model_family_id = None
 
-        # Load family-specific templates (e.g., 'llama')
-        family_dirs = [
-            d for d in os.listdir(self.prompts_dir)
-            if os.path.isdir(os.path.join(self.prompts_dir, d)) and d not in ['default', 'base_templates', 'includes']
-        ]
-        for family_dir in family_dirs:
-            family_templates_path = os.path.join(self.prompts_dir, family_dir)
-            loaders.append(FileSystemLoader(family_templates_path))
-            logging.debug(f"Added loader for family '{family_dir}'.")
+            if task_type=='generation':
+                template_class = GenerationPromptTemplate
+                task_class = GenerationTask
+                task_id_field = GenerationPromptTemplate.task_id
+            elif task_type=='evaluation':
+                template_class = EvaluationPromptTemplate
+                task_class = EvaluationTask
+                task_id_field = EvaluationPromptTemplate.task_id
+            else:
+                logging.error(f"Invalid task type '{task_type}'. Must be 'generation' or 'evaluation'.")
+                return None
 
-        # Load default templates
-        default_templates_path = os.path.join(self.prompts_dir, 'default')
-        if os.path.exists(default_templates_path):
-            loaders.append(FileSystemLoader(default_templates_path))
-            logging.debug(f"Added loader for 'default' templates.")
-        else:
-            logging.warning(f"Default templates directory '{default_templates_path}' does not exist.")
+            # Fetch the task
+            task = self.db_session.query(task_class).filter_by(task_name=task_name).first()
+            if not task:
+                logging.error(f"Task '{task_name}' not found.")
+                return None
 
-        # Load base_templates
-        base_templates_path = os.path.join(self.prompts_dir, 'base_templates')
-        if os.path.exists(base_templates_path):
-            loaders.append(FileSystemLoader(base_templates_path))
-            logging.debug(f"Added loader for 'base_templates'.")
-        else:
-            logging.warning(f"Base templates directory '{base_templates_path}' does not exist.")
+            # Fetch the template
+            query = self.db_session.query(template_class).filter(
+                task_id_field==task.task_id,
+                template_class.model_family_id==model_family_id
+            ).order_by(template_class.version.desc())
+            template = query.first()
 
-        # Load includes
-        includes_path = os.path.join(self.prompts_dir, 'includes')
-        if os.path.exists(includes_path):
-            loaders.append(FileSystemLoader(includes_path))
-            logging.debug(f"Added loader for 'includes'.")
-        else:
-            logging.warning(f"Includes directory '{includes_path}' does not exist.")
+            if template:
+                return template.template_text
+            else:
+                return None
 
-        # Load general templates from the root prompts directory
-        loaders.append(FileSystemLoader(self.prompts_dir))
-        logging.debug(f"Added loader for general templates in '{self.prompts_dir}'.")
+        except Exception as e:
+            logging.error(f"Error fetching template content: {e}")
+            return None
 
-        env = Environment(
-            loader=ChoiceLoader(loaders),
-            autoescape=select_autoescape(['jinja2'])
-        )
-        logging.debug("Initialized Jinja2 environment with all loaders.")
-        return env
-
-    def render_template(self, template_name: str, context: Dict[str, Any]) -> str:
+    def render_template(self, template_content: str, context: Dict[str, Any]) -> Optional[str]:
         """
-        Renders a template with the given context.
+        Renders the given template content using Jinja2 with the provided context.
 
         Args:
-            template_name (str): Name of the template file.
-            context (Dict[str, Any]): Context variables for the template.
+            template_content (str): The template content to render.
+            context (Dict[str, Any]): The context for rendering the template.
 
         Returns:
-            str: Rendered template as a string.
-
-        Raises:
-            jinja2.TemplateNotFound: If the template is not found.
-            jinja2.TemplateError: If rendering fails.
+            Optional[str]: The rendered template as a string, or None if rendering failed.
         """
-        family_name = context.get('family')  # Retrieve 'model' from context
-
         try:
-            if family_name:
-                # Try to load model-specific template
-                template_path = os.path.join(family_name, template_name)
-                template = self.env.get_template(template_path)
-                logging.debug(f"Loaded family-specific template '{template_path}'.")
-
-            else:
-                # Load default template
-                template = self.env.get_template(template_name)
-                logging.debug(f"Loaded default template '{template_name}'.")
-        except Exception as e:
-            logging.error(f"Template '{template_name}' not found for family '{family_name}': {e}")
-            raise
-
-        try:
-            prompt = template.render(**context)
-            logging.debug(f"Rendered prompt for template '{template_name}': {prompt[:50]}...")
-            return prompt
-        except Exception as e:
-            logging.error(f"Error rendering template '{template_name}': {e}")
-            raise
+            template = self.jinja_env.from_string(template_content)
+            return template.render(context)
+        except exceptions.TemplateError as e:
+            # Handle Jinja template error
+            logging.error(f"Error rendering template: {e}")
+            return None

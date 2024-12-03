@@ -2,7 +2,7 @@ from random import choices
 
 import gradio as gr
 from api_client import APIClient
-from database_handler import DatabaseHandler
+from ui.db.database_handler import DatabaseHandler
 
 # Initialize API client and database handler
 api_client = APIClient()

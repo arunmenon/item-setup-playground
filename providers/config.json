@@ -126,6 +126,14 @@
   },
   "task_execution": {
     "default_tasks": [
+      "title_enhancement",
+      "short_description_enhancement",
+      "long_description_enhancement"
+    ],
+    "generation_tasks": [
+      "short_description_enhancement"
+    ],
+    "evaluation_tasks": [
       "short_description_enhancement"
     ],
     "conditional_tasks": {

@@ -16,3 +16,6 @@ pycryptodome
 gradio
 plotly
 tqdm
+sqlalchemy
+fastparquet
+pyarrow

@@ -3,7 +3,7 @@ import json
 import pandas as pd
 
 class DatabaseHandler:
-    def __init__(self, db_path="model_responses.db"):
+    def __init__(self, db_path="external_database.db"):
         self.db_path = db_path
 
     def create_tables(self):
@@ -11,52 +11,58 @@ class DatabaseHandler:
         cursor = conn.cursor()
 
         # Create evaluation_results table
+        # Create evaluation_results table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS evaluation_results (
                 item_id TEXT,
                 item_product_type TEXT,
-                task TEXT,
+                generation_task TEXT,
+                evaluation_task TEXT,
                 model_name TEXT,
                 model_version TEXT,
                 evaluator_type TEXT,
                 evaluator_id TEXT,
-                quality_score INTEGER,
-                relevance INTEGER,
-                clarity INTEGER,
-                compliance INTEGER,
-                accuracy INTEGER,
-                reasoning TEXT,
-                suggestions TEXT,
+                evaluation_data TEXT,  -- Stores the JSON output
                 is_winner BOOLEAN,
                 comments TEXT,
-                PRIMARY KEY (item_id, task, model_name, model_version, evaluator_type, evaluator_id)
+                PRIMARY KEY (
+                    item_id,
+                    generation_task,
+                    evaluation_task,
+                    model_name,
+                    model_version,
+                    evaluator_type,
+                    evaluator_id
+                )
             )
         ''')
 
-        # Create aggregated_evaluations table
+        # Create aggregated_evaluations table (Optional)
+        # Adjusted to accommodate dynamic metrics
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS aggregated_evaluations (
                 item_id TEXT,
                 item_product_type TEXT,
-                task TEXT,
+                generation_task TEXT,
+                evaluation_task TEXT,
                 model_name TEXT,
                 model_version TEXT,
-                quality_score_mean REAL,
-                quality_score_variance REAL,
-                quality_score_confidence TEXT,
-                relevance_mean REAL,
-                relevance_variance REAL,
-                relevance_confidence TEXT,
-                clarity_mean REAL,
-                clarity_variance REAL,
-                clarity_confidence TEXT,
-                compliance_mean REAL,
-                compliance_variance REAL,
-                compliance_confidence TEXT,
-                accuracy_mean REAL,
-                accuracy_variance REAL,
-                accuracy_confidence TEXT,
-                PRIMARY KEY (item_id, task, model_name, model_version)
+                evaluator_type TEXT,
+                evaluator_id TEXT,
+                metric_name TEXT,
+                metric_mean REAL,
+                metric_variance REAL,
+                metric_confidence TEXT,
+                PRIMARY KEY (
+                    item_id,
+                    generation_task,
+                    evaluation_task,
+                    model_name,
+                    model_version,
+                    evaluator_type,
+                    evaluator_id,
+                    metric_name
+                )
             )
         ''')
 
@@ -64,49 +70,53 @@ class DatabaseHandler:
         conn.close()
 
 
-    def save_evaluation(self, item_id, product_type, task, model_name, model_version,
-                        evaluator_type, quality_score=None, relevance=None, clarity=None,
-                        compliance=None, accuracy=None, reasoning=None, suggestions=None,
-                        is_winner=False, comments=None):
+    def save_evaluation(self, evaluation_result):
+        """
+        Save an evaluation result to the evaluation_results table.
+
+        Args:
+            evaluation_result (dict): The evaluation result data.
+        """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute('''
             INSERT OR REPLACE INTO evaluation_results (
-                item_id, item_product_type, task, model_name, model_version,
-                evaluator_type, quality_score, relevance, clarity, compliance, accuracy,
-                reasoning, suggestions, is_winner, comments
+                item_id, item_product_type, generation_task, evaluation_task, model_name,
+                model_version, evaluator_type, evaluator_id, evaluation_data, is_winner, comments
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            item_id, product_type, task, model_name, model_version, evaluator_type,
-            quality_score, relevance, clarity, compliance, accuracy,
-            reasoning, suggestions, is_winner, comments
+            evaluation_result['item_id'],
+            evaluation_result['item_product_type'],
+            evaluation_result['generation_task'],
+            evaluation_result['evaluation_task'],
+            evaluation_result['model_name'],
+            evaluation_result['model_version'],
+            evaluation_result['evaluator_type'],
+            evaluation_result['evaluator_id'],
+            json.dumps(evaluation_result['evaluation_data']),  # Serialize JSON data
+            evaluation_result.get('is_winner', False),
+            evaluation_result.get('comments')
         ))
         conn.commit()
         conn.close()
 
-    def get_evaluations(self, evaluator_type=None, task=None, item_id=None,
-                        product_type=None, model_name=None):
+
+    def get_evaluations(self, **filters):
+        """
+        Retrieve evaluations from the evaluation_results table.
+
+        Args:
+            filters: Keyword arguments for filtering (e.g., evaluator_type='LLM')
+        """
         query = '''
             SELECT * FROM evaluation_results WHERE 1=1
         '''
         params = []
 
-        if evaluator_type:
-            query += ' AND evaluator_type = ?'
-            params.append(evaluator_type)
-        if task:
-            query += ' AND task = ?'
-            params.append(task)
-        if item_id:
-            query += ' AND item_id = ?'
-            params.append(item_id)
-        if product_type:
-            query += ' AND item_product_type = ?'
-            params.append(product_type)
-        if model_name:
-            query += ' AND model_name = ?'
-            params.append(model_name)
+        for key, value in filters.items():
+            query += f' AND {key} = ?'
+            params.append(value)
 
         with sqlite3.connect(self.db_path) as conn:
             evaluations_df = pd.read_sql_query(query, conn, params=params)
