@@ -1,12 +1,10 @@
-# entrypoint/prompt_manager.py
-
 import logging
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from entrypoint.styling_guide_manager import StylingGuideManager
 from entrypoint.template_renderer import TemplateRenderer
 from entrypoint.task_manager import TaskManager
-from models.models import GenerationPromptTemplate, EvaluationPromptTemplate, GenerationTask, EvaluationTask, ModelFamily
+from models.models import GenerationTask, EvaluationTask, ModelFamily
 
 class PromptManager:
     def __init__(self, db_session: Session):
@@ -16,7 +14,7 @@ class PromptManager:
         self.template_renderer = TemplateRenderer(db_session)
         self.task_manager = TaskManager(db_session)
 
-    def generate_prompts(self, item: Dict[str, Any], family_name: Optional[str],task_type: str) -> List[Dict[str, Any]]:
+    def generate_prompts(self, item: Dict[str, Any], family_name: Optional[str], task_type: str) -> List[Dict[str, Any]]:
         """
         Generates prompts for each task based on the item details and styling guide.
         Each prompt includes the desired output format.
@@ -24,13 +22,13 @@ class PromptManager:
         Args:
             item (Dict[str, Any]): The input data containing item details.
             family_name (Optional[str]): The model family name used for template selection.
+            task_type (str): The type of the task ('generation' or 'evaluation').
 
         Returns:
             List[Dict[str, Any]]: A list of dictionaries containing task details and generated prompts.
         """
-        product_type = item.get('product_type', '').lower()
+        product_type = item.get('item_product_type', '').lower()
         logging.info(f"Generating prompts for product type: '{product_type}', task type: '{task_type}'")
-
 
         # Generate prompts_tasks list
         prompts_tasks = []
@@ -46,12 +44,12 @@ class PromptManager:
         return prompts_tasks
 
     def handle_tasks(
-        self, 
-        family_name: Optional[str], 
+        self,
+        family_name: Optional[str],
         item: Dict[str, Any],
         product_type: str,
-        prompts_tasks: List[Dict[str, Any]], 
-        tasks: List[str], 
+        prompts_tasks: List[Dict[str, Any]],
+        tasks: List[str],
         task_type: str,
         is_conditional: bool
     ):
@@ -75,21 +73,22 @@ class PromptManager:
             # Prepare context
             context = self.prepare_prompt_context(item, product_type, styling_guide)
 
-            context_with_format = context.copy()
-            context_with_format['output_format'] = output_format
-
             # Fetch the appropriate template content from the database
-            template_content = self.fetch_template_content(task_name, family_name, task_type)
+            template_content = self.template_renderer.get_template(task_name, task_type, family_name)
             if not template_content:
                 logging.error(f"No template found for task '{task_name}', family '{family_name}', and task type '{task_type}'. Skipping.")
                 continue
 
-            # Render the prompt using TemplateRenderer
+            # Since templates are plain text with placeholders, use Python's string formatting
             try:
-                prompt = self.template_renderer.render_template_from_string(template_content, context_with_format)
-                logging.debug(f"Rendered prompt for task '{task_name}': {prompt[:50]}...")
+                prompt = template_content.format(**context)
+                logging.debug(f"Generated prompt for task '{task_name}': {prompt[:50]}...")
+            except KeyError as e:
+                missing_key = e.args[0]
+                logging.error(f"Missing placeholder '{missing_key}' in context for task '{task_name}'. Skipping this task.")
+                continue
             except Exception as e:
-                logging.error(f"Error rendering template for task '{task_name}': {str(e)}")
+                logging.error(f"Error formatting template for task '{task_name}': {str(e)}")
                 continue  # Skip this task
 
             # Append task, prompt, output_format, and max_tokens
@@ -102,48 +101,10 @@ class PromptManager:
             task_type_str = "conditional" if is_conditional else "default"
             logging.debug(f"Generated prompt for {task_type_str} task '{task_name}'.")
 
-    def fetch_template_content(self, task_name: str, family_name: Optional[str], task_type: str) -> Optional[str]:
-        if family_name:
-            model_family = self.db_session.query(ModelFamily).filter_by(name=family_name).first()
-            if not model_family:
-                logging.error(f"Model family '{family_name}' not found.")
-                return None
-
-            if task_type == 'generation':
-                template_class = GenerationPromptTemplate
-                task_class = GenerationTask
-                model_family_relation = GenerationPromptTemplate.model_family_id
-            else:
-                template_class = EvaluationPromptTemplate
-                task_class = EvaluationTask
-                model_family_relation = EvaluationPromptTemplate.model_family_id
-
-            template = self.db_session.query(template_class).join(task_class).filter(
-                task_class.task_name == task_name,
-                model_family_relation == model_family.model_family_id
-            ).order_by(template_class.version.desc()).first()
-        else:
-            if task_type == 'generation':
-                template_class = GenerationPromptTemplate
-                task_class = GenerationTask
-            else:
-                template_class = EvaluationPromptTemplate
-                task_class = EvaluationTask
-
-            template = self.db_session.query(template_class).join(task_class).filter(
-                task_class.task_name == task_name,
-                template_class.model_family_id == None
-            ).order_by(template_class.version.desc()).first()
-
-        if template:
-            return template.template_text
-        else:
-            return None
-
     def handle_conditional_tasks(
-        self, 
-        item: Dict[str, Any], 
-        family_name: Optional[str], 
+        self,
+        item: Dict[str, Any],
+        family_name: Optional[str],
         product_type: str,
         prompts_tasks: List[Dict[str, Any]],
         task_type: str

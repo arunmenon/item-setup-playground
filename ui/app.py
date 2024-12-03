@@ -30,6 +30,10 @@ parser = argparse.ArgumentParser(description="Run Gradio application with a spec
 parser.add_argument("--db-path", type=str, default="external_database.db", help="Path to the SQLite database")
 args = parser.parse_args()
 
+# Load the CSS content
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'styles.css'), 'r') as f:
+    custom_css = f.read()
+    
 # Initialize database handler and create tables
 db_handler = DatabaseHandler(db_path=args.db_path)
 db_handler.create_tables()
@@ -42,7 +46,7 @@ if not product_types:
     product_types = ["Electronics", "Clothing", "Home Goods", "Toys", "Books", "Other"]
 
 # Gradio Interface
-with gr.Blocks(css="styles.css") as app:
+with gr.Blocks(css=custom_css, theme=gr.themes.Default()) as app:
     gr.Markdown("# Item Setup Playground Interface")
 
     with gr.Tabs():

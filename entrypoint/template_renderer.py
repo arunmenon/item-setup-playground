@@ -1,63 +1,75 @@
-# entrypoint/template_renderer.py
-
 import logging
-from jinja2 import Environment, BaseLoader, TemplateNotFound
+from typing import Optional
 from sqlalchemy.orm import Session
-from models.models import Template
-
-class DatabaseTemplateLoader(BaseLoader):
-    def __init__(self, db_session: Session):
-        self.db_session = db_session
-
-    def get_source(self, environment, template_name):
-        try:
-            template = (
-                self.db_session.query(Template)
-                .filter_by(template_name=template_name, is_active=True)
-                .order_by(Template.version.desc())
-                .first()
-            )
-            if template:
-                source = template.content
-                return source, None, lambda: False
-            else:
-                raise TemplateNotFound(template_name)
-        except Exception as e:
-            logging.error(f"Error loading template '{template_name}': {e}")
-            raise TemplateNotFound(template_name)
+from models.models import (
+    GenerationPromptTemplate,
+    EvaluationPromptTemplate,
+    GenerationTask,
+    EvaluationTask,
+    ModelFamily
+)
 
 class TemplateRenderer:
     def __init__(self, db_session: Session):
         self.db_session = db_session
-        self.env = Environment(loader=DatabaseTemplateLoader(db_session))
 
-    def render_template(self, template_name: str, context: dict) -> str:
-        try:
-            template = self.env.get_template(template_name)
-            rendered_content = template.render(**context)
-            return rendered_content
-        except TemplateNotFound:
-            logging.error(f"Template '{template_name}' not found.")
-            raise
-        except Exception as e:
-            logging.error(f"Error rendering template '{template_name}': {e}")
-            raise
-
-    def render_template_from_string(self, template_content: str, context: dict) -> str:
+    def get_template(
+        self,
+        task_name: str,
+        task_type: str,
+        model_family_name: Optional[str] = None
+    ) -> Optional[str]:
         """
-        Renders a template from a template content string.
+        Fetches the latest template content for a given task, type, and model family.
 
         Args:
-            template_content (str): The template content as a string.
-            context (dict): The context dictionary for rendering.
+            task_name (str): The name of the task.
+            task_type (str): The type of the task ('generation' or 'evaluation').
+            model_family_name (Optional[str]): The model family name.
 
         Returns:
-            str: The rendered template.
+            Optional[str]: The template content if found, None otherwise.
         """
         try:
-            template = self.env.from_string(template_content)
-            rendered_content = template.render(**context)
-            return rendered_content
+            if model_family_name:
+                model_family = self.db_session.query(ModelFamily).filter_by(name=model_family_name).first()
+                if not model_family:
+                    logging.error(f"Model family '{model_family_name}' not found.")
+                    return None
+                model_family_id = model_family.model_family_id
+            else:
+                model_family_id = None
+
+            if task_type == 'generation':
+                template_class = GenerationPromptTemplate
+                task_class = GenerationTask
+                task_id_field = GenerationPromptTemplate.task_id
+            elif task_type == 'evaluation':
+                template_class = EvaluationPromptTemplate
+                task_class = EvaluationTask
+                task_id_field = EvaluationPromptTemplate.task_id
+            else:
+                logging.error(f"Invalid task type '{task_type}'. Must be 'generation' or 'evaluation'.")
+                return None
+
+            # Fetch the task
+            task = self.db_session.query(task_class).filter_by(task_name=task_name).first()
+            if not task:
+                logging.error(f"Task '{task_name}' not found.")
+                return None
+
+            # Fetch the template
+            query = self.db_session.query(template_class).filter(
+                task_id_field == task.task_id,
+                template_class.model_family_id == model_family_id
+            ).order_by(template_class.version.desc())
+            template = query.first()
+
+            if template:
+                return template.template_text
+            else:
+                return None
+
         except Exception as e:
-            logging.error(f"Error rendering template from string: {e}")
-            raise
+            logging.error(f"Error fetching template content: {e}")
+            return None
