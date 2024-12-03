@@ -13,7 +13,15 @@ from ui.tabs.item_enrichment_tab import create_item_enrichment_tab
 from ui.db.database_handler import DatabaseHandler
 from utils import load_product_types_from_file
 from handlers import process_single_sku, save_preference
-from plots import generate_aggregated_plot, generate_leaderboard_plot, generate_winner_model_comparison_plot
+from plots import (
+    generate_aggregated_plot,
+generate_leaderboard_plot, 
+generate_winner_model_comparison_plot,
+generate_confidence_level_breakdown,
+generate_correlation_heatmap,
+generate_variance_distribution_plot
+)
+
 from ui.tabs.feedback_tab import create_feedback_tab
 import os
 
@@ -40,7 +48,9 @@ with gr.Blocks(css="styles.css") as app:
     with gr.Tabs():
         # User-Facing Tabs
         create_item_enrichment_tab(process_single_sku, save_preference, product_types)
-        create_leaderboard_tab(db_handler.get_leaderboard, product_types)
+        create_leaderboard_tab(db_handler.get_leaderboard,
+                               admin_db_handler.get_evaluation_tasks, 
+                               product_types)
         create_analytics_tab(
             generate_leaderboard_plot,
             db_handler.get_leaderboard,
@@ -48,6 +58,9 @@ with gr.Blocks(css="styles.css") as app:
             db_handler.get_evaluations,
             db_handler.get_aggregated_evaluations,
             generate_aggregated_plot,
+            generate_variance_distribution_plot,
+            generate_confidence_level_breakdown,
+            admin_db_handler.get_evaluation_tasks,
             product_types
         )
         create_feedback_tab(db_handler.get_evaluations, product_types)
