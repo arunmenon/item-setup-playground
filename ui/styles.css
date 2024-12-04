@@ -1,31 +1,48 @@
-/* Adjust the padding and margins of Gradio components */
-.gradio-container {
-    padding: 20px;
+/* General page style */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #E0E0E0;
+    color: #333;
 }
 
+/* Title and headers */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #003366;
+    font-weight: bold;
 }
 
-/* Style buttons */
-button {
-    background-color: #007BFF;  /* Bootstrap primary color */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
+/* Input box styling */
+.gr-input, .gr-textbox, .gr-textarea, .gr-number, .gr-dropdown, .gr-checkbox, .gr-radio {
+    border: 1px solid #CED4DA !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+    font-size: 14px;
 }
 
-button:hover {
-    background-color: #0056b3;
+/* Button styling */
+.gr-button {
+    background-color: #007BFF !important;
+    color: white !important;
+    border-radius: 5px !important;
+    padding: 10px 15px !important;
+    font-weight: bold !important;
 }
 
-/* Style sliders */
-input[type="range"] {
-    width: 100%;
+.gr-button:hover {
+    background-color: #0056b3 !important;
 }
 
-/* Adjust DataFrame styling */
+/* Response box styling */
+.response-box {
+    background-color: #E9ECEF;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+/* DataFrame styling */
 .dataframe table {
     width: 100%;
     border-collapse: collapse;
@@ -36,7 +53,9 @@ input[type="range"] {
     padding: 8px;
 }
 
-.dataframe tr:nth-child(even){background-color: #f2f2f2;}
+.dataframe tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
 
 .dataframe th {
     padding-top: 12px;
@@ -44,4 +63,14 @@ input[type="range"] {
     text-align: left;
     background-color: #007BFF;
     color: white;
+}
+
+/* Adjust padding and margins for Gradio components */
+.gradio-container {
+    padding: 20px;
+}
+
+/* Specific component adjustments if necessary */
+.gr-slider input[type="range"] {
+    width: 100%;
 }
