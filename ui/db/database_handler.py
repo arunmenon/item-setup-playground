@@ -23,6 +23,7 @@ class DatabaseHandler:
                 evaluator_type TEXT,
                 evaluator_id TEXT,
                 evaluation_data TEXT,  -- Stores the JSON output
+                raw_evaluation_data TEXT,
                 is_winner BOOLEAN,
                 comments TEXT,
                 PRIMARY KEY (
@@ -82,11 +83,11 @@ class DatabaseHandler:
         cursor.execute('''
             INSERT OR REPLACE INTO evaluation_results (
                 item_id, item_product_type, generation_task, evaluation_task, model_name,
-                model_version, evaluator_type, evaluator_id, evaluation_data, is_winner, comments
+                model_version, evaluator_type, evaluator_id, evaluation_data, raw_evaluation_data, is_winner, comments
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            evaluation_result['item_id'],
+            int(evaluation_result['item_id']),
             evaluation_result['item_product_type'],
             evaluation_result['generation_task'],
             evaluation_result['evaluation_task'],
@@ -95,12 +96,46 @@ class DatabaseHandler:
             evaluation_result['evaluator_type'],
             evaluation_result['evaluator_id'],
             json.dumps(evaluation_result['evaluation_data']),  # Serialize JSON data
+            evaluation_result['raw_evaluation_data'],
             evaluation_result.get('is_winner', False),
             evaluation_result.get('comments')
         ))
         conn.commit()
         conn.close()
 
+    def _save_aggregated_evaluation_results(self, aggregated_results):
+        """
+        Save aggregated results to the aggregated_evaluations table.
+
+        Args:
+            aggregated_results (list): The list of aggregated evaluation results.
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        for result in aggregated_results:
+            cursor.execute('''
+                INSERT OR REPLACE INTO aggregated_evaluations (
+                    item_id, item_product_type, generation_task, evaluation_task, model_name,
+                    model_version, evaluator_type, evaluator_id, metric_name, metric_mean,
+                    metric_variance, metric_confidence
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                result['item_id'],
+                result['item_product_type'],
+                result['generation_task'],
+                result['evaluation_task'],
+                result['model_name'],
+                result['model_version'],
+                result['evaluator_type'],
+                result['evaluator_id'],
+                result['metric_name'],
+                result['metric_mean'],
+                result['metric_variance'],
+                result['metric_confidence']
+            ))
+        conn.commit()
+        conn.close()
 
     def get_evaluations(self, **filters):
         """

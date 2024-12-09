@@ -32,6 +32,8 @@ def create_provider_configuration_tab(admin_db_handler):
         provider_name = gr.Textbox(label="Provider Name", interactive=True)
         family = gr.Textbox(label="Family", interactive=True)
         model = gr.Textbox(label="Model", interactive=True)
+        version = gr.Textbox(label="Version", interactive=True)  # Added field
+        api_base = gr.Textbox(label="API Base", interactive=True)  # Added field
         max_tokens = gr.Number(label="Max Tokens", interactive=True)
         temperature = gr.Number(label="Temperature", interactive=True)
         is_active = gr.Checkbox(label="Is Active", value=True, interactive=True)
@@ -47,7 +49,7 @@ def create_provider_configuration_tab(admin_db_handler):
         # Function to load provider details
         def load_provider(provider_option):
             if not provider_option or provider_option=="":
-                return [gr.update(value="")] * 8 + [gr.update(visible=False), ""]
+                return [gr.update(value="")] * 10 + [gr.update(visible=False), ""]
             provider = admin_db_handler.db_session.query(ProviderConfig).filter(
                 ProviderConfig.name==provider_option
             ).first()
@@ -58,6 +60,8 @@ def create_provider_configuration_tab(admin_db_handler):
                     gr.update(value=provider.provider_name),
                     gr.update(value=provider.family),
                     gr.update(value=provider.model),
+                    gr.update(value=provider.version),
+                    gr.update(value=provider.api_base),
                     gr.update(value=provider.max_tokens),
                     gr.update(value=provider.temperature),
                     gr.update(value=provider.is_active),
@@ -65,17 +69,18 @@ def create_provider_configuration_tab(admin_db_handler):
                     ""
                 ]
             else:
-                return [gr.update(value="")] * 8 + [gr.update(visible=False), "Provider not found."]
+                return [gr.update(value="")] * 10 + [gr.update(visible=False), "Provider not found."]
 
         selected_provider.change(
             fn=load_provider,
             inputs=[selected_provider],
-            outputs=[provider_id, name, provider_name, family, model, max_tokens, temperature, is_active, delete_button,
+            outputs=[provider_id, name, provider_name, family, model, version, api_base, max_tokens, temperature,
+                     is_active, delete_button,
                      feedback]
         )
 
         # Save provider
-        def save_provider(provider_id_val, name_val, provider_name_val, family_val, model_val,
+        def save_provider(provider_id_val, name_val, provider_name_val, family_val, model_val, version_val, api_base_val,
                           max_tokens_val, temperature_val, is_active_val):
             try:
                 updated_data = {
@@ -83,6 +88,8 @@ def create_provider_configuration_tab(admin_db_handler):
                     "provider_name": provider_name_val,
                     "family"       : family_val,
                     "model"        : model_val,
+                    "version"      : version_val,
+                    "api_base"     : api_base_val,
                     "max_tokens"   : int(max_tokens_val),
                     "temperature"  : float(temperature_val),
                     "is_active"    : is_active_val,
@@ -105,7 +112,8 @@ def create_provider_configuration_tab(admin_db_handler):
 
         save_button.click(
             fn=save_provider,
-            inputs=[provider_id, name, provider_name, family, model, max_tokens, temperature, is_active],
+            inputs=[provider_id, name, provider_name, family, model, version, api_base, max_tokens, temperature,
+                    is_active],
             outputs=[feedback, selected_provider, delete_button]
         )
 
@@ -119,29 +127,31 @@ def create_provider_configuration_tab(admin_db_handler):
                     provider_options = [p.name for p in providers]
                     return (
                         "Provider deleted successfully.",
-                        "", "", "", "", "", "", "", True,
+                        "", "", "", "", "", "", "", "", "", True,
                         gr.update(visible=False),
                         gr.update(choices=provider_options, value=None)
                     )
                 else:
-                    return "No provider selected.", "", "", "", "", "", "", "", True, gr.update(visible=False), gr.update()
+                    return "No provider selected.", "", "", "", "", "", "", "", "", "", True, gr.update(visible=False), gr.update()
             except Exception as e:
-                return f"Error: {str(e)}", "", "", "", "", "", "", "", True, gr.update(visible=False), gr.update()
+                return f"Error: {str(e)}", "", "", "", "", "", "", "", "", "", True, gr.update(visible=False), gr.update()
 
         delete_button.click(
             fn=delete_provider_action,
             inputs=[provider_id],
-            outputs=[feedback, provider_id, name, provider_name, family, model, max_tokens, temperature, is_active,
+            outputs=[feedback, provider_id, name, provider_name, family, model, version, api_base, max_tokens,
+                     temperature, is_active,
                      delete_button, selected_provider]
         )
 
         # Create new provider
         def create_new_provider():
-            return "", "", "", "", "", "", "", True, gr.update(visible=False), "Ready to create a new provider."
+            return "", "", "", "", "", "", "", "", "", True, gr.update(visible=False), "Ready to create a new provider."
 
         create_button.click(
             fn=create_new_provider,
             inputs=[],
-            outputs=[provider_id, name, provider_name, family, model, max_tokens, temperature, is_active, delete_button,
+            outputs=[provider_id, name, provider_name, family, model, version, api_base, max_tokens, temperature,
+                     is_active, delete_button,
                      feedback]
         )

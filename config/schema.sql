@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS evaluation_tasks (
     task_id INTEGER PRIMARY KEY AUTOINCREMENT,
     task_name TEXT NOT NULL UNIQUE,
     description TEXT,
+    max_tokens INTEGER,
+    output_format TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

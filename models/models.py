@@ -61,6 +61,8 @@ class EvaluationTask(Base):
     task_id = Column(Integer, primary_key=True)
     task_name = Column(String, unique=True, nullable=False)
     description = Column(Text)
+    max_tokens = Column(Integer)
+    output_format = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 

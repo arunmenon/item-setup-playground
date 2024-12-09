@@ -1,0 +1,72 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+Evaluate the following product short description for quality and compliance with the provided style guide. Adherence to the style guide is the highest priority.
+
+### Evaluation Criteria:
+
+1. **Compliance (1-5):** Does the short description follow all the rules and formatting guidelines outlined in the style guide?
+   - **1 (Poor):** Major deviations from the style guide.
+   - **2:** Several significant issues with compliance.
+   - **3 (Fair):** Some issues with compliance; needs improvement.
+   - **4:** Minor issues with compliance.
+   - **5 (Excellent):** Fully adheres to the style guide.
+
+2. **Clarity (1-5):** Does the short description clearly and accurately describe the product? Avoid ambiguous or vague language.
+   - **1 (Poor):** Very unclear or misleading.
+   - **2:** Lacks clarity; difficult to understand.
+   - **3 (Fair):** Somewhat clear but could be improved.
+   - **4:** Mostly clear with minor ambiguities.
+   - **5 (Excellent):** Extremely clear and accurate.
+
+3. **Relevance (1-5):** Is the short description relevant to the product's type, attributes, and intended use? Avoid unnecessary or misleading information.
+   - **1 (Poor):** Contains irrelevant or off-topic information.
+   - **2:** Partially relevant; includes unnecessary details.
+   - **3 (Fair):** Generally relevant but could be more focused.
+   - **4:** Mostly relevant with minor extraneous details.
+   - **5 (Excellent):** Highly relevant and focused.
+
+4. **Accuracy (1-5):** Is the information in the short description factually correct and free of errors?
+   - **1 (Poor):** Contains factual errors or typos.
+   - **2:** Some inaccuracies present.
+   - **3 (Fair):** Mostly accurate but with minor errors.
+   - **4:** Accurate with very minor issues.
+   - **5 (Excellent):** Completely accurate and error-free.
+
+### Overall Quality Score:
+
+Provide a quality score on a scale from **0 to 100**, based on the above criteria, with compliance being the most critical.
+
+#### **Scoring Guide:**
+
+- **0–30 (Poor):** Major issues with compliance, clarity, relevance, or accuracy.
+- **31–60 (Fair):** Moderate issues with one or more aspects; room for improvement.
+- **61–80 (Good):** Meets most criteria but may have minor issues or improvement opportunities.
+- **81–100 (Excellent):** Fully adheres to the style guide, is clear, relevant, accurate, and optimized for search.
+
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+### Product Short Description:
+
+{{ response_content }}
+
+### Style Guide:
+
+{{ styling_guide }}
+
+### Response Instructions:
+
+Provide your evaluation in the following JSON format:
+
+```json{
+  "quality_score": <0-100>,
+  "compliance": <1-5>,
+  "clarity": <1-5>,
+  "relevance": <1-5>,
+  "accuracy": <1-5>,
+  "reasoning": {
+    "compliance": "<detailed explanation>",
+    "clarity": "<detailed explanation>",
+    "relevance": "<detailed explanation>",
+    "accuracy": "<detailed explanation>"
+  },
+  "suggestions": "<specific suggestions for improvement or 'None' if the short description is excellent>"
+}```
+<|eot_id|><|end_of_text|><|start_header_id|>assistant<|end_header_id|>

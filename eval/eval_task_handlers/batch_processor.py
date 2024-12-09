@@ -4,6 +4,9 @@ import asyncio
 from collections import defaultdict
 import numpy as np
 
+from eval.config.constants import TASK_MAPPING
+from models.models import EvaluationTask
+
 
 class BatchProcessor:
     def __init__(self, batch_size, db_handler):
@@ -11,7 +14,7 @@ class BatchProcessor:
         self.db_handler = db_handler
         self.db_handler.create_tables()
 
-    def process_batches(self, df, api_handler, evaluators, prepare_item):
+    async def process_batches(self, df, api_handler, evaluators, prepare_item, include_evaluation):
         for start in range(0, len(df), self.batch_size):
             batch = df.iloc[start:start + self.batch_size]
             logging.info(f"Processing batch {start // self.batch_size + 1}")
@@ -24,20 +27,21 @@ class BatchProcessor:
                 # Process a single item
                 item_data = prepare_item(row)
                 enrichment_results = api_handler.call_api(item_data)
-                if enrichment_results:
-                    evaluations = asyncio.run(
-                        self._evaluate_item(item_data, enrichment_results, evaluators)
-                    )
-                    evaluation_results.extend(evaluations)
-                else:
-                    logging.warning(f"No enrichment results for item: {item_id}")
+                # self._save_to_db(enrichment_results)
+
+                if include_evaluation:
+                    if enrichment_results:
+                        evaluations = await self._evaluate_item(item_data, enrichment_results, evaluators)
+                        evaluation_results.extend(evaluations)
+                    else:
+                        logging.warning(f"No enrichment results for item: {item_id}")
 
             if evaluation_results:
                 self._save_to_db(evaluation_results)
                 # Optionally, aggregate evaluations
                 aggregated_results = self._aggregate_evaluations(evaluation_results)
                 if aggregated_results:
-                    self.db_handler.save_aggregated_evaluations(aggregated_results)
+                    self.db_handler._save_aggregated_evaluation_results(aggregated_results)
 
     async def _evaluate_item(self, item_data, enrichment_results, evaluators):
         evaluation_results = []
@@ -51,20 +55,24 @@ class BatchProcessor:
             for generation_task_name, model_responses in enrichment_results.items():
                 if not model_responses:
                     continue
-
-                for model_name, model_data in model_responses.items():
-                    enriched_content = model_data.get("response", {}).get("content")
-                    if not enriched_content:
+                for task, task_name in TASK_MAPPING.items():
+                    model_responses = enrichment_results.get(task_name, {})
+                    if not model_responses:
                         continue
 
-                    # Create async tasks for evaluation
-                    tasks.append(
-                        evaluator.evaluate_task(
-                            item_data, product_type, generation_task_name, model_name, enriched_content, evaluator_id=evaluator_id
+                    for model_name, model_data in model_responses.items():
+                        enriched_content = model_data.get("response", {}).get(f"enhanced_{task}")
+                        if not enriched_content:
+                            continue
+
+                        # Create async tasks for evaluation
+                        tasks.append(
+                            evaluator.evaluate_task(
+                                item_data, product_type, generation_task_name, model_name, enriched_content, evaluator_id=evaluator_id
+                            )
                         )
-                    )
-                    task_context.append((
-                    generation_task_name, model_name, model_data.get('model_version', '1.0'), evaluator_id))
+                        task_context.append((
+                            generation_task_name, model_name, model_data.get('model_version', '1.0'), evaluator_id))
 
         # Await and process results
         results = await asyncio.gather(*tasks, return_exceptions=True)

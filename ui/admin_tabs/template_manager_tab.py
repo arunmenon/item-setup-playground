@@ -109,8 +109,8 @@ def create_prompt_template_management_tab(admin_db_handler):
 
         # Function to extract placeholders
         def extract_placeholders(template_text):
-            # Improved regex to match placeholders
-            placeholders = re.findall(r"{([a-zA-Z0-9_]+)}", template_text)
+            # Improved regex to match placeholders, including those with variable spaces
+            placeholders = re.findall(r"{\s*([a-zA-Z0-9_]+)\s*}", template_text)
             placeholders = list(set(placeholders))  # Remove duplicates
             placeholders_str = ', '.join(placeholders)
             return placeholders_str
@@ -302,8 +302,7 @@ def create_prompt_template_management_tab(admin_db_handler):
                         )
 
                 # Extract placeholders
-                placeholders = re.findall(r"{([a-zA-Z0-9_]+)}", template_text_val)
-                placeholders = list(set(placeholders))  # Remove duplicates
+                placeholders = extract_placeholders(template_text_val)
 
                 # Prepare template data
                 template_data = {

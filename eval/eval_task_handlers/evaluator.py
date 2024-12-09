@@ -1,5 +1,7 @@
 import logging
 import json
+import traceback
+import re
 from models.llm_request_models import BaseLLMRequest
 from models.models import GenerationTask, EvaluationTask, EvaluationPromptTemplate
 
@@ -38,7 +40,9 @@ class Evaluator:
                     continue
 
                 # Get placeholders from the template
-                placeholders = template.placeholders or []
+                # placeholders = template.placeholders or []
+                placeholders = [] if not template.placeholders else [item.strip() for item in
+                                                                              template.placeholders.split(',')]
 
                 # Prepare context dynamically
                 context = {}
@@ -55,24 +59,25 @@ class Evaluator:
                         missing_placeholders.append(placeholder)
 
                 if missing_placeholders:
-                    logging.error(f"Missing placeholders for evaluation task '{eval_task.task_name}': {missing_placeholders}")
+                    logging.error(f"Missing placeholders for evaluation task '{eval_task.max_token}': {missing_placeholders}")
                     continue
 
                 # Render the evaluation prompt
-                prompt = self.template_renderer.render_template_from_string(template.template_text, context)
+                prompt = self.template_renderer.render_template(template.template_text, context)
 
                 logging.debug(f"Generated prompt for evaluation task '{eval_task.task_name}': {prompt}")
 
                 # Invoke the LLM handler asynchronously
                 response = await self.handler.invoke(
-                    request=BaseLLMRequest(prompt=prompt, max_tokens=200),
+                    request=BaseLLMRequest(prompt=prompt, parameters={'max_tokens': eval_task.max_tokens}),
                     task=eval_task.task_name
                 )
 
                 logging.debug(f"LLM response for model {model_name}, evaluation task '{eval_task.task_name}': {response}")
 
                 # Parse and collect the LLM's response
-                parsed_result = self.parse_llm_response(response.get('response', ''))
+                raw_eval_response = response.get('response', '')
+                parsed_result = self.parse_llm_response(raw_eval_response)
 
                 # Collect evaluation data
                 evaluation_results.append({
@@ -81,21 +86,31 @@ class Evaluator:
                     "generation_task"  : generation_task_name,
                     "evaluation_task"  : eval_task.task_name,
                     "model_name"       : model_name,
-                    "model_version"    : self.handler.model_version,
+                    "model_version"    : self.handler.version,
                     "evaluator_type"   : 'LLM',
                     "evaluator_id"     : evaluator_id,
-                    "evaluation_data"  : parsed_result  # Store the parsed JSON output
+                    "evaluation_data"  : parsed_result,  # Store the parsed JSON output
+                    "raw_evaluation_data": raw_eval_response
                 })
             return evaluation_results
         except Exception as e:
             logging.error(f"Error evaluating content for item '{item_data['item_id']}': {e}")
+            print (traceback.print_exc())
             return []
 
     def parse_llm_response(self, response_text):
         logging.debug(f"Raw LLM response: {response_text}")
         try:
+            response_text = response_text.replace("```json", "").replace("```", "")
             parsed = json.loads(response_text)
             return parsed
         except json.JSONDecodeError as e:
-            logging.error(f"Failed to parse LLM response: {e}")
-            return {}
+            try:
+
+                match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                json_string = match.group(0).strip()
+                parsed = json.loads(json_string)
+                return parsed
+            except json.JSONDecodeError as e:
+                logging.error(f"Failed to parse LLM response: {e}")
+                return {}

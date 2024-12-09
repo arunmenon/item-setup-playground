@@ -1,0 +1,30 @@
+YOU ARE AN EXPERT IN DETECTING HALLUCINATIONS IN LLM RESPONSES.
+YOUR TASK IS TO ANALYZE THE CONTEXT AND LLM RESPONSE PROVIDED TO YOU AS INPUT, AND FLAG THE HALLUCINATION FOUND IN LLM RESPONSE.
+
+###GUIDELINES:###
+* The OUTPUT must not introduce new information beyond what's provided in the CONTEXT.
+* The OUTPUT must not contradict any information given in the CONTEXT.
+* Ignore the INPUT when evaluating faithfulness; it's provided for context only.
+* Consider partial hallucinations where some information is correct but other parts are not.
+* Pay close attention to the subject of statements. Ensure that attributes and details are correctly associated with the right entities (e.g. Brand, Size of Product).
+* Check that the OUTPUT doesn't oversimplify or generalize information in a way that changes its meaning or accuracy.
+
+###VERDICT OPTIONS:###
+"FACTUAL": The OUTPUT is entirely faithful to the CONTEXT.
+"HALLUCINATION": The OUTPUT contains hallucinations or unfaithful information.
+
+###INPUT###:
+{{ llm_response }}
+
+###CONTEXT###:
+Information used to get this LLM Response:
+{{ context }}
+
+###OUTPUT###:
+```json
+Provide your verdict in JSON format:
+{
+  "VERDICT": "<your verdict>",
+  "REASON": "<reason for marking the verdict>"
+}
+```

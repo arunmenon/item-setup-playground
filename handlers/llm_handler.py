@@ -8,7 +8,7 @@ from providers.provider_factory import ProviderFactory
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 class BaseModelHandler:
-    def __init__(self, provider: str = None, model: str = "gpt-4", max_tokens: int = None, temperature: float = 0.7, **provider_kwargs):
+    def __init__(self, provider: str = None, model: str = "gpt-4", max_tokens: int = None, temperature: float = 0.7, version: str = None,  **provider_kwargs):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.provider_name = provider
 
@@ -16,11 +16,13 @@ class BaseModelHandler:
         provider_kwargs['model'] = model
         provider_kwargs['max_tokens'] = max_tokens
         provider_kwargs['temperature'] = temperature
+        provider_kwargs['version'] = version
 
         self.provider = ProviderFactory.create_provider(provider, **provider_kwargs)
         self.model = model
         self.max_tokens = max_tokens
         self.temperature = temperature
+        self.version = version
 
     async def invoke(self, request: BaseLLMRequest, task: str, retries: int = 3) -> Dict[str, Any]:
         model = request.parameters.get("model") if request.parameters.get("model") else self.model
