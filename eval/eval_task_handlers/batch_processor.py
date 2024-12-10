@@ -1,101 +1,70 @@
-import json
+# batch_processor.py
+
 import logging
 import asyncio
 from collections import defaultdict
 import numpy as np
-
 from eval.config.constants import TASK_MAPPING
-from models.models import EvaluationTask
-
 
 class BatchProcessor:
-    def __init__(self, batch_size, db_handler):
+    def __init__(self, batch_size, store):
         self.batch_size = batch_size
-        self.db_handler = db_handler
-        self.db_handler.create_tables()
+        self.store = store
 
     async def process_batches(self, df, api_handler, evaluators, prepare_item, include_evaluation):
         for start in range(0, len(df), self.batch_size):
-            batch = df.iloc[start:start + self.batch_size]
+            batch = df.iloc[start:start+self.batch_size]
             logging.info(f"Processing batch {start // self.batch_size + 1}")
 
             evaluation_results = []
-
             for _, row in batch.iterrows():
-                item_id = row['catlg_item_id']
-
-                # Process a single item
                 item_data = prepare_item(row)
                 enrichment_results = api_handler.call_api(item_data)
-                # self._save_to_db(enrichment_results)
 
-                if include_evaluation:
-                    if enrichment_results:
-                        evaluations = await self._evaluate_item(item_data, enrichment_results, evaluators)
-                        evaluation_results.extend(evaluations)
-                    else:
-                        logging.warning(f"No enrichment results for item: {item_id}")
+                if include_evaluation and enrichment_results:
+                    evaluations = await self._evaluate_item(item_data, enrichment_results, evaluators)
+                    evaluation_results.extend(evaluations)
 
             if evaluation_results:
-                self._save_to_db(evaluation_results)
-                # Optionally, aggregate evaluations
+                self.store.save_evaluations(evaluation_results)
                 aggregated_results = self._aggregate_evaluations(evaluation_results)
                 if aggregated_results:
-                    self.db_handler._save_aggregated_evaluation_results(aggregated_results)
+                    self.store.save_aggregated_evaluation_results(aggregated_results)
 
     async def _evaluate_item(self, item_data, enrichment_results, evaluators):
         evaluation_results = []
-        product_type = item_data["item_product_type"]
+        product_type = item_data.get("item_product_type", "unknown")
 
         tasks = []
-        task_context = []
-
         for evaluator in evaluators:
             evaluator_id = evaluator.id
             for generation_task_name, model_responses in enrichment_results.items():
                 if not model_responses:
                     continue
                 for task, task_name in TASK_MAPPING.items():
-                    model_responses = enrichment_results.get(task_name, {})
-                    if not model_responses:
+                    model_responses_task = enrichment_results.get(task_name, {})
+                    if not model_responses_task:
                         continue
-
-                    for model_name, model_data in model_responses.items():
+                    for model_name, model_data in model_responses_task.items():
                         enriched_content = model_data.get("response", {}).get(f"enhanced_{task}")
                         if not enriched_content:
                             continue
 
-                        # Create async tasks for evaluation
                         tasks.append(
                             evaluator.evaluate_task(
                                 item_data, product_type, generation_task_name, model_name, enriched_content, evaluator_id=evaluator_id
                             )
                         )
-                        task_context.append((
-                            generation_task_name, model_name, model_data.get('model_version', '1.0'), evaluator_id))
 
-        # Await and process results
         results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        for idx, result_list in enumerate(results):
+        for result_list in results:
             if isinstance(result_list, list):
-                for eval_result in result_list:
-                    evaluation_results.append(eval_result)
+                evaluation_results.extend(result_list)
             else:
-                logging.error(f"Error in evaluating model response: {results[idx]}")
-
+                logging.error(f"Error evaluating model response: {result_list}")
         return evaluation_results
 
-    def _save_to_db(self, results):
-        if not results:
-            logging.info("No results to save.")
-            return
-
-        for result in results:
-            self.db_handler.save_evaluation(result)
-
     def _aggregate_evaluations(self, evaluation_results):
-        # Group evaluations by relevant keys
         grouped_evaluations = defaultdict(list)
         for eval_result in evaluation_results:
             key = (
@@ -123,22 +92,24 @@ class BatchProcessor:
                     mean = np.mean(values)
                     variance = np.var(values, ddof=1)
                     confidence = self._determine_confidence_level(variance)
-                    aggregated_result = {
-                        'item_id'          : key[0],
+                    # Assuming dataset_id is part of item_data or passed along evaluation_results if needed
+                    # If needed, ensure evaluation_results store dataset_id in eval_result
+                    dataset_id = eval_data_list[0].get('dataset_id', None)
+                    aggregated_results.append({
+                        'item_id': key[0],
                         'item_product_type': key[1],
-                        'generation_task'  : key[2],
-                        'evaluation_task'  : key[3],
-                        'model_name'       : key[4],
-                        'model_version'    : key[5],
-                        'evaluator_type'   : key[6],
-                        'evaluator_id'     : key[7],
-                        'metric_name'      : metric_name,
-                        'metric_mean'      : mean,
-                        'metric_variance'  : variance,
-                        'metric_confidence': confidence
-                    }
-                    aggregated_results.append(aggregated_result)
-
+                        'generation_task': key[2],
+                        'evaluation_task': key[3],
+                        'model_name': key[4],
+                        'model_version': key[5],
+                        'evaluator_type': key[6],
+                        'evaluator_id': key[7],
+                        'metric_name': metric_name,
+                        'metric_mean': mean,
+                        'metric_variance': variance,
+                        'metric_confidence': confidence,
+                        'dataset_id': dataset_id
+                    })
         return aggregated_results
 
     def _determine_confidence_level(self, variance):

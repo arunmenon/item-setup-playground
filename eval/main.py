@@ -1,109 +1,93 @@
-import sys
-import os
-import traceback
+# main.py
 
-from ui.db.database_handler import DatabaseHandler
-
-base_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(1, os.path.join(base_dir, "../"))
-
-from eval.eval_task_handlers.input_handler import InputHandler
+import argparse
+import logging
+import asyncio
+from relational_metadata_handler import RelationalMetadataHandler
+from bigquery_input_handler import BigQueryInputHandler
+from bigquery_store import BigQueryEvaluationStore
+from handlers.llm_handler import BaseModelHandler
+from entrypoint.template_renderer import TemplateRenderer
+from entrypoint.styling_guide_manager import StylingGuideManager
 from eval.eval_task_handlers.api_handler import APIHandler
 from eval.eval_task_handlers.evaluator import Evaluator
 from eval.eval_task_handlers.batch_processor import BatchProcessor
 from eval.utils.helper_functions import prepare_item
-from eval.config.constants import API_URL, TASK_MAPPING
-from entrypoint.template_renderer import TemplateRenderer
-from entrypoint.styling_guide_manager import StylingGuideManager
-from handlers.llm_handler import BaseModelHandler
-import argparse
-import logging
-import asyncio
+from eval.config.constants import API_URL
 from models.database import SessionLocal
 
-
-# from dotenv import load_dotenv
-#
-# load_dotenv()
-
 async def main():
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Run enrichment and evaluation script.")
-    parser.add_argument("--input", type=str, required=True, help="Input CSV file path.")
-    parser.add_argument("--batch_size", type=int, default=100, help="Batch size for processing.")
+    parser = argparse.ArgumentParser(description="Run enrichment and evaluation from BigQuery with relational metadata.")
+    parser.add_argument("--tenant_name", type=str, required=True, help="Tenant name.")
+    parser.add_argument("--dataset_name", type=str, required=True, help="Dataset name.")
+    parser.add_argument("--batch_size", type=int, default=100, help="Batch size.")
+    parser.add_argument("--relational_db_url", type=str, required=True, help="DB URL for MySQL/Postgres/SQLite.")
+    parser.add_argument("--project", type=str, default="my_project", help="GCP project.")
+    parser.add_argument("--dataset", type=str, default="my_dataset", help="BigQuery dataset.")
+    parser.add_argument("--task_input_table", type=str, default="task_input", help="task_input table name.")
     args = parser.parse_args()
 
-    # Initialize the database session
+    # Get dataset_id from relational DB
+    metadata_handler = RelationalMetadataHandler(db_url=args.relational_db_url)
+    dataset_id = metadata_handler.get_dataset_id(args.tenant_name, args.dataset_name)
+
     db_session = SessionLocal()
-    db_handler = DatabaseHandler(db_path='/Users/n0s09lj/Workspace/item-setup-playground/results.db')
-    # Initialize actors
     template_renderer = TemplateRenderer(db_session=db_session)
     styling_guide_manager = StylingGuideManager(db_session=db_session)
+    api_handler = APIHandler(API_URL)
 
-    # Initialize LLM handler
     provider_config_1 = {
-        "name"           : "gpt-4o",
-        "provider"       : "openai",
-        "model"          : "gpt-4o",
-        "family"         : "default",
-        "temperature"    : 0.2,
-        "version"        : "2024-02-01",
-        "api_base"       : "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/openai",
+        "name": "gpt-4o",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "family": "default",
+        "temperature": 0.2,
+        "version": "2024-02-01",
+        "api_base": "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/openai",
         "required_fields": []
     }
 
     handler_1 = BaseModelHandler(**provider_config_1)
 
-    provider_config_2 = {
-        "name"           : "meta-llama/Llama-3.1-405B-Instruct-FP8",
-        "provider"       : "elements_openai",
-        "model"          : "meta-llama/Llama-3.1-405B-Instruct-FP8",
-        "family"         : "llama",
-        "temperature"    : 0.1,
-        "version"        : "",
-        "api_base"       : "https://llama-3-dot-1-405b-fp8-stage.element.glb.us.walmart.net/llama-3-dot-1-405b-fp8/v1/completions",
-        "required_fields": []
-    }
-    # handler_2 = BaseModelHandler(**provider_config_2)
-
     provider_config_3 = {
-        "name"           : "claude-3-haiku",
-        "provider"       : "claude",
-        "model"          : "claude-3-haiku",
-        "version"        : "20240307",
-        "api_base"       : "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/google-genai",
-        "family"         : "default",
-        "temperature"    : 0.2,
+        "name": "claude-3-haiku",
+        "provider": "claude",
+        "model": "claude-3-haiku",
+        "version": "20240307",
+        "api_base": "https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/google-genai",
+        "family": "default",
+        "temperature": 0.2,
         "required_fields": []
     }
     handler_3 = BaseModelHandler(**provider_config_3)
 
-    input_handler = InputHandler(args.input)
-    api_handler = APIHandler(API_URL)
-    evaluator_1 = Evaluator(db_session=db_session, template_renderer=template_renderer, styling_guide_manager=styling_guide_manager, handler=handler_1, evaluator_id="gpt4o")
-    # evaluator_2 = Evaluator(db_session=db_session, template_renderer=template_renderer, styling_guide_manager=styling_guide_manager, handler=handler_2, evaluator_id="llama_405b")
-    evaluator_3 = Evaluator(db_session=db_session, template_renderer=template_renderer, styling_guide_manager=styling_guide_manager, handler=handler_3, evaluator_id="claude-3.5-sonnet")
-
-    # List of evaluators
-    # evaluators = [evaluator_1, evaluator_2, evaluator_3]
+    evaluator_1 = Evaluator(db_session, template_renderer, styling_guide_manager, handler_1, evaluator_id="gpt4o")
+    evaluator_3 = Evaluator(db_session, template_renderer, styling_guide_manager, handler_3, evaluator_id="claude-3.5-sonnet")
     evaluators = [evaluator_1, evaluator_3]
-    # evaluators = [evaluator_1]
-    # evaluators = [evaluator_2]
 
-    # Load input data
-    df = input_handler.load_data()
-
-    # Initialize the BatchProcessor
-    batch_processor = BatchProcessor(batch_size=args.batch_size, db_handler=db_handler)
-
-    # Process batches
-    await batch_processor.process_batches(
-        df, api_handler, evaluators, prepare_item, include_evaluation=True
+    input_handler = BigQueryInputHandler(
+        project=args.project,
+        dataset=args.dataset,
+        table=args.task_input_table,
+        dataset_id=dataset_id,
+        batch_size=args.batch_size
     )
+
+    store = BigQueryEvaluationStore(
+        evaluation_table=f"{args.project}.{args.dataset}.evaluation_results",
+        aggregated_table=f"{args.project}.{args.dataset}.aggregated_evaluations"
+    )
+
+    batch_processor = BatchProcessor(batch_size=args.batch_size, store=store)
+
+    while True:
+        df = input_handler.load_next_batch()
+        if df is None:
+            break
+        await batch_processor.process_batches(df, api_handler, evaluators, prepare_item, include_evaluation=True)
 
     logging.info("Batch processing completed.")
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     asyncio.run(main())
