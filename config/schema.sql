@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS evaluation_tasks (
     description TEXT,
     max_tokens INTEGER,
     output_format TEXT,
+    expected_metrics TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

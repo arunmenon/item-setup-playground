@@ -1,6 +1,6 @@
 from models.models import EvaluationTask, GenerationTask
 import gradio as gr
-
+import json
 
 def create_task_management_tab(admin_db_handler):
     with gr.TabItem("Task Management"):
@@ -38,6 +38,17 @@ def create_task_management_tab(admin_db_handler):
             interactive=True
         )
 
+        # Dataframe for metrics configuration (only for Evaluation tasks)
+        # Columns: name, type, range, required (bool), categories (comma-separated)
+        metrics_table = gr.Dataframe(
+            headers=["name", "type", "range", "required", "categories"],
+            row_count=3,
+            col_count=5,
+            type="array",
+            visible=False,  # Initially hidden; will be shown if Evaluation is selected
+            interactive=True
+        )
+
         with gr.Row():
             save_button = gr.Button("Save", variant="primary")
             delete_button = gr.Button("Delete", variant="stop", visible=False)
@@ -47,41 +58,104 @@ def create_task_management_tab(admin_db_handler):
         # Update form when task type changes
         def update_form(task_type):
             options = get_task_options(task_type)
-            return gr.update(choices=options, value=None), "", "", "", "JSON", gr.update(visible=False), ""
+            # If Evaluation, show metrics_table
+            show_metrics = True if task_type == 'Evaluation' else False
+            return (gr.update(choices=options, value=None), 
+                    "", "", "", "JSON", 
+                    gr.update(visible=False),  # delete_button
+                    "", 
+                    gr.update(visible=show_metrics) # metrics_table visibility
+                   )
 
         task_type_selector.change(
             fn=update_form,
             inputs=[task_type_selector],
-            outputs=[selected_task, task_name, description, max_tokens, output_format, delete_button, feedback]
+            outputs=[selected_task, task_name, description, max_tokens, output_format, delete_button, feedback, metrics_table]
         )
 
         # Load task details when existing task is selected
         def load_task(task_name_val, task_type_val):
             tasks = get_task_options(task_type_val)
+            show_metrics = (task_type_val == 'Evaluation')
             if task_name_val in tasks:
                 task_model = GenerationTask if task_type_val=='Generation' else EvaluationTask
                 task = admin_db_handler.db_session.query(task_model).filter_by(task_name=task_name_val).first()
                 if task:
-                    return str(task.task_id), task.task_name, task.description, str(task.max_tokens), task.output_format, gr.update(visible=True), ""
-            return "", task_name_val, "", "", "JSON", gr.update(visible=False), "Ready to create a new task."
+                    # If it's an evaluation task, try to load existing expected_metrics
+                    metrics_data = []
+                    if task_type_val == 'Evaluation' and hasattr(task, 'expected_metrics') and task.expected_metrics:
+                        # expected_metrics is assumed to be JSON with "metrics" key
+                        # Format: {"metrics": [{"name":...,"type":...}, ...]}
+                        # Convert it back to list of rows for the dataframe
+                        em = json.loads(task.expected_metrics)
+                        for m in em.get("metrics", []):
+                            row = [
+                                m.get("name", ""),
+                                m.get("type", ""),
+                                m.get("range", ""),
+                                m.get("required", False),
+                                ", ".join(m.get("categories", [])) if "categories" in m else ""
+                            ]
+                            metrics_data.append(row)
+
+                    return (str(task.task_id), 
+                            task.task_name, 
+                            task.description or "", 
+                            str(task.max_tokens) if task.max_tokens else "", 
+                            task.output_format or "JSON", 
+                            gr.update(visible=True),  # delete_button
+                            "", # feedback
+                            gr.update(value=metrics_data, visible=show_metrics)
+                           )
+            # If no task found or new creation scenario
+            return ("", task_name_val, "", "", "JSON", gr.update(visible=False), "Ready to create a new task.", gr.update(visible=(task_type_val=='Evaluation'), value=[]))
 
         selected_task.change(
             fn=load_task,
             inputs=[selected_task, task_type_selector],
-            outputs=[task_id, task_name, description, max_tokens, output_format, delete_button, feedback]
+            outputs=[task_id, task_name, description, max_tokens, output_format, delete_button, feedback, metrics_table]
         )
 
+        def convert_table_to_json(data):
+            metrics = []
+            for row in data:
+                # row: name, type, range, required, categories
+                if not any(row):
+                    continue
+                metric = {
+                    "name": row[0].strip() if row[0] else "",
+                    "type": row[1].strip() if row[1] else ""
+                }
+                if metric["type"] == "integer":
+                    metric["range"] = row[2].strip() if row[2] else ""
+                # required is boolean
+                metric["required"] = bool(row[3]) if row[3] else False
+
+                if metric["type"] == "categorical":
+                    categories_str = row[4].strip() if row[4] else ""
+                    categories = [c.strip() for c in categories_str.split(",") if c.strip()]
+                    metric["categories"] = categories
+                metrics.append(metric)
+            return json.dumps({"metrics": metrics}, indent=2)
+
         # Save task
-        def save_task(task_id_val, task_name_val, description_val, max_tokens_val, output_format_val, task_type_val):
+        def save_task(task_id_val, task_name_val, description_val, max_tokens_val, output_format_val, task_type_val, metrics_data):
             if not task_name_val.strip():
                 return "Task Name cannot be empty.", gr.update()
             try:
+                max_tokens_int = int(max_tokens_val) if max_tokens_val else None
                 task_data = {
-                    "task_name"    : task_name_val,
-                    "description"  : description_val,
-                    "max_tokens"   : int(max_tokens_val),
+                    "task_name": task_name_val,
+                    "description": description_val,
+                    "max_tokens": max_tokens_int,
                     "output_format": output_format_val
                 }
+
+                # If Evaluation, add expected_metrics field
+                if task_type_val == 'Evaluation':
+                    metrics_json = convert_table_to_json(metrics_data)
+                    task_data["expected_metrics"] = metrics_json
+
                 task_model = GenerationTask if task_type_val=='Generation' else EvaluationTask
                 if task_id_val:
                     # Update existing task
@@ -106,7 +180,7 @@ def create_task_management_tab(admin_db_handler):
 
         save_button.click(
             fn=save_task,
-            inputs=[task_id, task_name, description, max_tokens, output_format, task_type_selector],
+            inputs=[task_id, task_name, description, max_tokens, output_format, task_type_selector, metrics_table],
             outputs=[feedback, selected_task]
         )
 

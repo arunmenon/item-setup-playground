@@ -65,7 +65,7 @@ class EvaluationTask(Base):
     output_format = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
-
+    expected_metrics = Column(JSONEncodedDict)  
     prompt_templates = relationship('EvaluationPromptTemplate', back_populates='evaluation_task', cascade='all, delete-orphan')
     generation_tasks = relationship('GenerationTask', secondary=generation_task_evaluation_tasks, back_populates='evaluation_tasks')
 
