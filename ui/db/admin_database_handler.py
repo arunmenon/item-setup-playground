@@ -46,6 +46,8 @@ class AdminDatabaseHandler:
         self.db_session.delete(model_family)
         self.db_session.commit()
 
+
+
     # -----------------------
     # Generation Task CRUD Operations
     # -----------------------
@@ -225,3 +227,16 @@ class AdminDatabaseHandler:
         self.db_session.commit()
 
     # Add methods for task execution configs and other entities as needed
+
+    def get_datasets(self):
+        """
+        Return a list of (dataset_id, dataset_name, tenant_id) from the local 'datasets' table.
+        """
+        conn = self.engine.connect()
+        result = conn.execute("SELECT dataset_id, name, tenant_id FROM datasets")
+        rows = result.fetchall()
+        conn.close()
+
+        # We'll return a list of tuples for convenience
+        # e.g. [(1, 'Dataset A', 10), (2, 'Dataset B', 10), (3, 'Dataset C', 12), ...]
+        return [(row[0], row[1], row[2]) for row in rows]    
