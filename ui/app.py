@@ -25,18 +25,26 @@ from plots import (
     generate_variance_distribution_plot
 )
 from ui.tabs.feedback_tab import create_feedback_tab
-from ui.tabs.leaderboard_tab import create_leaderboard_tab  # Our updated tab
+
+# NEW: Our updated Leaderboard Tab that supports dynamic tasks/eval-tasks
+from ui.tabs.leaderboard_tab import create_leaderboard_tab
+
 from utils import load_product_types_from_file
 
-# NEW: Our BigQuery Leaderboard Handler
+# BigQuery Leaderboard Handler
 from bigquery_leaderboard_handler import BigQueryLeaderboardHandler
+
 
 # ---------------------------
 # Parse command-line arguments
 # ---------------------------
 parser = argparse.ArgumentParser(description="Run Gradio application with a specific database path.")
-parser.add_argument("--db-path", type=str, default="/Users/xxx/Workspace/item-setup-playground/results.db",
-                    help="Path to the SQLite database")
+parser.add_argument(
+    "--db-path",
+    type=str,
+    default="/Users/xxx/Workspace/item-setup-playground/results.db",
+    help="Path to the SQLite database"
+)
 args = parser.parse_args()
 
 # ---------------------------
@@ -57,21 +65,24 @@ def get_leaderboard_bq(**filters):
     """
     Adapts the filter dict from the UI into parameters for BigQueryLeaderboardHandler.
     Example filters might include:
-      - dataset_id
-      - product_type
-      - generation_task
+      - dataset_id (int)
+      - generation_task (str)
+      - evaluation_task (str)
+      - product_type (str)
     """
     dataset_id = filters.get("dataset_id")
-    product_type = filters.get("product_type")
     generation_task = filters.get("generation_task")
+    evaluation_task = filters.get("evaluation_task")
+    product_type = filters.get("product_type")
 
-    if dataset_id is None:
+    if not dataset_id:
         return pd.DataFrame()  # or None
 
     df = bq_leaderboard.get_leaderboard(
         dataset_id=dataset_id,
-        product_type=product_type,
-        generation_task=generation_task
+        generation_task=generation_task,
+        evaluation_task=evaluation_task,
+        product_type=product_type
     )
     return df
 
@@ -89,27 +100,29 @@ with gr.Blocks(css="styles.css") as app:
     gr.Markdown("# Item Setup Playground Interface")
 
     with gr.Tabs():
-        # User-Facing Tabs
+        # (1) User-Facing Tabs
         create_item_enrichment_tab(
             process_single_sku,
             save_preference,
             product_types
         )
 
-        # Our new, updated Leaderboard Tab
-        # Note we pass:
-        #   1) get_leaderboard_bq (the BigQuery aggregator)
-        #   2) admin_db_handler.get_evaluation_tasks (for dynamic eval tasks)
-        #   3) product_types
-        #   4) admin_db_handler.get_datasets (the local DB method)
+        # (2) Our updated Leaderboard Tab
+        # Now we pass:
+        #   - get_leaderboard_bq_fn=get_leaderboard_bq
+        #   - get_datasets_fn=admin_db_handler.get_datasets
+        #   - get_generation_tasks_fn=admin_db_handler.get_generation_tasks
+        #   - get_eval_tasks_for_gen_fn=admin_db_handler.get_evaluation_tasks_for_generation
+        # This ensures dynamic generation/evaluation tasks from the join table.
         create_leaderboard_tab(
             get_leaderboard_bq_fn=get_leaderboard_bq,
-            get_evaluation_tasks_fn=admin_db_handler.get_evaluation_tasks,
-            product_types=product_types,
-            get_datasets_fn=admin_db_handler.get_datasets
+            get_datasets_fn=admin_db_handler.get_datasets,
+            get_generation_tasks_fn=admin_db_handler.get_generation_tasks,
+            get_eval_tasks_for_gen_fn=admin_db_handler.get_evaluation_tasks_for_generation,
+            product_types=product_types
         )
 
-        # Analytics, Feedback, etc.
+        # (3) Analytics Tab, etc.
         create_analytics_tab(
             generate_leaderboard_plot,
             db_handler.get_leaderboard,

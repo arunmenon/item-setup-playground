@@ -7,6 +7,7 @@ from models.models import (
     GenerationPromptTemplate,
     GenerationTask,
     EvaluationTask,
+    GenerationTaskEvaluationTasks,
     ModelFamily,
     ProviderConfig,
     StylingGuide,
@@ -70,6 +71,25 @@ class AdminDatabaseHandler:
         task = self.db_session.query(GenerationTask).get(task_id)
         self.db_session.delete(task)
         self.db_session.commit()
+
+    # Example: retrieve all Evaluation Tasks *associated* with a given Generation Task
+    def get_evaluation_tasks_for_generation(self, generation_task_id: int):
+        """
+        Use the association table to find evaluation tasks linked to a generation task.
+        Return a list of (task_id, task_name).
+        """
+        # Join approach with SQLAlchemy
+        query = (
+            self.db_session.query(EvaluationTask.task_id, EvaluationTask.task_name)
+            .join(
+                GenerationTaskEvaluationTasks,
+                GenerationTaskEvaluationTasks.evaluation_task_id == EvaluationTask.task_id
+            )
+            .filter(GenerationTaskEvaluationTasks.generation_task_id == generation_task_id)
+        )
+        results = query.all()  # e.g. [(5, "factuality_evaluation"), (7, "grammar_check"), ...]
+        return [(r[0], r[1]) for r in results]
+        
 
     # -----------------------
     # Evaluation Task CRUD Operations

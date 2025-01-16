@@ -3,70 +3,86 @@
 import gradio as gr
 
 def create_leaderboard_tab(
-    get_leaderboard_bq_fn,    # Function that calls BigQueryLeaderboardHandler
-    get_evaluation_tasks_fn,  # (Optional) to populate evaluation_task dropdown
-    product_types,
-    get_datasets_fn           # NEW: retrieve (dataset_id, name, tenant_id) from local DB
+    get_leaderboard_bq_fn,        # BigQuery aggregator
+    get_datasets_fn,              # e.g. admin_db_handler.get_datasets
+    get_generation_tasks_fn,      # e.g. admin_db_handler.get_generation_tasks
+    get_eval_tasks_for_gen_fn,    # e.g. admin_db_handler.get_evaluation_tasks_for_generation
+    product_types
 ):
     with gr.TabItem("Leaderboard"):
         gr.Markdown("## Leaderboard")
 
-        # 1) Build dataset dropdown from local DB
-        dataset_rows = get_datasets_fn()  # e.g. [(1, 'Dataset A', 10), (2, 'Dataset B', 11), ...]
+        # 1. Load datasets from local DB
+        dataset_rows = get_datasets_fn()  # e.g. [(1, 'Dataset A', 10), (2, 'Dataset B', 10), (3, 'Dataset X', 11)]
         if not dataset_rows:
-            dataset_labels = ["No Datasets Found"]
             dataset_map = {}
+            dataset_labels = ["No Datasets Found"]
         else:
-            # We'll store them in a dict: { "Dataset A (tenant=10)": (1, 10), ... }
-            # or just "Dataset A" -> (1, 10) if you prefer. 
-            # This is to show tenant info if you want. Otherwise ignore tenant_id in the label.
+            # Suppose dataset_rows is (dataset_id, name, tenant_id)
             dataset_map = {}
             for ds_id, ds_name, tenant_id in dataset_rows:
                 label = f"{ds_name} (Tenant {tenant_id})"
-                dataset_map[label] = (ds_id, tenant_id)
-
+                dataset_map[label] = ds_id
             dataset_labels = list(dataset_map.keys())
 
+        # 2. Load generation tasks from local DB
+        gen_tasks = get_generation_tasks_fn()  # e.g. [(1, 'title_enhancement'), (2, 'description_enrichment')]
+        if not gen_tasks:
+            generation_task_map = {}
+            generation_task_labels = ["No Generation Tasks Found"]
+        else:
+            # We'll map the *name* to the ID so we can easily look up the associated eval tasks
+            generation_task_map = {}
+            for (g_id, g_name) in gen_tasks:
+                generation_task_map[g_name] = g_id
+            generation_task_labels = list(generation_task_map.keys())
+
         with gr.Row():
+            # Dataset selector
             dataset_selector = gr.Dropdown(
                 label="Dataset",
                 choices=dataset_labels,
                 value=dataset_labels[0] if dataset_labels else None
             )
 
+            # Generation task selector
             generation_task_selector = gr.Dropdown(
                 label="Generation Task",
-                choices=["All", "title_enhancement", "description_enrichment"],
-                value="All"
+                choices=generation_task_labels,
+                value=generation_task_labels[0] if generation_task_labels else None
             )
+
+            # We'll fill evaluation tasks dynamically
             evaluation_task_selector = gr.Dropdown(
                 label="Evaluation Task",
-                choices=["All"],  # Updated dynamically by update_evaluation_tasks
+                choices=["All"],
                 value="All"
             )
+
+            # Product type selector
             product_type_selector = gr.Dropdown(
                 label="Product Type",
                 choices=["All"] + product_types,
                 value="All"
             )
 
-        evaluator_type_selector = gr.Dropdown(
-            label="Evaluator Type",
-            choices=["All", "LLM", "Human"],
-            value="All"
-        )
-
         leaderboard_output = gr.Dataframe()
 
-        def update_evaluation_tasks(generation_task):
-            """
-            If generation_task == 'All', we show all tasks. Otherwise, get tasks for that generation_task.
-            """
-            if generation_task == "All":
-                eval_tasks = get_evaluation_tasks_fn()
-            else:
-                eval_tasks = get_evaluation_tasks_fn(generation_task)
-            return gr.update(choices=["All"] + eval_tasks, value="All")
+        # 3. Populate evaluation tasks whenever generation task changes
+        def update_evaluation_tasks(gen_task_name):
+            if gen_task_name in [None, "No Generation Tasks Found"]:
+                return gr.update(choices=["All"], value="All")
+
+            # Convert name -> ID
+            gen_task_id = generation_task_map[gen_task_name]
+            eval_tasks = get_eval_tasks_for_gen_fn(gen_task_id)
+            if not eval_tasks:
+                # Means no eval tasks are associated, so just "All"
+                return gr.update(choices=["All"], value="All")
+
+            # We only care about the names
+            eval_task_names = [et_name for (et_id, et_name) in eval_tasks]
+            return gr.update(choices=["All"] + eval_task_names, value="All")
 
         generation_task_selector.change(
             fn=update_evaluation_tasks,
@@ -74,44 +90,41 @@ def create_leaderboard_tab(
             outputs=[evaluation_task_selector]
         )
 
-        def refresh_leaderboard(
-            dataset_label,
-            generation_task,
-            evaluation_task,
-            product_type,
-            evaluator_type
-        ):
+        # 4. Refresh the leaderboard whenever any dropdown changes
+        def refresh_leaderboard(dataset_label, gen_task_name, eval_task_name, product_type):
+            # Convert dataset label -> ID
             if not dataset_label or dataset_label == "No Datasets Found":
                 return None
+            dataset_id = dataset_map[dataset_label]
 
-            # 2) Convert the selected dataset label -> (dataset_id, tenant_id)
-            ds_id, tenant_id = dataset_map[dataset_label]
+            # If generation tasks are missing, skip
+            if gen_task_name == "No Generation Tasks Found":
+                return None
 
-            # Collect filters for BQ
-            filters = {
-                "dataset_id": ds_id,
-                "generation_task": None if generation_task == "All" else generation_task,
-                "product_type": None if product_type == "All" else product_type,
-                "evaluation_task": None if evaluation_task == "All" else evaluation_task,
-                "evaluator_type": None if evaluator_type == "All" else evaluator_type,
-            }
+            # If eval_task_name is "All", pass None
+            if eval_task_name == "All":
+                eval_task_name = None
 
-            # 3) Call BigQuery function (we only pass what it actually needs)
+            # If product_type is "All", pass None
+            if product_type == "All":
+                product_type = None
+
+            # Now call BQ aggregator
             leaderboard_df = get_leaderboard_bq_fn(
-                dataset_id=filters["dataset_id"],
-                product_type=filters["product_type"],
-                generation_task=filters["generation_task"]
+                dataset_id=dataset_id,
+                generation_task=gen_task_name,
+                evaluation_task=eval_task_name,
+                product_type=product_type
             )
-
             return leaderboard_df
 
         inputs = [
             dataset_selector,
             generation_task_selector,
             evaluation_task_selector,
-            product_type_selector,
-            evaluator_type_selector
+            product_type_selector
         ]
+
         for inp in inputs:
             inp.change(
                 fn=refresh_leaderboard,
