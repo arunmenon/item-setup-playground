@@ -1,4 +1,4 @@
-# File: main.py (or your main Gradio entry point)
+# File: app.py (or your main Gradio entry point)
 
 import argparse
 import gradio as gr
@@ -26,14 +26,13 @@ from plots import (
 )
 from ui.tabs.feedback_tab import create_feedback_tab
 
-# NEW: Our updated Leaderboard Tab that supports dynamic tasks/eval-tasks
+# NEW: Our updated Leaderboard Tab that can handle multi-metrics
 from ui.tabs.leaderboard_tab import create_leaderboard_tab
 
 from utils import load_product_types_from_file
 
-# BigQuery Leaderboard Handler
+# BigQuery Leaderboard Handler (supports multi-metrics)
 from bigquery_leaderboard_handler import BigQueryLeaderboardHandler
-
 
 # ---------------------------
 # Parse command-line arguments
@@ -61,6 +60,9 @@ admin_db_handler = AdminDatabaseHandler(db_path=args.db_path)
 project_id = "wmt-rg-dev"  # Replace with your actual GCP project ID
 bq_leaderboard = BigQueryLeaderboardHandler(project_id=project_id)
 
+# ------------------------------------------------------------------------------
+# 1) Single-score aggregator (backward compatibility)
+# ------------------------------------------------------------------------------
 def get_leaderboard_bq(**filters):
     """
     Adapts the filter dict from the UI into parameters for BigQueryLeaderboardHandler.
@@ -69,6 +71,7 @@ def get_leaderboard_bq(**filters):
       - generation_task (str)
       - evaluation_task (str)
       - product_type (str)
+    This version only uses the 'score' from evaluation_data.
     """
     dataset_id = filters.get("dataset_id")
     generation_task = filters.get("generation_task")
@@ -78,13 +81,56 @@ def get_leaderboard_bq(**filters):
     if not dataset_id:
         return pd.DataFrame()  # or None
 
-    df = bq_leaderboard.get_leaderboard(
+    return bq_leaderboard.get_leaderboard(
         dataset_id=dataset_id,
         generation_task=generation_task,
         evaluation_task=evaluation_task,
         product_type=product_type
     )
-    return df
+
+# ------------------------------------------------------------------------------
+# 2) Multi-metric aggregator
+# ------------------------------------------------------------------------------
+def get_leaderboard_bq_with_metrics(
+    dataset_id: int,
+    generation_task: str = None,
+    evaluation_task: str = None,
+    product_type: str = None,
+    metrics: list = None
+):
+    """
+    Calls BigQueryLeaderboardHandler.get_leaderboard_with_metrics,
+    passing multiple metric definitions (e.g. yes/no => 1/0).
+    """
+    return bq_leaderboard.get_leaderboard_with_metrics(
+        dataset_id=dataset_id,
+        generation_task=generation_task,
+        evaluation_task=evaluation_task,
+        product_type=product_type,
+        metrics=metrics
+    )
+
+# ------------------------------------------------------------------------------
+# 3) Fetch local evaluation task details to get expected_metrics
+# ------------------------------------------------------------------------------
+def get_evaluation_task_details(task_name: str):
+    """
+    Look up the local EvaluationTask row by name, so we can retrieve .expected_metrics
+    for dynamic metric parsing in BigQuery.
+    """
+    return admin_db_handler.db_session.execute(
+        """
+        SELECT *
+        FROM evaluation_tasks
+        WHERE task_name = :task_name
+        """,
+        {"task_name": task_name}
+    ).fetchone()
+    # Or create a method in admin_db_handler: get_evaluation_task_by_name(task_name)
+
+# Alternatively, if you prefer an ORM approach:
+# def get_evaluation_task_details(task_name: str):
+#     return admin_db_handler.db_session.query(EvaluationTask).filter_by(task_name=task_name).first()
 
 # ---------------------------
 # Load product types
@@ -108,14 +154,13 @@ with gr.Blocks(css="styles.css") as app:
         )
 
         # (2) Our updated Leaderboard Tab
-        # Now we pass:
-        #   - get_leaderboard_bq_fn=get_leaderboard_bq
-        #   - get_datasets_fn=admin_db_handler.get_datasets
-        #   - get_generation_tasks_fn=admin_db_handler.get_generation_tasks
-        #   - get_eval_tasks_for_gen_fn=admin_db_handler.get_evaluation_tasks_for_generation
-        # This ensures dynamic generation/evaluation tasks from the join table.
+        # Pass both the old single-metric aggregator (get_leaderboard_bq)
+        # AND the new multi-metric aggregator (get_leaderboard_bq_with_metrics).
+        # Also pass get_evaluation_task_details to retrieve .expected_metrics from local DB.
         create_leaderboard_tab(
             get_leaderboard_bq_fn=get_leaderboard_bq,
+            get_leaderboard_with_metrics_fn=get_leaderboard_bq_with_metrics,
+            get_evaluation_task_details_fn=get_evaluation_task_details,
             get_datasets_fn=admin_db_handler.get_datasets,
             get_generation_tasks_fn=admin_db_handler.get_generation_tasks,
             get_eval_tasks_for_gen_fn=admin_db_handler.get_evaluation_tasks_for_generation,
