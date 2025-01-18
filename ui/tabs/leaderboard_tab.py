@@ -2,20 +2,31 @@
 
 import gradio as gr
 import json
+import logging
+import plotly.express as px
 
 def create_leaderboard_tab(
-    get_leaderboard_bq_fn,            # Original "score-based" aggregator
-    get_leaderboard_with_metrics_fn,  # NEW aggregator for multi-metrics
+    get_leaderboard_bq_fn,            # single-score aggregator
+    get_leaderboard_with_metrics_fn,  # multi-metric aggregator
     get_datasets_fn,
     get_generation_tasks_fn,
     get_eval_tasks_for_gen_fn,
-    get_evaluation_task_details_fn,   # function to fetch the row from local DB for an evaluation task
+    get_evaluation_task_details_fn,
     product_types
 ):
-    with gr.TabItem("Leaderboard"):
-        gr.Markdown("## Leaderboard (Multi-metric)")
+    """
+    Creates a 'Leaderboard' tab in Gradio that:
+      1) Loads Datasets, Gen Tasks, and populates an Evaluation Task dropdown dynamically.
+      2) Allows a user to pick Product Type and Visualization.
+      3) Calls either get_leaderboard_bq_fn or get_leaderboard_with_metrics_fn depending on 
+         whether an Evaluation Task has expected_metrics.
+      4) Displays the result in a DataFrame plus a Plotly chart (if visualization != "Table").
+    """
 
-        # 1. Load datasets from local DB
+    with gr.TabItem("Leaderboard"):
+        gr.Markdown("## Leaderboard (Multi-metric + Visualizations)")
+
+        # 1) Load Datasets
         dataset_rows = get_datasets_fn()
         if not dataset_rows:
             dataset_map = {}
@@ -27,7 +38,7 @@ def create_leaderboard_tab(
                 dataset_map[label] = ds_id
             dataset_labels = list(dataset_map.keys())
 
-        # 2. Generation tasks
+        # 2) Generation tasks
         gen_tasks = get_generation_tasks_fn()
         if not gen_tasks:
             generation_task_map = {}
@@ -38,6 +49,7 @@ def create_leaderboard_tab(
                 generation_task_map[g_name] = g_id
             generation_task_labels = list(generation_task_map.keys())
 
+        # UI: dataset, gen task, eval task, product type
         with gr.Row():
             dataset_selector = gr.Dropdown(
                 label="Dataset",
@@ -60,10 +72,29 @@ def create_leaderboard_tab(
                 value="All"
             )
 
-        leaderboard_output = gr.Dataframe()
+        # Visualization dropdown
+        visualization_selector = gr.Dropdown(
+            label="Visualization",
+            choices=[
+                "Table",
+                "Bar Chart by Model",
+                "Bar Chart by Product Type",
+                "Pie Chart by Model (Count)"
+            ],
+            value="Table"
+        )
 
-        # 3. Populate evaluation tasks whenever generation task changes
+        # We'll display a DataFrame plus a Plot
+        leaderboard_df = gr.Dataframe()
+        leaderboard_plot = gr.Plot()
+
+        # (A) Populate evaluation tasks whenever generation task changes
         def update_evaluation_tasks(gen_task_name):
+            """
+            Called if the user picks a new Generation Task. We retrieve 
+            all evaluation tasks associated with that gen_task_id and 
+            populate the evaluation_task_selector dropdown.
+            """
             if not gen_task_name or gen_task_name == "No Generation Tasks Found":
                 return gr.update(choices=["All"], value="All")
             gen_task_id = generation_task_map[gen_task_name]
@@ -79,31 +110,34 @@ def create_leaderboard_tab(
             outputs=[evaluation_task_selector]
         )
 
-        # 4. Refresh the leaderboard
-        def refresh_leaderboard(dataset_label, gen_task_name, eval_task_name, product_type):
+        # (B) The main callback that fetches data & builds a chart
+        def refresh_leaderboard(dataset_label, gen_task_name, eval_task_name, product_type, visualization):
+            logging.debug("refresh_leaderboard => dataset=%s, gen_task=%s, eval_task=%s, product_type=%s, viz=%s",
+                          dataset_label, gen_task_name, eval_task_name, product_type, visualization)
+
+            # 1) Check dataset & generation task
             if not dataset_label or dataset_label == "No Datasets Found":
-                return None
+                return None, None
             dataset_id = dataset_map[dataset_label]
 
             if gen_task_name == "No Generation Tasks Found":
-                return None
+                return None, None
 
-            # Convert "All" to None
+            # 2) Convert "All" to None
             if eval_task_name == "All":
                 eval_task_name = None
             if product_type == "All":
                 product_type = None
 
-            # If we have a real evaluation task chosen, see if it has custom metrics
+            # 3) See if chosen eval task has custom metrics in expected_metrics
             metrics_list = None
             if eval_task_name:
-                # load the evaluation task details from local DB
-                task_row = get_evaluation_task_details_fn(eval_task_name)  # returns an object or dict
+                task_row = get_evaluation_task_details_fn(eval_task_name)
                 if task_row and task_row.expected_metrics:
-                    em = json.loads(task_row.expected_metrics)  # { "metrics": [ {name, type}, ... ] }
+                    em = json.loads(task_row.expected_metrics)
                     metrics_list = em.get("metrics", [])
 
-            # If we have metrics_list (and not empty), use get_leaderboard_with_metrics
+            # 4) aggregator call
             if metrics_list:
                 df = get_leaderboard_with_metrics_fn(
                     dataset_id=dataset_id,
@@ -112,26 +146,72 @@ def create_leaderboard_tab(
                     product_type=product_type,
                     metrics=metrics_list
                 )
-                return df
             else:
-                # fallback to simple "score" aggregator
                 df = get_leaderboard_bq_fn(
                     dataset_id=dataset_id,
                     generation_task=gen_task_name,
                     evaluation_task=eval_task_name,
                     product_type=product_type
                 )
-                return df
 
-        inputs = [
+            if df is None or df.empty:
+                return df, None
+
+            # 5) Build a Plotly figure if user picks a chart
+            fig = None
+            if visualization == "Table":
+                pass  # no figure
+            else:
+                # If aggregator returned e.g. "avg_score" or "avg_quality_score" columns, 
+                # we'll pick the first to use as y
+                numeric_cols = [c for c in df.columns if c.startswith("avg_")]
+                ycol = numeric_cols[0] if numeric_cols else "num_evaluations"
+
+                if visualization == "Bar Chart by Model":
+                    if "model_name" in df.columns:
+                        fig = px.bar(
+                            df,
+                            x="model_name",
+                            y=ycol,
+                            color="model_name",
+                            title=f"Bar Chart by Model ({ycol})"
+                        )
+                elif visualization == "Bar Chart by Product Type":
+                    if "item_product_type" in df.columns:
+                        fig = px.bar(
+                            df,
+                            x="item_product_type",
+                            y=ycol,
+                            color="item_product_type",
+                            title=f"Bar Chart by Product Type ({ycol})"
+                        )
+                elif visualization == "Pie Chart by Model (Count)":
+                    if "model_name" in df.columns and "num_evaluations" in df.columns:
+                        fig = px.pie(
+                            df,
+                            names="model_name",
+                            values="num_evaluations",
+                            title="Pie: #Evaluations by Model"
+                        )
+
+            return df, fig
+
+        def unified_callback(*args):
+            # unify the outputs into (df, figure)
+            df, fig = refresh_leaderboard(*args)
+            return df, fig
+
+        # (C) Whenever any dropdown changes, we call 'unified_callback' => (df, fig)
+        all_inputs = [
             dataset_selector,
             generation_task_selector,
             evaluation_task_selector,
-            product_type_selector
+            product_type_selector,
+            visualization_selector
         ]
-        for inp in inputs:
+        for inp in all_inputs:
             inp.change(
-                fn=refresh_leaderboard,
-                inputs=inputs,
-                outputs=leaderboard_output
+                fn=unified_callback,
+                inputs=all_inputs,
+                outputs=[leaderboard_df, leaderboard_plot]
             )

@@ -1,41 +1,37 @@
 # File: bigquery_leaderboard_handler.py
 
+import logging
 from google.cloud import bigquery
 import pandas as pd
 
 def build_metric_sql_snippet(metric_def):
     """
-    Build a per-metric SELECT expression based on type.
-    e.g. {"name":"decision","type":"yes_no"} -> CASE ... THEN 1 ELSE 0 END
-         {"name":"clarity","type":"integer"} -> CAST(JSON_VALUE(...))
+    Build a per-metric SELECT expression based on type, e.g.:
+      {"name":"decision","type":"yes_no"} -> yes/no => 1/0
+      {"name":"clarity","type":"integer"} -> CAST(JSON_VALUE(...))
     """
     metric_name = metric_def["name"]
     metric_type = metric_def.get("type", "float")  # fallback
 
+    # We'll parse from evaluation_data.<metric_name>
     json_extract = f"JSON_VALUE(evaluation_data, '$.{metric_name}')"
 
-    # yes/no or boolean
     if metric_type in ("yes_no", "boolean"):
+        # Convert yes/no => 1/0
         return f"""
         CASE
-          WHEN {json_extract} = "Yes" OR {json_extract} = "True"  THEN 1
+          WHEN {json_extract} = "Yes" OR {json_extract} = "True" THEN 1
           WHEN {json_extract} = "No"  OR {json_extract} = "False" THEN 0
           ELSE NULL
         END AS {metric_name}
         """
-
     elif metric_type == "categorical":
-        # Suppose there's a list of categories, e.g. ["Low","Medium","High"]
-        # We'll check if categories exist, else fallback
         cats = metric_def.get("categories", [])
         if not cats:
-            # fallback to a float cast
             return f"CAST({json_extract} AS FLOAT64) AS {metric_name}"
 
-        # Build a dynamic CASE
         case_lines = []
         for i, cat in enumerate(cats):
-            # e.g. WHEN JSON_VALUE(...) = "Low" THEN 0
             case_lines.append(f'WHEN {json_extract} = "{cat}" THEN {i}')
         case_sql = "\n".join(case_lines)
         return f"""
@@ -44,11 +40,9 @@ def build_metric_sql_snippet(metric_def):
           ELSE NULL
         END AS {metric_name}
         """
-
     else:
         # integer, float, or default
         return f"CAST({json_extract} AS FLOAT64) AS {metric_name}"
-
 
 class BigQueryLeaderboardHandler:
     def __init__(self, project_id: str, dataset: str = "item_setup_playground"):
@@ -63,12 +57,16 @@ class BigQueryLeaderboardHandler:
         product_type: str = None
     ) -> pd.DataFrame:
         """
-        Original method: uses 'score' only.
+        Single metric aggregator:
+        - De-duplicates by picking the latest run for each row 
+          via run_sequence_id DESC, run_date DESC (window function).
+        - Then parses 'score' from evaluation_data.
+        - Groups by item_product_type, model_name, etc., computing AVG(score).
         """
         table = f"`{self.client.project}.{self.dataset}.evaluation_results`"
-        
+
         query = f"""
-        WITH parsed AS (
+        WITH ranked AS (
           SELECT
             product_identifier_id,
             item_product_type,
@@ -76,12 +74,20 @@ class BigQueryLeaderboardHandler:
             evaluation_task,
             model_name,
             model_version,
+            -- parse 'score' from JSON
             CAST(JSON_VALUE(evaluation_data, '$.score') AS FLOAT64) AS score,
-            dataset_id
+            dataset_id,
+            run_sequence_id,
+            run_date,
+            ROW_NUMBER() OVER (
+              PARTITION BY product_identifier_id, generation_task, evaluation_task, model_name, model_version, dataset_id
+              ORDER BY run_sequence_id DESC, run_date DESC
+            ) AS rn
           FROM {table}
           WHERE dataset_id = @dataset_id
         """
 
+        # optional filters
         if generation_task and generation_task != "All":
             query += " AND generation_task = @generation_task"
         if evaluation_task and evaluation_task != "All":
@@ -99,7 +105,8 @@ class BigQueryLeaderboardHandler:
           model_version,
           AVG(score) AS avg_score,
           COUNT(*) AS num_evaluations
-        FROM parsed
+        FROM ranked
+        WHERE rn = 1   -- keep only the latest row per group
         GROUP BY
           item_product_type,
           generation_task,
@@ -120,6 +127,9 @@ class BigQueryLeaderboardHandler:
         if product_type and product_type != "All":
             params.append(bigquery.ScalarQueryParameter("product_type", "STRING", product_type))
 
+        logging.debug("get_leaderboard query:\n%s", query)
+        logging.debug("get_leaderboard params: %s", params)
+
         job_config = bigquery.QueryJobConfig(query_parameters=params)
         df = self.client.query(query, job_config=job_config).to_dataframe()
         return df
@@ -127,36 +137,35 @@ class BigQueryLeaderboardHandler:
     def get_leaderboard_with_metrics(
         self,
         dataset_id: int,
-        generation_task: str,
-        evaluation_task: str,
-        product_type: str,
-        metrics: list
+        generation_task: str = None,
+        evaluation_task: str = None,
+        product_type: str = None,
+        metrics: list = None
     ) -> pd.DataFrame:
         """
-        A new method: dynamically parse metrics from evaluation_data based on 'metrics'.
-        e.g. if metrics = [
-              {"name":"compliance","type":"yes_no"},
-              {"name":"clarity","type":"integer"}
-            ]
-        We do a CASE for yes_no, a CAST for integer, etc.
-        Then compute the average for each metric.
+        Multi-metric aggregator:
+        - De-duplicates by picking the latest run (row_number).
+        - If no metrics are provided, fallback to "quality_score" (as integer).
         """
         table = f"`{self.client.project}.{self.dataset}.evaluation_results`"
 
-        # Build SQL snippets for each metric
-        if not metrics:
-            # fallback to a single "score" scenario
-            metrics = [{"name":"score","type":"float"}]
+        # If user didn't define metrics in expected_metrics, fallback to "quality_score"
+        # (If your data uses something else, adapt accordingly).
+        if not metrics or len(metrics) == 0:
+            metrics = [{
+                "name": "quality_score",
+                "type": "integer"
+            }]
 
+        # Build the snippet for each metric
         selects = []
         for mdef in metrics:
             snippet = build_metric_sql_snippet(mdef)
             selects.append(snippet)
-
         metrics_sql = ",\n".join(selects)
 
         query = f"""
-        WITH parsed AS (
+        WITH ranked AS (
           SELECT
             product_identifier_id,
             item_product_type,
@@ -165,7 +174,13 @@ class BigQueryLeaderboardHandler:
             model_name,
             model_version,
             dataset_id,
-            {metrics_sql}
+            run_sequence_id,
+            run_date,
+            {metrics_sql},
+            ROW_NUMBER() OVER (
+              PARTITION BY product_identifier_id, generation_task, evaluation_task, model_name, model_version, dataset_id
+              ORDER BY run_sequence_id DESC, run_date DESC
+            ) AS rn
           FROM {table}
           WHERE dataset_id = @dataset_id
         """
@@ -187,7 +202,7 @@ class BigQueryLeaderboardHandler:
           model_version,
         """
 
-        # For each metric, compute AVG(...)
+        # For each metric, compute an AVG(...)
         agg_expressions = []
         for mdef in metrics:
             mname = mdef["name"]
@@ -197,7 +212,8 @@ class BigQueryLeaderboardHandler:
         query += f"""
           {agg_sql},
           COUNT(*) AS num_evaluations
-        FROM parsed
+        FROM ranked
+        WHERE rn = 1
         GROUP BY
           item_product_type,
           generation_task,
@@ -207,7 +223,7 @@ class BigQueryLeaderboardHandler:
         ORDER BY
         """
 
-        # Sort by the first metric, or do something more advanced
+        # We sort by the first metric
         first_metric = metrics[0]["name"]
         query += f"avg_{first_metric} DESC"
 
@@ -220,6 +236,9 @@ class BigQueryLeaderboardHandler:
             params.append(bigquery.ScalarQueryParameter("evaluation_task", "STRING", evaluation_task))
         if product_type and product_type != "All":
             params.append(bigquery.ScalarQueryParameter("product_type", "STRING", product_type))
+
+        logging.debug("get_leaderboard_with_metrics query:\n%s", query)
+        logging.debug("get_leaderboard_with_metrics params: %s", params)
 
         job_config = bigquery.QueryJobConfig(query_parameters=params)
         df = self.client.query(query, job_config=job_config).to_dataframe()

@@ -1,9 +1,17 @@
 # File: app.py (or your main Gradio entry point)
 
+import sys
+import os
+import traceback
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(1, os.path.join(base_dir, "../"))
+
 import argparse
 import gradio as gr
 import pandas as pd
 import os
+import logging  # If you want to log
 
 # Local imports
 from ui.db.admin_database_handler import AdminDatabaseHandler
@@ -26,13 +34,21 @@ from plots import (
 )
 from ui.tabs.feedback_tab import create_feedback_tab
 
-# NEW: Our updated Leaderboard Tab that can handle multi-metrics
+# NEW: Our updated Leaderboard Tab that can handle multi-metrics & fallback
 from ui.tabs.leaderboard_tab import create_leaderboard_tab
 
 from utils import load_product_types_from_file
 
-# BigQuery Leaderboard Handler (supports multi-metrics)
+# BigQuery Leaderboard Handler (supports multi-metrics, fallback to quality_score, no duplicates)
 from bigquery_leaderboard_handler import BigQueryLeaderboardHandler
+
+# Optionally set up Google Application Credentials
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = f"{os.getenv('WMT_CA_PATH')}/wmt-rg-dev-sa-rg-gfaas-dev.json"
+
+# ------------------------------------------------------------------------------
+# If you want logging, uncomment:
+# logging.basicConfig(level=logging.DEBUG)
+# ------------------------------------------------------------------------------
 
 # ---------------------------
 # Parse command-line arguments
@@ -61,7 +77,7 @@ project_id = "wmt-rg-dev"  # Replace with your actual GCP project ID
 bq_leaderboard = BigQueryLeaderboardHandler(project_id=project_id)
 
 # ------------------------------------------------------------------------------
-# 1) Single-score aggregator (backward compatibility)
+# Single "score" aggregator
 # ------------------------------------------------------------------------------
 def get_leaderboard_bq(**filters):
     """
@@ -71,7 +87,7 @@ def get_leaderboard_bq(**filters):
       - generation_task (str)
       - evaluation_task (str)
       - product_type (str)
-    This version only uses the 'score' from evaluation_data.
+    This aggregator only uses 'score' from evaluation_data.
     """
     dataset_id = filters.get("dataset_id")
     generation_task = filters.get("generation_task")
@@ -89,7 +105,7 @@ def get_leaderboard_bq(**filters):
     )
 
 # ------------------------------------------------------------------------------
-# 2) Multi-metric aggregator
+# Multi-metric aggregator
 # ------------------------------------------------------------------------------
 def get_leaderboard_bq_with_metrics(
     dataset_id: int,
@@ -101,6 +117,7 @@ def get_leaderboard_bq_with_metrics(
     """
     Calls BigQueryLeaderboardHandler.get_leaderboard_with_metrics,
     passing multiple metric definitions (e.g. yes/no => 1/0).
+    Fallback if no metrics => 'quality_score' as integer, also no duplicates.
     """
     return bq_leaderboard.get_leaderboard_with_metrics(
         dataset_id=dataset_id,
@@ -111,7 +128,7 @@ def get_leaderboard_bq_with_metrics(
     )
 
 # ------------------------------------------------------------------------------
-# 3) Fetch local evaluation task details to get expected_metrics
+# Fetch local evaluation task details to get .expected_metrics
 # ------------------------------------------------------------------------------
 def get_evaluation_task_details(task_name: str):
     """
@@ -126,11 +143,7 @@ def get_evaluation_task_details(task_name: str):
         """,
         {"task_name": task_name}
     ).fetchone()
-    # Or create a method in admin_db_handler: get_evaluation_task_by_name(task_name)
-
-# Alternatively, if you prefer an ORM approach:
-# def get_evaluation_task_details(task_name: str):
-#     return admin_db_handler.db_session.query(EvaluationTask).filter_by(task_name=task_name).first()
+    # Or an ORM approach: admin_db_handler.get_evaluation_task_by_name(task_name)
 
 # ---------------------------
 # Load product types
@@ -153,10 +166,7 @@ with gr.Blocks(css="styles.css") as app:
             product_types
         )
 
-        # (2) Our updated Leaderboard Tab
-        # Pass both the old single-metric aggregator (get_leaderboard_bq)
-        # AND the new multi-metric aggregator (get_leaderboard_bq_with_metrics).
-        # Also pass get_evaluation_task_details to retrieve .expected_metrics from local DB.
+        # (2) Our Leaderboard Tab (multi-metrics, fallback, no duplicates)
         create_leaderboard_tab(
             get_leaderboard_bq_fn=get_leaderboard_bq,
             get_leaderboard_with_metrics_fn=get_leaderboard_bq_with_metrics,
@@ -183,7 +193,7 @@ with gr.Blocks(css="styles.css") as app:
 
         create_feedback_tab(db_handler.get_evaluations, product_types)
 
-        # Admin Tabs
+        # (4) Admin Tabs
         create_task_management_tab(admin_db_handler)
         create_task_mapping_tab(admin_db_handler)
         create_prompt_template_management_tab(admin_db_handler)
@@ -191,4 +201,5 @@ with gr.Blocks(css="styles.css") as app:
         create_styling_guide_manager_tab(admin_db_handler, product_types)
 
 if __name__=="__main__":
-    app.launch()
+    # Launch the app (disable queue if you want immediate logs)
+    app.launch()  
