@@ -34,25 +34,21 @@ from plots import (
 )
 from ui.tabs.feedback_tab import create_feedback_tab
 
-# NEW: Our updated Leaderboard Tab that can handle multi-metrics & fallback
+# Leaderboard Tab with multi-metrics + fallback
 from ui.tabs.leaderboard_tab import create_leaderboard_tab
 
 from utils import load_product_types_from_file
-
-# BigQuery Leaderboard Handler (supports multi-metrics, fallback to quality_score, no duplicates)
 from bigquery_leaderboard_handler import BigQueryLeaderboardHandler
 
-# Optionally set up Google Application Credentials
+# Optionally set up GCP creds
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = f"{os.getenv('WMT_CA_PATH')}/wmt-rg-dev-sa-rg-gfaas-dev.json"
 
-# ------------------------------------------------------------------------------
-# If you want logging, uncomment:
+# Uncomment if you want logs:
 # logging.basicConfig(level=logging.DEBUG)
-# ------------------------------------------------------------------------------
 
-# ---------------------------
+# ------------------------------------------------------------------------------
 # Parse command-line arguments
-# ---------------------------
+# ------------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description="Run Gradio application with a specific database path.")
 parser.add_argument(
     "--db-path",
@@ -62,32 +58,27 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-# ---------------------------
+# ------------------------------------------------------------------------------
 # Initialize local DB
-# ---------------------------
+# ------------------------------------------------------------------------------
 db_handler = DatabaseHandler(db_path=args.db_path)
 db_handler.create_tables()
 
 admin_db_handler = AdminDatabaseHandler(db_path=args.db_path)
 
-# ---------------------------
+# ------------------------------------------------------------------------------
 # Initialize BigQuery Handler
-# ---------------------------
-project_id = "wmt-rg-dev"  # Replace with your actual GCP project ID
+# ------------------------------------------------------------------------------
+project_id = "wmt-rg-dev"  # Replace with your GCP project ID
 bq_leaderboard = BigQueryLeaderboardHandler(project_id=project_id)
 
 # ------------------------------------------------------------------------------
-# Single "score" aggregator
+# 1) Single "score" aggregator
 # ------------------------------------------------------------------------------
 def get_leaderboard_bq(**filters):
     """
     Adapts the filter dict from the UI into parameters for BigQueryLeaderboardHandler.
-    Example filters might include:
-      - dataset_id (int)
-      - generation_task (str)
-      - evaluation_task (str)
-      - product_type (str)
-    This aggregator only uses 'score' from evaluation_data.
+    We only parse 'score' from evaluation_data => returning an avg_score, etc.
     """
     dataset_id = filters.get("dataset_id")
     generation_task = filters.get("generation_task")
@@ -95,7 +86,7 @@ def get_leaderboard_bq(**filters):
     product_type = filters.get("product_type")
 
     if not dataset_id:
-        return pd.DataFrame()  # or None
+        return pd.DataFrame()
 
     return bq_leaderboard.get_leaderboard(
         dataset_id=dataset_id,
@@ -105,7 +96,7 @@ def get_leaderboard_bq(**filters):
     )
 
 # ------------------------------------------------------------------------------
-# Multi-metric aggregator
+# 2) Multi-metric aggregator
 # ------------------------------------------------------------------------------
 def get_leaderboard_bq_with_metrics(
     dataset_id: int,
@@ -114,11 +105,6 @@ def get_leaderboard_bq_with_metrics(
     product_type: str = None,
     metrics: list = None
 ):
-    """
-    Calls BigQueryLeaderboardHandler.get_leaderboard_with_metrics,
-    passing multiple metric definitions (e.g. yes/no => 1/0).
-    Fallback if no metrics => 'quality_score' as integer, also no duplicates.
-    """
     return bq_leaderboard.get_leaderboard_with_metrics(
         dataset_id=dataset_id,
         generation_task=generation_task,
@@ -128,14 +114,31 @@ def get_leaderboard_bq_with_metrics(
     )
 
 # ------------------------------------------------------------------------------
-# Fetch local evaluation task details to get .expected_metrics
+# 3) Score Buckets aggregator
+# ------------------------------------------------------------------------------
+def get_leaderboard_bq_with_buckets(
+    dataset_id: int,
+    generation_task: str = None,
+    evaluation_task: str = None,
+    product_type: str = None
+):
+    """
+    Calls BigQueryLeaderboardHandler.get_leaderboard_with_buckets, 
+    returning a DataFrame of [model_name, model_version, bucket, count_in_bucket].
+    E.g. "Bad", "Average", "Good", "Excellent" buckets.
+    """
+    return bq_leaderboard.get_leaderboard_with_buckets(
+        dataset_id=dataset_id,
+        generation_task=generation_task,
+        evaluation_task=evaluation_task,
+        product_type=product_type
+    )
+
+# ------------------------------------------------------------------------------
+# 4) Retrieve local evaluation_task row for .expected_metrics
 # ------------------------------------------------------------------------------
 def get_evaluation_task_details(task_name: str):
-    """
-    Look up the local EvaluationTask row by name, so we can retrieve .expected_metrics
-    for dynamic metric parsing in BigQuery.
-    """
-    return admin_db_handler.db_session.execute(
+    row = admin_db_handler.db_session.execute(
         """
         SELECT *
         FROM evaluation_tasks
@@ -143,33 +146,34 @@ def get_evaluation_task_details(task_name: str):
         """,
         {"task_name": task_name}
     ).fetchone()
-    # Or an ORM approach: admin_db_handler.get_evaluation_task_by_name(task_name)
+    return row
 
-# ---------------------------
+# ------------------------------------------------------------------------------
 # Load product types
-# ---------------------------
+# ------------------------------------------------------------------------------
 product_types = load_product_types_from_file('product_types.txt')
 if not product_types:
     product_types = ["Electronics", "Clothing", "Home Goods", "Toys", "Books", "Other"]
 
-# ---------------------------
+# ------------------------------------------------------------------------------
 # Build Gradio Interface
-# ---------------------------
+# ------------------------------------------------------------------------------
 with gr.Blocks(css="styles.css") as app:
     gr.Markdown("# Item Setup Playground Interface")
 
     with gr.Tabs():
-        # (1) User-Facing Tabs
-        create_item_enrichment_tab(
-            process_single_sku,
-            save_preference,
-            product_types
-        )
+        # (1) Item Enrichment Tab
+        create_item_enrichment_tab(process_single_sku, save_preference, product_types)
 
-        # (2) Our Leaderboard Tab (multi-metrics, fallback, no duplicates)
+        # (2) Our new Leaderboard Tab
+        # We pass all three aggregator fns:
+        #   - get_leaderboard_bq_fn (single "score")
+        #   - get_leaderboard_with_metrics_fn (multi-metrics)
+        #   - get_leaderboard_with_buckets_fn (score buckets)
         create_leaderboard_tab(
             get_leaderboard_bq_fn=get_leaderboard_bq,
             get_leaderboard_with_metrics_fn=get_leaderboard_bq_with_metrics,
+            get_leaderboard_with_buckets_fn=get_leaderboard_bq_with_buckets,  # <--- new
             get_evaluation_task_details_fn=get_evaluation_task_details,
             get_datasets_fn=admin_db_handler.get_datasets,
             get_generation_tasks_fn=admin_db_handler.get_generation_tasks,
@@ -177,7 +181,7 @@ with gr.Blocks(css="styles.css") as app:
             product_types=product_types
         )
 
-        # (3) Analytics Tab, etc.
+        # (3) Analytics Tab
         create_analytics_tab(
             generate_leaderboard_plot,
             db_handler.get_leaderboard,
@@ -201,5 +205,4 @@ with gr.Blocks(css="styles.css") as app:
         create_styling_guide_manager_tab(admin_db_handler, product_types)
 
 if __name__=="__main__":
-    # Launch the app (disable queue if you want immediate logs)
-    app.launch()  
+    app.launch(enable_queue=False)

@@ -168,7 +168,7 @@ def create_task_management_tab(admin_db_handler):
 
         # Save task
         def save_task(task_id_val, task_name_val, description_val,
-                      max_tokens_val, output_format_val, task_type_val, metrics_data):
+                      max_tokens_val, output_3format_val, task_type_val, metrics_data):
             if not task_name_val.strip():
                 return "Task Name cannot be empty.", gr.update()
             try:
