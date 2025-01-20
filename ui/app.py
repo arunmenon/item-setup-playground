@@ -24,6 +24,7 @@ from ui.tabs.analytics_tab import create_analytics_tab
 from ui.tabs.item_enrichment_tab import create_item_enrichment_tab
 from ui.tabs.pricing_analysis_tab import create_pricing_analysis_tab
 from ui.tabs.confidence_breakdown_tab import create_confidence_breakdown_tab
+from ui.tabs.cq_score_tab import create_cq_score_tab
 from ui.db.database_handler import DatabaseHandler
 from ui.handlers import process_single_sku, save_preference
 from plots import (
@@ -211,6 +212,10 @@ with gr.Blocks(css="styles.css") as app:
             project_id="wmt-rg-dev",
             default_dataset="item_setup_playground",
             product_types=["Shoes","Shirts","All"]
+        )
+        create_cq_score_tab(
+            project_id="wmt-rg-dev",
+            default_dataset="item_setup_playground"
         )
         create_pricing_analysis_tab()
         create_styling_guide_manager_tab(admin_db_handler, product_types)
