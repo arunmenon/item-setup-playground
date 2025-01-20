@@ -23,6 +23,7 @@ from ui.admin_tabs.task_mapping_tab import create_task_mapping_tab
 from ui.tabs.analytics_tab import create_analytics_tab
 from ui.tabs.item_enrichment_tab import create_item_enrichment_tab
 from ui.tabs.pricing_analysis_tab import create_pricing_analysis_tab
+from ui.tabs.confidence_breakdown_tab import create_confidence_breakdown_tab
 from ui.db.database_handler import DatabaseHandler
 from ui.handlers import process_single_sku, save_preference
 from plots import (
@@ -203,6 +204,14 @@ with gr.Blocks(css="styles.css") as app:
         create_task_mapping_tab(admin_db_handler)
         create_prompt_template_management_tab(admin_db_handler)
         create_provider_configuration_tab(admin_db_handler)
+        create_confidence_breakdown_tab(
+            get_datasets_fn=admin_db_handler.get_datasets,
+            get_generation_tasks_fn=admin_db_handler.get_generation_tasks,
+            get_eval_tasks_for_gen_fn=admin_db_handler.get_evaluation_tasks_for_generation,
+            project_id="wmt-rg-dev",
+            default_dataset="item_setup_playground",
+            product_types=["Shoes","Shirts","All"]
+        )
         create_pricing_analysis_tab()
         create_styling_guide_manager_tab(admin_db_handler, product_types)
 
