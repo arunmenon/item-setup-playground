@@ -1,0 +1,40 @@
+[
+    {
+      "provider": "OpenAI",
+      "model": "gpt-4o",
+      "input_price_1m": 2.50,
+      "output_price_1m": 10.00
+    },
+    {
+      "provider": "OpenAI",
+      "model": "gpt-4o-mini",
+      "input_price_1m": 0.15,
+      "output_price_1m": 0.60
+    },
+    {
+      "provider": "OpenAI",
+      "model": "gpt-4-turbo",
+      "input_price_1m": 10.0,
+      "output_price_1m": 30.0
+    },
+    {
+      "provider": "Anthropic",
+      "model": "claude-3-haiku",
+      "input_price_1m": 0.25,
+      "output_price_1m": 1.25
+    },
+    {
+      "provider": "Google",
+      "model": "gemini-1.5-flash",
+      "input_price_1m": 0.07,
+      "output_price_1m": 0.30
+    },
+    {
+      "provider": "Mistral",
+      "model": "mistral-large",
+      "input_price_1m": 3.00,
+      "output_price_1m": 9.00
+    }
+    // ... add more as needed
+  ]
+  

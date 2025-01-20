@@ -22,6 +22,7 @@ from ui.admin_tabs.template_manager_tab import create_prompt_template_management
 from ui.admin_tabs.task_mapping_tab import create_task_mapping_tab
 from ui.tabs.analytics_tab import create_analytics_tab
 from ui.tabs.item_enrichment_tab import create_item_enrichment_tab
+from ui.tabs.pricing_analysis_tab import create_pricing_analysis_tab
 from ui.db.database_handler import DatabaseHandler
 from ui.handlers import process_single_sku, save_preference
 from plots import (
@@ -202,6 +203,7 @@ with gr.Blocks(css="styles.css") as app:
         create_task_mapping_tab(admin_db_handler)
         create_prompt_template_management_tab(admin_db_handler)
         create_provider_configuration_tab(admin_db_handler)
+        create_pricing_analysis_tab()
         create_styling_guide_manager_tab(admin_db_handler, product_types)
 
 if __name__=="__main__":
